@@ -1,4 +1,6 @@
 port module Port exposing (..)
 
 
-port output : String -> Cmd msg
+port outputEncoder : String -> Cmd msg
+
+port outputDecoder : String -> Cmd msg

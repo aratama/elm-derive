@@ -27,19 +27,26 @@ update msg model = case msg of
 
 main : Program Flag Model Msg
 main = Platform.worker 
-    { init = \source -> ({ source = source }, Port.output <| case AutoEncoder.run source of 
+    { init = \source -> ({ source = source }, Cmd.batch [
+        Port.outputEncoder <| case AutoEncoder.run source of 
             Err err -> 
                 String.join "\n" <| List.map (Parser.Extra.deadEndToString source) err
             Ok result ->
                 
                 case AutoEncoder.Encoder.generateEncoder result of 
                     Err err -> String.join "\n"  <| List.map (\e -> "[Error] " ++ e) err 
-                    Ok generated -> generated
-    )
+                    Ok generated -> generated,
+
+
+        Port.outputDecoder <| case AutoEncoder.run source of 
+            Err err -> 
+                String.join "\n" <| List.map (Parser.Extra.deadEndToString source) err
+            Ok result ->
                 
-                -- case  AutoEncoder.Decoder.generateDecoder result of 
-                --     Err err -> String.join "\n"  <| List.map (\e -> "[Error] " ++ e) err   
-                --     Ok generated -> generated]
+                case AutoEncoder.Decoder.generateDecoder result of 
+                    Err err -> String.join "\n"  <| List.map (\e -> "[Error] " ++ e) err 
+                    Ok generated -> generated]
+    )
                 
     , update = update 
     , subscriptions = \model -> Sub.none

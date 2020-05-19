@@ -1,19 +1,19 @@
 {
-  "name": "elm-firestore",
+  "name": "elm-autoencoder-cli",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "parcel build ./src/index.js",
-    "start": "npm run build && node dist/index.js"
+    "build": "elm make src/Main.elm --output=dist/index.js",
+    "start": "node src/index.mjs \"./example/TodoList.elm\""
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@babel/polyfill": "^7.8.7",
-    "elm-hot": "^1.1.4",
-    "node-elm-compiler": "^5.0.4",
-    "sass": "^1.26.5"
+    "node-elm-compiler": "^5.0.4"
+  },
+  "dependencies": {
+    "fs-extra": "^9.0.0"
   }
 }
