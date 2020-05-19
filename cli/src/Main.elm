@@ -14,6 +14,7 @@ import TodoList.Type.Encode
 import List.Extra as List
 import Platform
 import Port
+import Parser.Extra
 
 type alias Model = { source : String }
 
@@ -28,7 +29,7 @@ main : Program Flag Model Msg
 main = Platform.worker 
     { init = \source -> ({ source = source }, Port.output <| case AutoEncoder.run source of 
             Err err -> 
-                String.join "\n" <| List.map (deadEndToString source) err
+                String.join "\n" <| List.map (Parser.Extra.deadEndToString source) err
             Ok result ->
                 
                 case AutoEncoder.Encoder.generateEncoder result of 
@@ -44,23 +45,4 @@ main = Platform.worker
     , subscriptions = \model -> Sub.none
     }
 
-
-deadEndToString src deadEnd = "(" ++ String.fromInt deadEnd.row ++ "," ++ String.fromInt deadEnd.col ++  ") " ++ problemToString deadEnd.problem ++ "\n\n" 
-    ++ Maybe.withDefault "" (List.getAt ((deadEnd.row - 1) // 2) ( String.lines src))
-
-problemToString problem = case problem of 
-    Expecting s -> "Expecting " ++ s 
-    ExpectingInt -> "ExpectingInt" 
-    ExpectingHex -> "ExpectingHex"
-    ExpectingOctal -> "ExpectingOctal" 
-    ExpectingBinary -> "ExpectingBinary" 
-    ExpectingFloat -> "ExpectingFloat"
-    ExpectingNumber -> "ExpectingNumber" 
-    ExpectingVariable -> "ExpectingVariable" 
-    ExpectingSymbol s -> "ExpectingSymbol `" ++ s ++ "`" 
-    ExpectingKeyword s -> "ExpectingKeyword `" ++ s ++ "`"
-    ExpectingEnd -> "ExpectingEnd"
-    UnexpectedChar -> "UnexpectedChar" 
-    Problem s -> "Problem `" ++ s ++ "`" 
-    BadRepeat -> "BadRepeat"
 

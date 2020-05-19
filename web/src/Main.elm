@@ -12,6 +12,7 @@ import TodoList.Type
 import TodoList.Type.Decode
 import TodoList.Type.Encode
 import List.Extra as List
+import Parser.Extra
 
 source : String
 source = """-- # Elm Encoder/Decoder Auto Generator (Prototype)
@@ -62,24 +63,7 @@ main = Browser.sandbox
     }
 
 
-deadEndToString src deadEnd = "(" ++ String.fromInt deadEnd.row ++ "," ++ String.fromInt deadEnd.col ++  ") " ++ problemToString deadEnd.problem ++ "\n\n" 
-    ++ Maybe.withDefault "" (List.getAt ((deadEnd.row - 1) // 2) ( String.lines src))
 
-problemToString problem = case problem of 
-    Expecting s -> "Expecting " ++ s 
-    ExpectingInt -> "ExpectingInt" 
-    ExpectingHex -> "ExpectingHex"
-    ExpectingOctal -> "ExpectingOctal" 
-    ExpectingBinary -> "ExpectingBinary" 
-    ExpectingFloat -> "ExpectingFloat"
-    ExpectingNumber -> "ExpectingNumber" 
-    ExpectingVariable -> "ExpectingVariable" 
-    ExpectingSymbol s -> "ExpectingSymbol `" ++ s ++ "`" 
-    ExpectingKeyword s -> "ExpectingKeyword `" ++ s ++ "`"
-    ExpectingEnd -> "ExpectingEnd"
-    UnexpectedChar -> "UnexpectedChar" 
-    Problem s -> "Problem `" ++ s ++ "`" 
-    BadRepeat -> "BadRepeat"
 
 view : Model -> Html.Html Msg
 view model =  
@@ -87,7 +71,7 @@ view model =
         [ Html.textarea [Html.Events.onInput Input ] [Html.text <| String.trim source]
         , Html.div [] <| case AutoEncoder.run model.source of 
             Err err -> 
-                [Html.pre [] [Html.text <| String.join "\n" <| List.map (deadEndToString model.source) err ] ]
+                [Html.pre [] [Html.text <| String.join "\n" <| List.map (Parser.Extra.deadEndToString model.source) err ] ]
             Ok result ->
                 [
                 Html.pre [] [Html.text <| case AutoEncoder.Encoder.generateEncoder result of 
