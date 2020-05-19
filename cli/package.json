@@ -5,11 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "parcel index.html"
+    "build": "parcel build ./src/index.js",
+    "start": "npm run build && node dist/index.js"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@babel/polyfill": "^7.8.7",
     "elm-hot": "^1.1.4",
     "node-elm-compiler": "^5.0.4",
     "sass": "^1.26.5"
