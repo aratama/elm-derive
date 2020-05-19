@@ -1,0 +1,5 @@
+node_modules
+elm-stuff
+.cache
+dist
+src/TodoList/**

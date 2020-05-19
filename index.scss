@@ -1,0 +1,42 @@
+pre {
+  padding: 1em;
+  font-size: 14px;
+  font-family: "Fira Code", monospace;
+  overflow: scroll;
+  background-color: #222;
+  color: white;
+}
+
+textarea {
+  padding: 1em;
+  font-size: 14px;
+  overflow: scroll;
+  font-family: "Fira Code", monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+.root {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.root {
+  display: flex;
+}
+
+.root > * {
+  width: 50vw;
+}
+
+.root > :nth-child(2) > * {
+  height: 50vh;
+}
