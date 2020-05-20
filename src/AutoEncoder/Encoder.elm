@@ -36,7 +36,7 @@ encoderFromTypeName name =
             Ok <| "encode" ++ typeName
 
         _ ->
-            Err <| [ "Unsupported Data Type: " ++ String.join " " name ]
+            Err <| [ "Unsupported Data Type: `" ++ String.join " " name ++ "`" ]
 
 
 generateEncoderFromTypeAlias : TypeAlias -> Result Error String

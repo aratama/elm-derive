@@ -97,7 +97,7 @@ view model =
         , Html.div [] <|
             case AutoEncoder.run model.source of
                 Err err ->
-                    [ Html.pre []
+                    [ Html.pre [ class "syntactic-error" ]
                         [ Html.text <|
                             String.join "\n"
                                 [ "Syntactic Error: "
@@ -118,7 +118,7 @@ view model =
 showCode generator result =
     case generator result of
         Err err ->
-            Html.text <| errorToString err
+            Html.pre [ class "generation-error" ] [ Html.text <| errorToString err ]
 
         Ok generated ->
             Html.div [ class "generated" ]

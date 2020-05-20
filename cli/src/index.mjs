@@ -1,4 +1,6 @@
-import elm from "../dist/index.js";
+#!/usr/bin/env node
+
+import elm from "../dist/elm-autoencoder.js";
 import fs from "fs";
 import fsx from "fs-extra";
 import path from "path";

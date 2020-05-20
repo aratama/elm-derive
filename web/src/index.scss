@@ -76,3 +76,12 @@ textarea {
 .left .generated {
   min-height: 100vh;
 }
+
+.syntactic-error {
+  min-height: 100vh;
+  background-color: #282c34;
+}
+
+.generation-error {
+  min-height: 33.33vh;
+}

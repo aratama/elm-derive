@@ -1,3 +1,4 @@
+-- generated automatically by elm-autoencoder
 module TodoList.Type.Decode exposing (..)
 
 import Json.Decode

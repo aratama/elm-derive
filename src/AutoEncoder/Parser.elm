@@ -9,11 +9,11 @@ import Set
 importDIrective : Parser ModuleName
 importDIrective =
     succeed identity
-        |. symbol "import"
+        |. keyword "import"
         |. skip
         |= moduleName
         |. skip
-        |. symbol "exposing"
+        |. keyword "exposing"
         |. skip
         |. symbol "("
         |. skip
@@ -75,9 +75,9 @@ typeAlias : Parser TypeAlias
 typeAlias =
     succeed TypeAlias
         |. skip
-        |. symbol "type"
+        |. keyword "type"
         |. skip
-        |. symbol "alias"
+        |. keyword "alias"
         |. skip
         |= typeNameSegment
         |. skip

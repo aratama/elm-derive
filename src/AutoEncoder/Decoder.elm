@@ -39,7 +39,7 @@ decoderFromTypeName name =
             Ok <| "decode" ++ typeName
 
         _ ->
-            Err [ "Unsupported Data Type: " ++ String.join " " name ]
+            Err [ "Unsupported Data Type: `" ++ String.join " " name ++ "`" ]
 
 
 generateDecoderFromTypeAlias : TypeAlias -> Result Error String

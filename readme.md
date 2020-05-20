@@ -1,5 +1,15 @@
-# Elm Autoencoder
+# elm-autoencoder
 
 WIP: JSON Encoder/Decoder code generator for Elm
 
-Demo: https://elm-autoencoder.netlify.app/
+## Demo
+
+See https://elm-autoencoder.netlify.app/
+
+## Command Line Interface
+
+```shell
+$ npx aratama/elm-autoencoder src/TodoList/Type.elm
+```
+
+Hopefully this command will generates `src/TodoList/Type/Encode.elm`, `src/TodoList/Type/Decode.elm` and `src/TodoList/Type/LocalStorage.elm`.
