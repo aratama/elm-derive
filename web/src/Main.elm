@@ -14,8 +14,8 @@ import Parser.Extra
 import SyntaxHighlight
 
 
-source : String
-source =
+sampleSource : String
+sampleSource =
     """-- # Elm Encoder/Decoder Auto Generator (Prototype)
 -- 
 -- Put your great type definitions below.
@@ -28,6 +28,12 @@ source =
 -- * List a
 -- * Dict String a 
 -- * Maybe a
+-- 
+-- elm-autoencoder has a CLI. Try the following command in your terminal:
+-- 
+-- $ npx aratama/elm-autoencoder src/Type/TodoList.Elm
+-- 
+-- Have fun at Elm programming!
 
 module TodoList.Type exposing (..)
 
@@ -67,7 +73,7 @@ update msg model =
 main : Program () Model Msg
 main =
     Browser.sandbox
-        { init = { source = source }
+        { init = { source = sampleSource }
         , view = view
         , update = update
         }
