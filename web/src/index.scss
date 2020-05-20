@@ -2,16 +2,17 @@ pre {
   padding: 1em;
   font-size: 14px;
   font-family: "Fira Code", monospace;
-  overflow: scroll;
+
   background-color: #222;
   color: white;
 }
 
-textarea {
-  padding: 1em;
-  font-size: 14px;
-  overflow: scroll;
-  font-family: "Fira Code", monospace;
+.left > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50vw;
+  height: 100%;
 }
 
 * {
@@ -37,6 +38,41 @@ body,
   width: 50vw;
 }
 
-.root > :nth-child(2) > * {
-  height: 50vh;
+textarea {
+  padding: 1em;
+  overflow: scroll;
+  resize: none;
+  background-color: transparent;
+  color: transparent;
+  caret-color: white;
+
+  font-family: "Fira Code", monospace;
+  font-size: 14px;
+  line-height: 1.5em;
+  letter-spacing: 0;
+}
+
+.generated {
+  height: 33.33vh;
+  overflow: scroll;
+
+  font-family: "Fira Code", monospace;
+  font-size: 14px;
+  line-height: 1.5em;
+  letter-spacing: 0;
+}
+
+.generated code {
+  font-family: "Fira Code", monospace;
+  font-size: 14px;
+  line-height: 1.5em;
+  letter-spacing: 0;
+}
+
+.generated pre.elmsh {
+  min-height: 100vh;
+}
+
+.left .generated {
+  min-height: 100vh;
 }

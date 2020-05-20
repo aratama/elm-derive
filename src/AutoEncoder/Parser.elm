@@ -24,20 +24,7 @@ importDIrective =
 
 moduleName : Parser ModuleName
 moduleName =
-    let
-        go : List String -> Parser (Step (List String) (List String))
-        go revStmts =
-            oneOf
-                [ succeed (\stmt -> Loop (stmt :: revStmts))
-                    |. symbol "."
-                    |= typeNameSegment
-                , succeed ()
-                    |> map (\_ -> Done (List.reverse revStmts))
-                ]
-    in
-    succeed (::)
-        |= typeNameSegment
-        |= loop [] go
+    sepBy1 (symbol ".") typeNameSegment
 
 
 typeVar : Parser String
@@ -126,10 +113,19 @@ skip =
     loop 0 <|
         ifProgress <|
             oneOf
-                [ lineComment "--"
+                [ lineCommentWorkAround "--" -- lineComment "--"
                 , multiComment "{-" "-}" Nestable
                 , spaces
                 ]
+
+
+
+-- https://github.com/elm/parser/issues/46
+
+
+lineCommentWorkAround : String -> Parser ()
+lineCommentWorkAround start =
+    succeed () |. symbol start |. chompWhile (\c -> c /= '\n')
 
 
 ifProgress : Parser a -> Int -> Parser (Step Int ())
@@ -183,3 +179,23 @@ many p =
                 ]
     in
     loop [] go
+
+
+oneOrMore : Parser a -> Parser (List a)
+oneOrMore p =
+    succeed (::)
+        |= p
+        |= many p
+
+
+sepBy1 : Parser s -> Parser a -> Parser (List a)
+sepBy1 s p =
+    let
+        w =
+            succeed identity
+                |. s
+                |= p
+    in
+    succeed (::)
+        |= p
+        |= many w

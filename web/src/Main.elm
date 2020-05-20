@@ -1,21 +1,22 @@
 module Main exposing (main)
 
-import Browser
 import AutoEncoder
+import AutoEncoder.Decoder
+import AutoEncoder.Encoder
+import AutoEncoder.LocalStorage
+import Browser
 import Html
 import Html.Attributes exposing (class)
 import Html.Events
-import AutoEncoder.Encoder
-import AutoEncoder.Decoder
-import Parser exposing (Problem(..))
-import TodoList.Type
-import TodoList.Type.Decode
-import TodoList.Type.Encode
 import List.Extra as List
+import Parser exposing (Problem(..))
 import Parser.Extra
+import SyntaxHighlight
+
 
 source : String
-source = """-- # Elm Encoder/Decoder Auto Generator (Prototype)
+source =
+    """-- # Elm Encoder/Decoder Auto Generator (Prototype)
 -- 
 -- Put your great type definitions below.
 -- This generator supports a subset of Elm syntax.
@@ -48,37 +49,81 @@ type alias Model =
     }
 """
 
-type alias Model = { source : String }
 
-type Msg = Input String
+type alias Model =
+    { source : String }
 
-update msg model = case msg of 
-    Input s -> { model | source = s }
+
+type Msg
+    = Input String
+
+
+update msg model =
+    case msg of
+        Input s ->
+            { model | source = s }
+
 
 main : Program () Model Msg
-main = Browser.sandbox 
-    { init = { source = source }
-    , view = view
-    , update = update 
-    }
+main =
+    Browser.sandbox
+        { init = { source = source }
+        , view = view
+        , update = update
+        }
 
 
+errorToString err =
+    let
+        total =
+            List.length err
+    in
+    String.join "\n" <| List.indexedMap (\i e -> "Error (" ++ String.fromInt i ++ " / " ++ String.fromInt total ++ "):\n " ++ e ++ "\n") err
 
 
 view : Model -> Html.Html Msg
-view model =  
-    Html.div [class "root"] 
-        [ Html.textarea [Html.Events.onInput Input ] [Html.text <| String.trim source]
-        , Html.div [] <| case AutoEncoder.run model.source of 
-            Err err -> 
-                [Html.pre [] [Html.text <| String.join "\n" <| List.map (Parser.Extra.deadEndToString model.source) err ] ]
-            Ok result ->
-                [
-                Html.pre [] [Html.text <| case AutoEncoder.Encoder.generateEncoder result of 
-                    Err err -> String.join "\n"  <| List.map (\e -> "[Error] " ++ e) err 
-                    Ok generated -> generated]
-                , Html.pre [] [Html.text <| case  AutoEncoder.Decoder.generateDecoder result of 
-                    Err err -> String.join "\n"  <| List.map (\e -> "[Error] " ++ e) err   
-                    Ok generated -> generated]
+view model =
+    Html.div [ class "root" ]
+        [ SyntaxHighlight.useTheme SyntaxHighlight.oneDark
+        , Html.div [ class "left" ]
+            [ Html.div [ class "generated" ]
+                [ SyntaxHighlight.elm (String.trim model.source)
+                    |> Result.map (SyntaxHighlight.toBlockHtml (Just 1))
+                    |> Result.withDefault
+                        (Html.pre [] [ Html.code [] [ Html.text (String.trim model.source) ] ])
                 ]
-        ]   
+            , Html.textarea [ Html.Events.onInput Input ] [ Html.text <| String.trim model.source ]
+            ]
+        , Html.div [] <|
+            case AutoEncoder.run model.source of
+                Err err ->
+                    [ Html.pre []
+                        [ Html.text <|
+                            String.join "\n"
+                                [ "Syntactic Error: "
+                                , ""
+                                , String.join "\n" <| List.map (Parser.Extra.deadEndToString model.source) err
+                                ]
+                        ]
+                    ]
+
+                Ok result ->
+                    [ showCode AutoEncoder.Encoder.generateEncoder result
+                    , showCode AutoEncoder.Decoder.generateDecoder result
+                    , showCode AutoEncoder.LocalStorage.generatePort result
+                    ]
+        ]
+
+
+showCode generator result =
+    case generator result of
+        Err err ->
+            Html.text <| errorToString err
+
+        Ok generated ->
+            Html.div [ class "generated" ]
+                [ SyntaxHighlight.elm generated
+                    |> Result.map (SyntaxHighlight.toBlockHtml (Just 1))
+                    |> Result.withDefault
+                        (Html.pre [] [ Html.code [] [ Html.text generated ] ])
+                ]

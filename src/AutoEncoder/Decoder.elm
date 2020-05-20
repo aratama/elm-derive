@@ -106,7 +106,8 @@ generateDecoder mod =
         [] ->
             Ok <|
                 String.join "\n"
-                    [ "module " ++ String.join "." mod.name ++ ".Decode exposing (..)"
+                    [ "-- generated automatically by elm-autoencoder"
+                    , "module " ++ String.join "." mod.name ++ ".Decode exposing (..)"
                     , ""
                     , "import Json.Decode"
                     , "import " ++ String.join "." mod.name ++ " exposing (..)"

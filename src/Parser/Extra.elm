@@ -1,10 +1,18 @@
 module Parser.Extra exposing (..)
 
 import List.Extra as List
-import Parser exposing (Problem(..))
+import Parser exposing (DeadEnd, Problem(..))
 
 
+deadEndToString : String -> DeadEnd -> String
 deadEndToString src deadEnd =
+    let
+        lineNumberWidth =
+            4
+
+        row =
+            deadEnd.row - 1
+    in
     "("
         ++ String.fromInt deadEnd.row
         ++ ","
@@ -12,9 +20,15 @@ deadEndToString src deadEnd =
         ++ ") "
         ++ problemToString deadEnd.problem
         ++ "\n\n"
-        ++ Maybe.withDefault "" (List.getAt ((deadEnd.row - 1) // 2) (String.lines src))
+        ++ String.padLeft lineNumberWidth ' ' (String.fromInt (row + 1))
+        ++ "| "
+        ++ Maybe.withDefault "" (List.getAt row (String.lines src))
+        ++ "\n"
+        ++ String.repeat (lineNumberWidth + 2 + deadEnd.col - 1) " "
+        ++ "^"
 
 
+problemToString : Problem -> String
 problemToString problem =
     case problem of
         Expecting s ->
