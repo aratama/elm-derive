@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "elm make src/Main.elm --output=./dist/elm-autoencoder.js && esbuild ./src/index.mjs --bundle --outfile=../bin/index.js --platform=node",
+    "build": "elm make src/Main.elm  --optimize --output=./dist/elm-autoencoder.js && esbuild ./src/index.mjs --bundle --outfile=../bin/index.js --platform=node",
     "start": "node ../bin/index.js example/TodoList.elm"
   },
   "author": "",
