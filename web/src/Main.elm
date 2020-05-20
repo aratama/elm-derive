@@ -4,10 +4,15 @@ import AutoEncoder
 import AutoEncoder.Decoder
 import AutoEncoder.Encoder
 import AutoEncoder.LocalStorage
+import AutoEncoder.Web.Type
+import AutoEncoder.Web.Type.Decode
+import AutoEncoder.Web.Type.Encode
 import Browser
 import Html
 import Html.Attributes exposing (class)
 import Html.Events
+import Json.Decode
+import Json.Encode
 import List.Extra as List
 import Parser exposing (Problem(..))
 import Parser.Extra
@@ -68,6 +73,16 @@ update msg model =
     case msg of
         Input s ->
             { model | source = s }
+
+
+test : AutoEncoder.Web.Type.Model -> Json.Encode.Value
+test m =
+    AutoEncoder.Web.Type.Encode.encodeModel m
+
+
+decode : Json.Encode.Value -> Result Json.Decode.Error AutoEncoder.Web.Type.Model
+decode value =
+    Json.Decode.decodeValue AutoEncoder.Web.Type.Decode.decodeModel value
 
 
 main : Program () Model Msg
