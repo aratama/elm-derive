@@ -46,6 +46,8 @@ textarea {
   background-color: transparent;
   color: transparent;
   caret-color: white;
+  border: none;
+  outline: none;
 
   font-family: "Fira Code", monospace;
   font-size: 14px;
@@ -54,7 +56,7 @@ textarea {
 }
 
 .generated {
-  height: 33.33vh;
+  height: 100vh;
   overflow: scroll;
 
   font-family: "Fira Code", monospace;
@@ -84,7 +86,7 @@ textarea {
 }
 
 .generation-error {
-  min-height: 33.33vh;
+  min-height: 100vh;
 }
 
 ::-webkit-scrollbar {

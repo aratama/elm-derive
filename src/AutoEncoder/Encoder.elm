@@ -1,11 +1,8 @@
 module AutoEncoder.Encoder exposing (..)
 
+import AutoEncoder.Generate exposing (..)
 import AutoEncoder.Type exposing (..)
 import Result
-
-
-type alias Error =
-    List String
 
 
 encoderFromTypeName : List String -> Result Error String
@@ -53,9 +50,11 @@ generateEncoderFromTypeAlias alias =
                         "(\"" ++ entry.name ++ "\", " ++ t ++ " value." ++ entry.name ++ ")"
                     )
 
+        results : List (Result Error String)
         results =
             List.map field alias.fields
 
+        fields : List String
         fields =
             List.filterMap Result.toMaybe results
 
@@ -89,23 +88,6 @@ asList list =
         ++ "\n]"
 
 
-indent : String -> String
-indent xs =
-    String.lines xs |> List.map (\x -> "    " ++ x) |> String.join "\n"
-
-
-toErrors =
-    List.filterMap
-        (\r ->
-            case r of
-                Ok _ ->
-                    Nothing
-
-                Err err ->
-                    Just err
-        )
-
-
 generateEncoder : Module -> Result Error String
 generateEncoder mod =
     let
@@ -126,10 +108,14 @@ generateEncoder mod =
             Ok <|
                 String.join "\n"
                     [ "-- generated automatically by elm-autoencoder"
-                    , "module " ++ String.join "." mod.name ++ ".Encode exposing (..)"
+                    , ""
+                    , "port module " ++ String.join "." mod.name ++ ".AutoEncoder exposing (..)"
                     , ""
                     , "import Json.Encode"
+                    , "import Json.Decode"
                     , "import " ++ String.join "." mod.name ++ " exposing (..)"
+                    , ""
+                    , "-- encoders -------------------------------------------------------------"
                     , ""
                     , String.join "\n" members
                     ]

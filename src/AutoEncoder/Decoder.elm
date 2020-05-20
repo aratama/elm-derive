@@ -1,10 +1,7 @@
 module AutoEncoder.Decoder exposing (..)
 
+import AutoEncoder.Generate exposing (..)
 import AutoEncoder.Type exposing (..)
-
-
-type alias Error =
-    List String
 
 
 decoderFromTypeName : List String -> Result Error String
@@ -85,11 +82,6 @@ asList list =
         ++ "\n]"
 
 
-indent : String -> String
-indent xs =
-    String.lines xs |> List.map (\x -> "    " ++ x) |> String.join "\n"
-
-
 generateDecoder : Module -> Result Error String
 generateDecoder mod =
     let
@@ -106,23 +98,7 @@ generateDecoder mod =
         [] ->
             Ok <|
                 String.join "\n"
-                    [ "-- generated automatically by elm-autoencoder"
-                    , "module " ++ String.join "." mod.name ++ ".Decode exposing (..)"
-                    , ""
-                    , "import Json.Decode"
-                    , "import " ++ String.join "." mod.name ++ " exposing (..)"
+                    [ "-- decoders -------------------------------------------------------------"
                     , ""
                     , String.join "\n" (List.filterMap Result.toMaybe results)
                     ]
-
-
-toErrors =
-    List.filterMap
-        (\r ->
-            case r of
-                Ok _ ->
-                    Nothing
-
-                Err err ->
-                    Just err
-        )

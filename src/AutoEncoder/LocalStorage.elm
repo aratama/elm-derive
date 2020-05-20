@@ -1,5 +1,6 @@
 module AutoEncoder.LocalStorage exposing (generateJS, generatePort)
 
+import AutoEncoder.Generate exposing (..)
 import AutoEncoder.Parser
 import AutoEncoder.Type exposing (..)
 import Parser
@@ -36,52 +37,60 @@ raw typeAlias =
         ++ " }"
 
 
-type alias Error =
-    List String
-
-
 generatePort : Module -> Result Error String
 generatePort typeModule =
-    Ok <|
-        String.join "\n"
-            [ "port module " ++ String.join "." typeModule.name ++ ".Port exposing (..)"
-            , ""
-            , "import Json.Encode"
-            , ""
+    let
+        results =
+            List.map (generateSaveByType typeModule) typeModule.members
 
-            --, String.join "\n\n" <| List.map raw typeModule.name
-            , ""
-            , String.join "\n" <|
-                List.map
-                    (\typeAlias ->
-                        String.join "\n" <|
-                            List.map generateRef typeAlias.fields
-                    )
-                    typeModule.members
-            , ""
-            , "type Ref a = Ref String"
-            , ""
-            , "at : Int -> Ref (List b) -> Ref b"
-            , "at i (Ref ref) = Ref (\"/\" ++ String.fromInt i)"
-            , ""
-            , "firebase : Ref Firebase"
-            , "firebase = Ref \"/\""
-            , ""
-            , "port on_ : { ref : String, value : Json.Encode.Value } -> Cmd msg"
-            , ""
-            , "on : Ref a -> a -> Cmd msg"
-            , "on (Ref ref) value = on_ { ref = ref, value = value }"
-            , ""
-            , "port set_ : { ref: String, value: Json.Encode.Value } -> Cmd msg"
-            , ""
-            , "set : (a -> Json.Encode.Value) -> a -> Ref a -> Cmd msg"
-            , "set encoder value (Ref ref) = set_ { ref = ref, value = encoder value }"
-            , ""
-            , "port receive : (Json.Encode.Value -> msg) -> Sub msg"
-            , ""
-            , "encodeFirebase : Firebase -> Json.Encode.Value"
-            , "encodeFirebase root = Json.Encode.int 42"
-            ]
+        generated =
+            List.filterMap Result.toMaybe results
+
+        errors : List Error
+        errors =
+            toErrors results
+    in
+    case errors of
+        _ :: _ ->
+            Err <| List.concat errors
+
+        _ ->
+            Ok <|
+                String.join "\n"
+                    [ "-- localStorage ------------------------------------------------------------------"
+                    , ""
+                    , "type alias Key = String"
+                    , ""
+                    , String.join "\n\n" generated
+                    , ""
+                    , "port saveToLocalStorage : { key : Key, typeName : String, value : Json.Encode.Value } -> Cmd msg"
+                    , ""
+                    , "port requestToLocalStorage : { Key: Key, typeName : String } -> Cmd msg"
+                    , ""
+                    , "receiveHoge : (Key -> Maybe Hoge -> msg) -> Sub msg"
+                    , ""
+                    , "-- Then, add the following code in your entry point javascript file:"
+                    , "--     elm.ports.saveToLocalStorage.subscribe(input => localStorage.save(input.key, input));"
+                    , "--     elm.ports.requestToLocalStorage.subscribe(key => { const value = localStorage.get(key); elm.ports[\"receive\" + value.typeName].send({ key: key, value: input.value }) }) });"
+                    , ""
+                    ]
+
+
+generateSaveByType : Module -> TypeAlias -> Result Error String
+generateSaveByType typeModule typeAlias =
+    Ok <|
+        "save"
+            ++ typeAlias.name
+            ++ " : Key -> "
+            ++ typeAlias.name
+            ++ " -> Cmd msg\n"
+            ++ "save"
+            ++ typeAlias.name
+            ++ " key value = save { key = key, value = "
+            ++ String.join "." typeModule.name
+            ++ ".Encode.encode"
+            ++ typeAlias.name
+            ++ " value }"
 
 
 generateJS : List TypeAlias -> String

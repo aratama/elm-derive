@@ -3,6 +3,7 @@ module Main exposing (main)
 import AutoEncoder
 import AutoEncoder.Decoder
 import AutoEncoder.Encoder
+import AutoEncoder.Generate
 import AutoEncoder.LocalStorage
 import AutoEncoder.Web.Type
 import AutoEncoder.Web.Type.Decode
@@ -129,9 +130,37 @@ view model =
                     ]
 
                 Ok result ->
-                    [ showCode AutoEncoder.Encoder.generateEncoder result
-                    , showCode AutoEncoder.Decoder.generateDecoder result
-                    , showCode AutoEncoder.LocalStorage.generatePort result
+                    let
+                        r : Result AutoEncoder.Generate.Error String
+                        r =
+                            List.foldl
+                                (\generator current ->
+                                    case current of
+                                        Err err ->
+                                            Err err
+
+                                        Ok generated ->
+                                            case generator result of
+                                                Err err ->
+                                                    Err err
+
+                                                Ok generated_ ->
+                                                    Ok <| generated ++ "\n\n\n" ++ generated_
+                                )
+                                (Ok "")
+                                [ AutoEncoder.Encoder.generateEncoder, AutoEncoder.Decoder.generateDecoder, AutoEncoder.LocalStorage.generatePort ]
+                    in
+                    [ case r of
+                        Err err ->
+                            Html.pre [ class "generation-error" ] [ Html.text <| errorToString err ]
+
+                        Ok generated ->
+                            Html.div [ class "generated" ]
+                                [ SyntaxHighlight.elm generated
+                                    |> Result.map (SyntaxHighlight.toBlockHtml (Just 1))
+                                    |> Result.withDefault
+                                        (Html.pre [] [ Html.code [] [ Html.text generated ] ])
+                                ]
                     ]
         ]
 
