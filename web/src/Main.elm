@@ -4,7 +4,6 @@ import AutoEncoder
 import AutoEncoder.Decoder
 import AutoEncoder.Encoder
 import AutoEncoder.Generate
-import AutoEncoder.LocalStorage
 import AutoEncoder.Web.Type
 import AutoEncoder.Web.Type.Decode
 import AutoEncoder.Web.Type.Encode
@@ -145,10 +144,10 @@ view model =
                                                     Err err
 
                                                 Ok generated_ ->
-                                                    Ok <| generated ++ "\n\n\n" ++ generated_
+                                                    Ok <| generated ++ "\n" ++ generated_
                                 )
                                 (Ok "")
-                                [ AutoEncoder.Encoder.generateEncoder, AutoEncoder.Decoder.generateDecoder, AutoEncoder.LocalStorage.generatePort ]
+                                [ AutoEncoder.Encoder.generateEncoder, AutoEncoder.Decoder.generateDecoder ]
                     in
                     [ case r of
                         Err err ->
