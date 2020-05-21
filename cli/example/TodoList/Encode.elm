@@ -1,4 +1,4 @@
--- generated automatically by elm-autoencoder
+-- generated automatically by elm-gencode
 module TodoList.Type.Encode exposing (..)
 
 import Json.Encode

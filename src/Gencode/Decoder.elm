@@ -1,7 +1,7 @@
-module AutoEncoder.Decoder exposing (..)
+module Gencode.Decoder exposing (..)
 
-import AutoEncoder.Generate exposing (..)
-import AutoEncoder.Type exposing (..)
+import Gencode.Generate exposing (..)
+import Gencode.Type exposing (..)
 
 
 decoderFromTypeName : Module -> List TypeSegment -> Result Error String

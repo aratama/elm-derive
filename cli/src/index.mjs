@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import elm from "../dist/elm-autoencoder.js";
+import elm from "../dist/elm-gencode.js";
 import fs from "fs";
 import fsx from "fs-extra";
 import path from "path";
@@ -15,21 +15,11 @@ if (file) {
     const outputPath = path.join(
       path.dirname(file),
       path.basename(file, ".elm"),
-      "Encode.elm"
-    );
-    fsx.ensureDir(path.dirname(outputPath));
-    fs.writeFileSync(outputPath, value);
-  });
-
-  app.ports.outputDecoder.subscribe((value) => {
-    const outputPath = path.join(
-      path.dirname(file),
-      path.basename(file, ".elm"),
-      "Decode.elm"
+      "Gencode.elm"
     );
     fsx.ensureDir(path.dirname(outputPath));
     fs.writeFileSync(outputPath, value);
   });
 } else {
-  console.log("elm-autoencoder v0.0.1");
+  console.log("elm-gencode v0.0.1");
 }

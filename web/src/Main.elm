@@ -1,14 +1,12 @@
 module Main exposing (main)
 
-import AutoEncoder
-import AutoEncoder.Decoder
-import AutoEncoder.Encoder
-import AutoEncoder.Generate
-import AutoEncoder.Parser
-import AutoEncoder.Web.Type
-import AutoEncoder.Web.Type.Decode
-import AutoEncoder.Web.Type.Encode
 import Browser
+import Gencode
+import Gencode.Decoder
+import Gencode.Encoder
+import Gencode.Generate
+import Gencode.Web.Type
+import Gencode.Web.Type.Gencode
 import Html
 import Html.Attributes exposing (class)
 import Html.Events
@@ -35,9 +33,9 @@ sampleSource =
 -- * Dict String a 
 -- * Maybe a
 -- 
--- elm-autoencoder has a CLI. Try the following command in your terminal:
+-- elm-gencode has a CLI. Try the following command in your terminal:
 -- 
--- $ npx aratama/elm-autoencoder src/Type/TodoList.Elm
+-- $ npx aratama/elm-gencode src/Type/TodoList.Elm
 -- 
 -- Have fun at Elm programming!
 
@@ -84,28 +82,18 @@ update msg model =
             { model | source = s }
 
 
-encode : AutoEncoder.Web.Type.Model -> Json.Encode.Value
+encode : Gencode.Web.Type.Model -> Json.Encode.Value
 encode m =
-    AutoEncoder.Web.Type.Encode.encodeModel m
+    Gencode.Web.Type.Gencode.encodeModel m
 
 
-decode : Json.Encode.Value -> Result Json.Decode.Error AutoEncoder.Web.Type.Model
+decode : Json.Encode.Value -> Result Json.Decode.Error Gencode.Web.Type.Model
 decode value =
-    Json.Decode.decodeValue AutoEncoder.Web.Type.Decode.decodeModel value
+    Json.Decode.decodeValue Gencode.Web.Type.Gencode.decodeModel value
 
 
 main : Program () Model Msg
 main =
-    let
-        test name parser input =
-            Debug.log name <| Parser.run parser input
-
-        _ =
-            test "typeAlias" AutoEncoder.Parser.typeAlias "type alias Hoge = {}"
-
-        _ =
-            test "typeAlias" AutoEncoder.Parser.typeParser "type alias Hoge = {}"
-    in
     Browser.sandbox
         { init = { source = sampleSource }
         , view = view
@@ -135,21 +123,21 @@ view model =
             , Html.textarea [ Html.Events.onInput Input ] [ Html.text <| String.trim model.source ]
             ]
         , Html.div [] <|
-            case AutoEncoder.run model.source of
+            case Gencode.run model.source of
                 Err err ->
                     [ Html.pre [ class "syntactic-error" ]
                         [ Html.text <|
                             String.join "\n"
                                 [ "Syntactic Error: "
                                 , ""
-                                , String.join "\n" <| List.map (Parser.Extra.deadEndToString model.source) (Debug.log "err" err)
+                                , String.join "\n" <| List.map (Parser.Extra.deadEndToString model.source) err
                                 ]
                         ]
                     ]
 
                 Ok result ->
                     let
-                        r : Result AutoEncoder.Generate.Error String
+                        r : Result Gencode.Generate.Error String
                         r =
                             List.foldl
                                 (\generator current ->
@@ -166,8 +154,8 @@ view model =
                                                     Ok <| generated ++ "\n" ++ generated_ ++ "\n"
                                 )
                                 (Ok "")
-                                [ AutoEncoder.Encoder.generateEncoder
-                                , AutoEncoder.Decoder.generateDecoder
+                                [ Gencode.Encoder.generateEncoder
+                                , Gencode.Decoder.generateDecoder
                                 ]
                     in
                     [ case r of

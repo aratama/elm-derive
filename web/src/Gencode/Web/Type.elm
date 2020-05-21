@@ -1,4 +1,4 @@
-module AutoEncoder.Web.Type exposing (..)
+module Gencode.Web.Type exposing (..)
 
 
 type alias Model =

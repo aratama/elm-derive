@@ -1,6 +1,6 @@
-module AutoEncoder.Parser exposing (..)
+module Gencode.Parser exposing (..)
 
-import AutoEncoder.Type exposing (..)
+import Gencode.Type exposing (..)
 import List
 import Parser exposing (..)
 import Set

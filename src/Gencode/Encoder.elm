@@ -1,7 +1,7 @@
-module AutoEncoder.Encoder exposing (..)
+module Gencode.Encoder exposing (..)
 
-import AutoEncoder.Generate exposing (..)
-import AutoEncoder.Type exposing (..)
+import Gencode.Generate exposing (..)
+import Gencode.Type exposing (..)
 import Result
 
 
@@ -92,7 +92,7 @@ generateEncoderFromType mod t =
                     Err errors
 
                 [] ->
-                    Ok <| "(\\value -> Json.Encoder.object \n" ++ (indent <| indent <| asList fields) ++ ")"
+                    Ok <| "(\\value -> Json.Encode.object \n" ++ (indent <| indent <| asList fields) ++ ")"
 
 
 generateEncoderFromModuleMember : Module -> ModuleMember -> Result Error String
@@ -199,9 +199,9 @@ generateEncoder mod =
         [] ->
             Ok <|
                 unlines
-                    [ "-- generated automatically by elm-autoencoder"
+                    [ "-- generated automatically by elm-gencode"
                     , ""
-                    , "port module " ++ String.join "." mod.name ++ ".AutoEncoder exposing (..)"
+                    , "module " ++ String.join "." mod.name ++ ".Gencode exposing (..)"
                     , ""
                     , "import Json.Encode"
                     , "import Json.Decode"

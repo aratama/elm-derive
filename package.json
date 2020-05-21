@@ -1,22 +1,22 @@
 {
-  "name": "elm-autoencoder",
+  "name": "elm-gencode",
   "version": "1.0.0",
   "description": "WIP: JSON Encoder/Decoder code generator for Elm",
   "main": "",
   "bin": {
-    "elm-autoencoder": "./bin/index.js"
+    "elm-gencode": "./bin/index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aratama/elm-autoencoder.git"
+    "url": "git+https://github.com/aratama/elm-gencode.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/aratama/elm-autoencoder/issues"
+    "url": "https://github.com/aratama/elm-gencode/issues"
   },
-  "homepage": "https://github.com/aratama/elm-autoencoder#readme"
+  "homepage": "https://github.com/aratama/elm-gencode#readme"
 }

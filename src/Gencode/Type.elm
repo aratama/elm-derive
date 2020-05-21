@@ -1,4 +1,4 @@
-module AutoEncoder.Type exposing (..)
+module Gencode.Type exposing (..)
 
 
 type alias TypeName =

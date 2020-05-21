@@ -1,4 +1,4 @@
-module AutoEncoder.Generate exposing (..)
+module Gencode.Generate exposing (..)
 
 
 type alias Error =

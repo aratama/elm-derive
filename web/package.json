@@ -1,12 +1,12 @@
 {
-  "name": "elm-autoencoder-web",
+  "name": "elm-gencode-web",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "parcel ./src/index.html",
-    "build": "node ../bin/index.js src/AutoEncoder/Web/Type.elm && parcel build ./src/index.html"
+    "build": "node ../bin/index.js src/Gencode/Web/Type.elm && parcel build ./src/index.html"
   },
   "author": "",
   "license": "ISC",
