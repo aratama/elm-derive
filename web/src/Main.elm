@@ -4,6 +4,7 @@ import AutoEncoder
 import AutoEncoder.Decoder
 import AutoEncoder.Encoder
 import AutoEncoder.Generate
+import AutoEncoder.Parser
 import AutoEncoder.Web.Type
 import AutoEncoder.Web.Type.Decode
 import AutoEncoder.Web.Type.Encode
@@ -58,6 +59,8 @@ type alias Model =
     , uid : Int
     , visibility : String
     }
+
+type Hoge = Hoge
 """
 
 
@@ -75,8 +78,8 @@ update msg model =
             { model | source = s }
 
 
-test : AutoEncoder.Web.Type.Model -> Json.Encode.Value
-test m =
+encode : AutoEncoder.Web.Type.Model -> Json.Encode.Value
+encode m =
     AutoEncoder.Web.Type.Encode.encodeModel m
 
 
@@ -87,6 +90,16 @@ decode value =
 
 main : Program () Model Msg
 main =
+    let
+        test name parser input =
+            Debug.log name <| Parser.run parser input
+
+        _ =
+            test "typeAlias" AutoEncoder.Parser.typeAlias "type alias Hoge = {}"
+
+        _ =
+            test "typeAlias" AutoEncoder.Parser.typeParser "type alias Hoge = {}"
+    in
     Browser.sandbox
         { init = { source = sampleSource }
         , view = view
@@ -123,7 +136,7 @@ view model =
                             String.join "\n"
                                 [ "Syntactic Error: "
                                 , ""
-                                , String.join "\n" <| List.map (Parser.Extra.deadEndToString model.source) err
+                                , String.join "\n" <| List.map (Parser.Extra.deadEndToString model.source) (Debug.log "err" err)
                                 ]
                         ]
                     ]
@@ -147,7 +160,9 @@ view model =
                                                     Ok <| generated ++ "\n" ++ generated_
                                 )
                                 (Ok "")
-                                [ AutoEncoder.Encoder.generateEncoder, AutoEncoder.Decoder.generateDecoder ]
+                                [ AutoEncoder.Encoder.generateEncoder
+                                , AutoEncoder.Decoder.generateDecoder
+                                ]
                     in
                     [ case r of
                         Err err ->

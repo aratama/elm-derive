@@ -39,35 +39,54 @@ decoderFromTypeName name =
             Err [ "Unsupported Data Type: `" ++ String.join " " name ++ "`" ]
 
 
-generateDecoderFromTypeAlias : TypeAlias -> Result Error String
+generateDecoderFromModuleMember : ModuleMember -> Result Error String
+generateDecoderFromModuleMember member =
+    case member of
+        TypeAliasMember typeAlias ->
+            generateDecoderFromTypeAlias typeAlias
+
+        TypeMember typeMember ->
+            let
+                decoderName =
+                    "decode" ++ typeMember.head
+            in
+            Ok <| decoderName
+
+
+generateDecoderFromTypeAlias : TypeAliasDef -> Result Error String
 generateDecoderFromTypeAlias alias =
-    let
-        encoderName =
-            "decode" ++ alias.name
+    case alias.body of
+        TypeNameType typeName ->
+            Err [ "TODO generateDecoderFromTypeAlias" ]
 
-        field : NameAndType -> Result Error String
-        field entry =
-            decoderFromTypeName entry.typeName
-                |> Result.map (\t -> "(Json.Decode.field \"" ++ entry.name ++ "\" " ++ t ++ ")")
+        RecordType fields ->
+            let
+                encoderName =
+                    "decode" ++ alias.head
 
-        results =
-            List.map field alias.fields
+                field : NameAndType -> Result Error String
+                field entry =
+                    decoderFromTypeName entry.typeName
+                        |> Result.map (\t -> "(Json.Decode.field \"" ++ entry.name ++ "\" " ++ t ++ ")")
 
-        errors =
-            toErrors results
-    in
-    case errors of
-        _ :: _ ->
-            Err <| List.concat errors
+                results =
+                    List.map field fields
 
-        [] ->
-            Ok <|
-                String.join "\n"
-                    [ encoderName ++ " : Json.Decode.Decoder " ++ alias.name
-                    , encoderName ++ " = Json.Decode.map" ++ String.fromInt (List.length alias.fields) ++ " " ++ alias.name
-                    , indent <| String.join "\n" (List.filterMap Result.toMaybe results)
-                    , ""
-                    ]
+                errors =
+                    toErrors results
+            in
+            case errors of
+                _ :: _ ->
+                    Err <| List.concat errors
+
+                [] ->
+                    Ok <|
+                        String.join "\n"
+                            [ encoderName ++ " : Json.Decode.Decoder " ++ alias.head
+                            , encoderName ++ " = Json.Decode.map" ++ String.fromInt (List.length fields) ++ " " ++ alias.head
+                            , indent <| String.join "\n" (List.filterMap Result.toMaybe results)
+                            , ""
+                            ]
 
 
 asList : List String -> String
@@ -86,7 +105,7 @@ generateDecoder : Module -> Result Error String
 generateDecoder mod =
     let
         results =
-            List.map generateDecoderFromTypeAlias mod.members
+            List.map generateDecoderFromModuleMember mod.members
 
         errors =
             toErrors results

@@ -5,79 +5,141 @@ import AutoEncoder.Type exposing (..)
 import Result
 
 
-encoderFromTypeName : Module -> List String -> Result Error String
+encoderFromTypeName : Module -> List TypeSegment -> Result Error String
 encoderFromTypeName mod name =
     case name of
-        [ "Int" ] ->
+        [ TypeSegment "Int" ] ->
             Ok "Json.Encode.int"
 
-        [ "String" ] ->
+        [ TypeSegment "String" ] ->
             Ok "Json.Encode.string"
 
-        [ "Float" ] ->
+        [ TypeSegment "Float" ] ->
             Ok "Json.Encode.float"
 
-        [ "Bool" ] ->
+        [ TypeSegment "Bool" ] ->
             Ok "Json.Encode.bool"
 
-        [ "Dict", "String", contntType ] ->
+        [ TypeSegment "Dict", TypeSegment "String", contntType ] ->
             encoderFromTypeName mod [ contntType ] |> Result.map (\t -> "Json.Encode.dict identity " ++ t)
 
-        [ "List", contntType ] ->
+        [ TypeSegment "List", contntType ] ->
             encoderFromTypeName mod [ contntType ] |> Result.map (\t -> "Json.Encode.list " ++ t)
 
-        [ "Maybe", contntType ] ->
+        [ TypeSegment "Maybe", contntType ] ->
             encoderFromTypeName mod [ contntType ] |> Result.map (\t -> "(Maybe.withDefault Json.Encode.null << Maybe.map " ++ t ++ ")")
 
-        [ typeName ] ->
-            case List.filter (\member -> member.name == String.join " " name) mod.members of
+        [ TypeSegment typeName ] ->
+            let
+                filtered =
+                    List.filter
+                        (\member ->
+                            case member of
+                                TypeAliasMember ta ->
+                                    ta.head == typeName
+
+                                TypeMember tm ->
+                                    tm.head == typeName
+                        )
+                        mod.members
+            in
+            case filtered of
                 [] ->
-                    Err <| [ "Unknown Data Type: `" ++ String.join " " name ++ "`" ]
+                    Err <| [ "Unknown Data Type: `" ++ typeNameSegmentsToString name ++ "`" ]
 
                 _ ->
                     Ok <| "encode" ++ typeName
 
         _ ->
-            Err <| [ "Unsupported Data Type: `" ++ String.join " " name ++ "`" ]
+            Err <| [ "Unsupported Data Type: `" ++ typeNameSegmentsToString name ++ "`" ]
 
 
-generateEncoderFromTypeAlias : Module -> TypeAlias -> Result Error String
+generateEncoderFromType : Module -> String -> Type -> Result Error String
+generateEncoderFromType mod name t =
+    case t of
+        TypeNameType tuple ->
+            encoderFromTypeName mod (TypeSegment tuple.head :: tuple.vars)
+
+        RecordType record ->
+            let
+                field : NameAndType -> Result Error String
+                field entry =
+                    encoderFromTypeName mod (List.map TypeSegment entry.typeName)
+                        |> Result.map
+                            (\k ->
+                                "(\"" ++ entry.name ++ "\", " ++ k ++ " value." ++ entry.name ++ ")"
+                            )
+
+                results : List (Result Error String)
+                results =
+                    List.map field record
+
+                fields : List String
+                fields =
+                    List.filterMap Result.toMaybe results
+
+                errors : Error
+                errors =
+                    List.concat <| toErrors results
+            in
+            case errors of
+                e :: es ->
+                    Err errors
+
+                [] ->
+                    Ok <| "Json.Encoder.object \n" ++ (indent <| indent <| asList fields)
+
+
+generateEncoderFromModuleMember : Module -> ModuleMember -> Result Error String
+generateEncoderFromModuleMember mod member =
+    case member of
+        TypeAliasMember typeAlias ->
+            generateEncoderFromTypeAlias mod typeAlias
+
+        TypeMember typeMember ->
+            let
+                encoderName =
+                    "encode" ++ typeMember.head
+
+                variants =
+                    List.map
+                        (\variant ->
+                            if List.isEmpty variant.fields then
+                                variant.name ++ " -> Json.Encode.string " ++ "\"" ++ variant.name ++ "\""
+
+                            else
+                                "TODO"
+                        )
+                        typeMember.body
+            in
+            Ok <|
+                String.join "\n"
+                    [ encoderName ++ " : " ++ typeMember.head ++ " -> Json.Encode.Value"
+                    , encoderName ++ " value"
+                    , indent "= case value of"
+                    , indent <| indent <| String.join "\n" variants
+                    ]
+
+
+generateEncoderFromTypeAlias : Module -> TypeAliasDef -> Result Error String
 generateEncoderFromTypeAlias mod alias =
     let
         encoderName =
-            "encode" ++ alias.name
+            "encode" ++ alias.head
 
-        field : NameAndType -> Result Error String
-        field entry =
-            encoderFromTypeName mod entry.typeName
-                |> Result.map
-                    (\t ->
-                        "(\"" ++ entry.name ++ "\", " ++ t ++ " value." ++ entry.name ++ ")"
-                    )
-
-        results : List (Result Error String)
-        results =
-            List.map field alias.fields
-
-        fields : List String
-        fields =
-            List.filterMap Result.toMaybe results
-
-        errors : Error
-        errors =
-            List.concat <| toErrors results
+        result : Result Error String
+        result =
+            generateEncoderFromType mod alias.head alias.body
     in
-    case errors of
-        _ :: _ ->
+    case result of
+        Err errors ->
             Err errors
 
-        [] ->
+        Ok str ->
             Ok <|
                 String.join "\n"
-                    [ encoderName ++ " : " ++ alias.name ++ " -> Json.Encode.Value"
-                    , encoderName ++ " value = Json.Encode.object"
-                    , indent <| asList fields
-                    , ""
+                    [ encoderName ++ " : " ++ alias.head ++ " -> Json.Encode.Value"
+                    , encoderName ++ " value\n" ++ indent "= " ++ str
                     ]
 
 
@@ -97,7 +159,7 @@ generateEncoder : Module -> Result Error String
 generateEncoder mod =
     let
         results =
-            List.map (generateEncoderFromTypeAlias mod) mod.members
+            List.map (generateEncoderFromModuleMember mod) mod.members
 
         members =
             List.filterMap Result.toMaybe results
@@ -122,5 +184,5 @@ generateEncoder mod =
                     , ""
                     , "-- encoders -------------------------------------------------------------"
                     , ""
-                    , String.join "\n" members
+                    , String.join "\n\n" members
                     ]

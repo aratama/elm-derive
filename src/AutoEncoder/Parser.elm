@@ -1,4 +1,4 @@
-module AutoEncoder.Parser exposing (parser)
+module AutoEncoder.Parser exposing (..)
 
 import AutoEncoder.Type exposing (..)
 import List
@@ -71,18 +71,45 @@ nameAndType =
         |. skip
 
 
-typeAlias : Parser TypeAlias
-typeAlias =
-    succeed TypeAlias
-        |. skip
+typeHead : Parser ModuleMember
+typeHead =
+    succeed identity
         |. keyword "type"
         |. skip
+        |= oneOf
+            [ map TypeAliasMember typeAlias
+            , map TypeMember typeMember
+            ]
+
+
+
+-- newType : Parser ModuleMember
+-- newType :
+
+
+typeAlias : Parser TypeAliasDef
+typeAlias =
+    succeed (\head vars body -> { head = head, vars = vars, body = body })
         |. keyword "alias"
         |. skip
         |= typeNameSegment
         |. skip
+        |= succeed []
+        -- |= many
+        --     (succeed identity
+        --         |= typeNameSegment
+        --         |. skip
+        --     )
+        -- |. skip
         |. symbol "="
         |. skip
+        |= typeParser
+        |. skip
+
+
+record : Parser Record
+record =
+    succeed identity
         |= sequence
             { start = "{"
             , separator = ","
@@ -94,18 +121,48 @@ typeAlias =
         |. skip
 
 
-typeAliases : Parser (List TypeAlias)
-typeAliases =
-    let
-        go revStmts =
-            oneOf
-                [ succeed (\stmt -> Loop (stmt :: revStmts))
-                    |= typeAlias
-                , succeed ()
-                    |> map (\_ -> Done (List.reverse revStmts))
-                ]
-    in
-    loop [] go
+typeMember : Parser TypeDef
+typeMember =
+    succeed (\head vars body -> { head = head, vars = vars, body = body })
+        |= typeNameSegment
+        |. skip
+        |= many
+            (succeed identity
+                |= typeVar
+                |. skip
+            )
+        |. symbol "="
+        |. skip
+        |= sepBy1 (symbol "|" |. skip) variant
+
+
+variant : Parser Variant
+variant =
+    succeed Variant
+        |= typeNameSegment
+        |. skip
+        |= many (typeParser |. skip)
+
+
+typeParser : Parser Type
+typeParser =
+    oneOf
+        [ map RecordType record
+        ]
+
+
+typeRef : Parser Type
+typeRef =
+    oneOf
+        [ map RecordType record
+        ]
+
+
+moduleMember : Parser ModuleMember
+moduleMember =
+    oneOf
+        [ typeHead
+        ]
 
 
 skip : Parser ()
@@ -162,7 +219,7 @@ parser =
         |. skip
         |. many importDIrective
         |. skip
-        |= typeAliases
+        |= many moduleMember
         |. end
 
 
