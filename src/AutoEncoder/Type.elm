@@ -19,14 +19,12 @@ type alias TypeVariable =
 
 type alias TypeAliasDef =
     { head : TypeNameHead
-    , vars : List TypeVariable
     , body : Type
     }
 
 
 type alias TypeDef =
     { head : TypeNameHead
-    , vars : List TypeVariable
     , body : List Variant
     }
 
@@ -51,6 +49,7 @@ type TypeSegment
 type Type
     = TypeNameType TypeNameRef
     | RecordType Record
+    | TypeSegmentType TypeSegment
 
 
 type alias Variant =

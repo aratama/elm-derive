@@ -27,8 +27,8 @@ moduleName =
     sepBy1 (symbol ".") typeNameSegment
 
 
-typeVar : Parser String
-typeVar =
+fieldName : Parser String
+fieldName =
     variable
         { start = Char.isLower
         , inner = \c -> Char.isAlphaNum c || c == '_'
@@ -47,23 +47,13 @@ typeNameSegment =
 
 typeName : Parser TypeName
 typeName =
-    let
-        go revStmts =
-            oneOf
-                [ succeed (\stmt -> Loop (stmt :: revStmts))
-                    |= typeNameSegment
-                    |. skip
-                , succeed ()
-                    |> map (\_ -> Done (List.reverse revStmts))
-                ]
-    in
-    loop [] go
+    oneOrMore typeNameSegment
 
 
 nameAndType : Parser NameAndType
 nameAndType =
     succeed NameAndType
-        |= typeVar
+        |= fieldName
         |. skip
         |. symbol ":"
         |. skip
@@ -89,18 +79,11 @@ typeHead =
 
 typeAlias : Parser TypeAliasDef
 typeAlias =
-    succeed (\head vars body -> { head = head, vars = vars, body = body })
+    succeed (\head body -> { head = head, body = body })
         |. keyword "alias"
         |. skip
         |= typeNameSegment
         |. skip
-        |= succeed []
-        -- |= many
-        --     (succeed identity
-        --         |= typeNameSegment
-        --         |. skip
-        --     )
-        -- |. skip
         |. symbol "="
         |. skip
         |= typeParser
@@ -123,14 +106,9 @@ record =
 
 typeMember : Parser TypeDef
 typeMember =
-    succeed (\head vars body -> { head = head, vars = vars, body = body })
+    succeed (\head body -> { head = head, body = body })
         |= typeNameSegment
         |. skip
-        |= many
-            (succeed identity
-                |= typeVar
-                |. skip
-            )
         |. symbol "="
         |. skip
         |= sepBy1 (symbol "|" |. skip) variant
@@ -148,7 +126,26 @@ typeParser : Parser Type
 typeParser =
     oneOf
         [ map RecordType record
+        , map TypeSegmentType typeSegment
         ]
+
+
+typeSegment : Parser TypeSegment
+typeSegment =
+    oneOf
+        [ map TypeSegmentList typeSegmentList
+        , map TypeSegment typeNameSegment
+        ]
+
+
+typeSegmentList : Parser (List TypeSegment)
+typeSegmentList =
+    succeed identity
+        |. symbol "("
+        |. skip
+        |= oneOrMore (lazy <| \() -> typeSegment)
+        |. symbol ")"
+        |. skip
 
 
 typeRef : Parser Type
@@ -242,6 +239,7 @@ oneOrMore : Parser a -> Parser (List a)
 oneOrMore p =
     succeed (::)
         |= p
+        |. skip
         |= many p
 
 

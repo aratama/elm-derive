@@ -59,6 +59,9 @@ generateDecoderFromTypeAlias alias =
         TypeNameType typeName ->
             Err [ "TODO generateDecoderFromTypeAlias" ]
 
+        TypeSegmentType _ ->
+            Ok "<TODO>"
+
         RecordType fields ->
             let
                 encoderName =

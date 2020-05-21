@@ -60,7 +60,7 @@ type alias Model =
     , visibility : String
     }
 
-type Hoge = Hoge
+type Hoge = Hoge | Piyo { foo : Int }
 """
 
 

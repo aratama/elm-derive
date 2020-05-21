@@ -54,11 +54,14 @@ encoderFromTypeName mod name =
             Err <| [ "Unsupported Data Type: `" ++ typeNameSegmentsToString name ++ "`" ]
 
 
-generateEncoderFromType : Module -> String -> Type -> Result Error String
-generateEncoderFromType mod name t =
+generateEncoderFromType : Module -> Type -> Result Error String
+generateEncoderFromType mod t =
     case t of
         TypeNameType tuple ->
             encoderFromTypeName mod (TypeSegment tuple.head :: tuple.vars)
+
+        TypeSegmentType _ ->
+            Ok "<TODO>"
 
         RecordType record ->
             let
@@ -87,7 +90,7 @@ generateEncoderFromType mod name t =
                     Err errors
 
                 [] ->
-                    Ok <| "Json.Encoder.object \n" ++ (indent <| indent <| asList fields)
+                    Ok <| "(\\value -> Json.Encoder.object \n" ++ (indent <| indent <| asList fields) ++ ")"
 
 
 generateEncoderFromModuleMember : Module -> ModuleMember -> Result Error String
@@ -108,7 +111,39 @@ generateEncoderFromModuleMember mod member =
                                 variant.name ++ " -> Json.Encode.string " ++ "\"" ++ variant.name ++ "\""
 
                             else
-                                "TODO"
+                                let
+                                    abc =
+                                        List.range 0 (List.length variant.fields - 1)
+                                            |> List.map (\i -> Char.fromCode (97 + i))
+
+                                    vars =
+                                        abc
+                                            |> List.intersperse ' '
+                                            |> String.fromList
+
+                                    fields =
+                                        List.indexedMap
+                                            (\i field ->
+                                                let
+                                                    c =
+                                                        Char.fromCode (97 + i)
+
+                                                    encoder : String
+                                                    encoder =
+                                                        case generateEncoderFromType mod field of
+                                                            Err err ->
+                                                                "<ERROR>"
+
+                                                            Ok str ->
+                                                                str
+                                                in
+                                                "(\"" ++ String.fromChar c ++ "\", " ++ encoder ++ " " ++ String.fromChar c ++ ")"
+                                            )
+                                            variant.fields
+                                            |> (::) ("(\"tag\", \"" ++ variant.name ++ "\")")
+                                            |> asList
+                                in
+                                variant.name ++ " " ++ vars ++ " -> Json.Encode.object\n" ++ indent fields
                         )
                         typeMember.body
             in
@@ -129,7 +164,7 @@ generateEncoderFromTypeAlias mod alias =
 
         result : Result Error String
         result =
-            generateEncoderFromType mod alias.head alias.body
+            generateEncoderFromType mod alias.body
     in
     case result of
         Err errors ->
@@ -139,7 +174,7 @@ generateEncoderFromTypeAlias mod alias =
             Ok <|
                 String.join "\n"
                     [ encoderName ++ " : " ++ alias.head ++ " -> Json.Encode.Value"
-                    , encoderName ++ " value\n" ++ indent "= " ++ str
+                    , encoderName ++ "\n" ++ indent "= " ++ str
                     ]
 
 
