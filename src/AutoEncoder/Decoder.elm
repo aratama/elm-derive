@@ -4,111 +4,252 @@ import AutoEncoder.Generate exposing (..)
 import AutoEncoder.Type exposing (..)
 
 
-decoderFromTypeName : List String -> Result Error String
-decoderFromTypeName name =
+decoderFromTypeName : Module -> List TypeSegment -> Result Error String
+decoderFromTypeName mod name =
     case name of
-        [ "Int" ] ->
+        [ TypeSegment "Int" ] ->
             Ok
                 "Json.Decode.int"
 
-        [ "String" ] ->
+        [ TypeSegment "String" ] ->
             Ok
                 "Json.Decode.string"
 
-        [ "Float" ] ->
+        [ TypeSegment "Float" ] ->
             Ok
                 "Json.Decode.float"
 
-        [ "Bool" ] ->
+        [ TypeSegment "Bool" ] ->
             Ok
                 "Json.Decode.bool"
 
-        [ "Dict", "String", contntType ] ->
-            decoderFromTypeName [ contntType ] |> Result.map (\t -> "(Json.Decode.dict identity " ++ t ++ ")")
+        [ TypeSegment "Dict", TypeSegment "String", contntType ] ->
+            decoderFromTypeName mod [ contntType ] |> Result.map (\t -> "(Json.Decode.dict identity " ++ t ++ ")")
 
-        [ "List", contntType ] ->
-            decoderFromTypeName [ contntType ] |> Result.map (\t -> "(Json.Decode.list " ++ t ++ ")")
+        [ TypeSegment "List", contntType ] ->
+            decoderFromTypeName mod [ contntType ] |> Result.map (\t -> "(Json.Decode.list " ++ t ++ ")")
 
-        [ "Maybe", contntType ] ->
-            decoderFromTypeName [ contntType ] |> Result.map (\t -> "(Json.Decode.maybe " ++ t ++ ")")
+        [ TypeSegment "Maybe", contntType ] ->
+            decoderFromTypeName mod [ contntType ] |> Result.map (\t -> "(Json.Decode.maybe " ++ t ++ ")")
 
-        [ typeName ] ->
+        [ TypeSegment typeName ] ->
             Ok <| "decode" ++ typeName
 
         _ ->
-            Err [ "Unsupported Data Type: `" ++ String.join " " name ++ "`" ]
+            Err [ "Unsupported Data Type: `" ++ typeNameSegmentsToString name ++ "`" ]
 
 
-generateDecoderFromModuleMember : ModuleMember -> Result Error String
-generateDecoderFromModuleMember member =
+fieldRecodeSequence : Module -> Record -> Result Error String
+fieldRecodeSequence mod fields =
+    let
+        field : NameAndType -> Result Error String
+        field entry =
+            generateDecoderFromType mod entry.typeName
+                |> Result.map (\t -> "(Json.Decode.field \"" ++ entry.name ++ "\" (" ++ t ++ "))")
+
+        results =
+            List.map field fields
+
+        errors =
+            toErrors results
+
+        succeeds =
+            List.filterMap Result.toMaybe results
+    in
+    if List.isEmpty errors then
+        Ok (unlines succeeds)
+
+    else
+        Err <| List.concat errors
+
+
+generateDecoderFromType : Module -> Type -> Result Error String
+generateDecoderFromType mod ty =
+    case ty of
+        TypeSegmentType segment ->
+            case segment of
+                TypeSegment seg ->
+                    decoderFromTypeName mod [ TypeSegment seg ]
+
+                TypeSegmentList segs ->
+                    decoderFromTypeName mod segs
+
+        RecordType fields ->
+            let
+                vars : List String
+                vars =
+                    List.indexedMap (\_ f -> f.name) fields
+
+                assignments : List String
+                assignments =
+                    List.indexedMap (\_ f -> f.name ++ " = " ++ f.name) fields
+            in
+            case fieldRecodeSequence mod fields of
+                Err err ->
+                    Err err
+
+                Ok seq ->
+                    let
+                        mapFunctionName =
+                            "Json.Decode.map" ++ String.fromInt (List.length fields)
+
+                        decoder =
+                            "(" ++ mapFunctionName ++ " (\\" ++ String.join " " vars ++ " -> { " ++ String.join ", " assignments ++ " }) " ++ seq ++ ")"
+                    in
+                    Ok <|
+                        if List.length fields == 1 then
+                            fields
+                                |> List.map (\f -> generateDecoderFromType mod f.typeName)
+                                |> List.filterMap Result.toMaybe
+                                |> String.join ""
+
+                        else
+                            decoder
+
+
+generateDecoderFromModuleMember : Module -> ModuleMember -> Result Error String
+generateDecoderFromModuleMember mod member =
     case member of
         TypeAliasMember typeAlias ->
-            generateDecoderFromTypeAlias typeAlias
+            generateDecoderFromTypeAlias mod typeAlias
 
         TypeMember typeMember ->
             let
                 decoderName =
                     "decode" ++ typeMember.head
+
+                singleVariants =
+                    List.filter (\variant -> List.length variant.fields == 0) typeMember.body
+
+                variantsHasFields =
+                    List.filter (\variant -> 0 < List.length variant.fields) typeMember.body
+
+                branches =
+                    List.concat
+                        [ if List.isEmpty singleVariants then
+                            []
+
+                          else
+                            [ unlines
+                                [ "Json.Decode.string |> Json.Decode.andThen"
+                                , indent "(\\variant -> case variant of"
+                                , indent <| indent <| unlines (List.map (\variant -> "\"" ++ variant.name ++ "\" -> " ++ variant.name) singleVariants)
+                                , indent ")"
+                                ]
+                            ]
+                        , if List.isEmpty variantsHasFields then
+                            []
+
+                          else
+                            [ unlines
+                                [ "Json.Decode.field \"tag\" Json.Decode.string |> Json.Decode.andThen"
+                                , indent "(\\tag -> case tag of"
+                                , indent <|
+                                    indent <|
+                                        unlines <|
+                                            List.map
+                                                (\variant ->
+                                                    "\""
+                                                        ++ variant.name
+                                                        ++ "\" -> "
+                                                        ++ "Json.Decode.object "
+                                                        ++ variant.name
+                                                        ++ "\n"
+                                                        ++ indent
+                                                            (unlines
+                                                                (List.indexedMap
+                                                                    (\i field ->
+                                                                        let
+                                                                            fieldName =
+                                                                                String.fromChar (Char.fromCode (97 + i))
+
+                                                                            decoder : String
+                                                                            decoder =
+                                                                                case generateDecoderFromType mod field of
+                                                                                    Err _ ->
+                                                                                        "<ERROR>"
+
+                                                                                    Ok d ->
+                                                                                        d
+                                                                        in
+                                                                        "(Json.Decode.field \"" ++ fieldName ++ "\" (" ++ decoder ++ "))"
+                                                                    )
+                                                                    variant.fields
+                                                                )
+                                                            )
+                                                )
+                                                variantsHasFields
+                                ]
+                            ]
+                        ]
             in
-            Ok <| decoderName
+            Ok <|
+                unlines
+                    [ decoderName ++ " : Json.Decode.Decoder " ++ typeMember.head
+                    , decoderName
+                        ++ " = "
+                        ++ (if List.length branches == 1 then
+                                unlines branches
+
+                            else
+                                unlines
+                                    [ indent <| "Json.Decode.oneOf "
+                                    , asList <|
+                                        branches
+                                    ]
+                           )
+                    ]
 
 
-generateDecoderFromTypeAlias : TypeAliasDef -> Result Error String
-generateDecoderFromTypeAlias alias =
+generateDecoderFromTypeAlias : Module -> TypeAliasDef -> Result Error String
+generateDecoderFromTypeAlias mod alias =
+    let
+        encoderName =
+            "decode" ++ alias.head
+
+        decoder =
+            case generateDecoderFromType mod alias.body of
+                Err _ ->
+                    "<<ERROR>>"
+
+                Ok d ->
+                    d
+    in
     case alias.body of
-        TypeNameType typeName ->
-            Err [ "TODO generateDecoderFromTypeAlias" ]
+        RecordType record ->
+            case fieldRecodeSequence mod record of
+                Err err ->
+                    Err err
 
-        TypeSegmentType _ ->
-            Ok "<TODO>"
-
-        RecordType fields ->
-            let
-                encoderName =
-                    "decode" ++ alias.head
-
-                field : NameAndType -> Result Error String
-                field entry =
-                    decoderFromTypeName entry.typeName
-                        |> Result.map (\t -> "(Json.Decode.field \"" ++ entry.name ++ "\" " ++ t ++ ")")
-
-                results =
-                    List.map field fields
-
-                errors =
-                    toErrors results
-            in
-            case errors of
-                _ :: _ ->
-                    Err <| List.concat errors
-
-                [] ->
+                Ok seq ->
                     Ok <|
-                        String.join "\n"
-                            [ encoderName ++ " : Json.Decode.Decoder " ++ alias.head
-                            , encoderName ++ " = Json.Decode.map" ++ String.fromInt (List.length fields) ++ " " ++ alias.head
-                            , indent <| String.join "\n" (List.filterMap Result.toMaybe results)
-                            , ""
+                        unlines
+                            [ "decode"
+                                ++ alias.head
+                                ++ " : Json.Decode.Decoder "
+                                ++ alias.head
+                            , "decode"
+                                ++ alias.head
+                                ++ " = Json.Decode.map"
+                                ++ String.fromInt (List.length record)
+                                ++ " "
+                                ++ alias.head
+                            , indent seq
                             ]
 
-
-asList : List String -> String
-asList list =
-    (case list of
-        x :: xs ->
-            "[ " ++ x ++ "\n" ++ String.join "\n" (List.map (\y -> ", " ++ y) xs)
-
-        [] ->
-            ""
-    )
-        ++ "\n]"
+        _ ->
+            Ok <|
+                unlines
+                    [ encoderName ++ " : Json.Decode.Decoder " ++ alias.head
+                    , encoderName ++ " = " ++ decoder
+                    ]
 
 
 generateDecoder : Module -> Result Error String
 generateDecoder mod =
     let
         results =
-            List.map generateDecoderFromModuleMember mod.members
+            List.map (generateDecoderFromModuleMember mod) mod.members
 
         errors =
             toErrors results
@@ -119,8 +260,8 @@ generateDecoder mod =
 
         [] ->
             Ok <|
-                String.join "\n"
+                unlines
                     [ "-- decoders -------------------------------------------------------------"
                     , ""
-                    , String.join "\n" (List.filterMap Result.toMaybe results)
+                    , unlines (List.filterMap Result.toMaybe results)
                     ]

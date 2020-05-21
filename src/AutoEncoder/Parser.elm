@@ -57,7 +57,7 @@ nameAndType =
         |. skip
         |. symbol ":"
         |. skip
-        |= typeName
+        |= topLevelTypeParser
         |. skip
 
 
@@ -128,6 +128,18 @@ typeParser =
         [ map RecordType record
         , map TypeSegmentType typeSegment
         ]
+
+
+topLevelTypeParser : Parser Type
+topLevelTypeParser =
+    lazy <|
+        \() ->
+            oneOf
+                [ map (TypeSegmentType << TypeSegmentList) typeSegmentList
+                , Parser.map (TypeSegmentType << TypeSegmentList) <| oneOrMore typeSegment
+                , map (TypeSegmentType << TypeSegment) typeNameSegment
+                , map RecordType record
+                ]
 
 
 typeSegment : Parser TypeSegment

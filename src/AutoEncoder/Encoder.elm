@@ -57,17 +57,19 @@ encoderFromTypeName mod name =
 generateEncoderFromType : Module -> Type -> Result Error String
 generateEncoderFromType mod t =
     case t of
-        TypeNameType tuple ->
-            encoderFromTypeName mod (TypeSegment tuple.head :: tuple.vars)
+        TypeSegmentType typeSegment ->
+            case typeSegment of
+                TypeSegment seg ->
+                    encoderFromTypeName mod [ TypeSegment seg ]
 
-        TypeSegmentType _ ->
-            Ok "<TODO>"
+                TypeSegmentList segs ->
+                    encoderFromTypeName mod segs
 
         RecordType record ->
             let
                 field : NameAndType -> Result Error String
                 field entry =
-                    encoderFromTypeName mod (List.map TypeSegment entry.typeName)
+                    generateEncoderFromType mod entry.typeName
                         |> Result.map
                             (\k ->
                                 "(\"" ++ entry.name ++ "\", " ++ k ++ " value." ++ entry.name ++ ")"
@@ -148,11 +150,11 @@ generateEncoderFromModuleMember mod member =
                         typeMember.body
             in
             Ok <|
-                String.join "\n"
+                unlines
                     [ encoderName ++ " : " ++ typeMember.head ++ " -> Json.Encode.Value"
                     , encoderName ++ " value"
                     , indent "= case value of"
-                    , indent <| indent <| String.join "\n" variants
+                    , indent <| indent <| unlines variants
                     ]
 
 
@@ -172,22 +174,10 @@ generateEncoderFromTypeAlias mod alias =
 
         Ok str ->
             Ok <|
-                String.join "\n"
+                unlines
                     [ encoderName ++ " : " ++ alias.head ++ " -> Json.Encode.Value"
                     , encoderName ++ "\n" ++ indent "= " ++ str
                     ]
-
-
-asList : List String -> String
-asList list =
-    (case list of
-        x :: xs ->
-            "[ " ++ x ++ "\n" ++ String.join "\n" (List.map (\y -> ", " ++ y) xs)
-
-        [] ->
-            ""
-    )
-        ++ "\n]"
 
 
 generateEncoder : Module -> Result Error String
@@ -208,7 +198,7 @@ generateEncoder mod =
 
         [] ->
             Ok <|
-                String.join "\n"
+                unlines
                     [ "-- generated automatically by elm-autoencoder"
                     , ""
                     , "port module " ++ String.join "." mod.name ++ ".AutoEncoder exposing (..)"

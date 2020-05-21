@@ -46,21 +46,27 @@ module TodoList.Type exposing (..)
 import Maybe exposing (..)
 import Dict exposing (..)
 
-type alias Task = 
-    { description : String
-    , completed : Bool
-    , edits : Maybe String
-    , id : Int
-    }
-
-type alias Model =
+type alias TodoList =
     { tasks : List Task
     , field : String
     , uid : Int
     , visibility : String
     }
 
-type Hoge = Hoge | Piyo { foo : Int }
+type alias Task = 
+    { description : String
+    , completed : Bool
+    , edits : (Maybe String)
+    , id : Int
+    }
+
+type Tree 
+    = Leaf String 
+    | Branch Tree Tree
+
+type Color = Red | Green | Blue
+
+type Vector = Vector { x: Float, y: Float }
 """
 
 
@@ -157,7 +163,7 @@ view model =
                                                     Err err
 
                                                 Ok generated_ ->
-                                                    Ok <| generated ++ "\n" ++ generated_
+                                                    Ok <| generated ++ "\n" ++ generated_ ++ "\n"
                                 )
                                 (Ok "")
                                 [ AutoEncoder.Encoder.generateEncoder

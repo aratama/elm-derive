@@ -47,8 +47,7 @@ type TypeSegment
 
 
 type Type
-    = TypeNameType TypeNameRef
-    | RecordType Record
+    = RecordType Record
     | TypeSegmentType TypeSegment
 
 
@@ -60,7 +59,7 @@ type alias Variant =
 
 type alias NameAndType =
     { name : String
-    , typeName : TypeName
+    , typeName : Type
     }
 
 

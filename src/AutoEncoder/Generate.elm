@@ -21,3 +21,20 @@ toErrors =
                 Err err ->
                     Just err
         )
+
+
+asList : List String -> String
+asList list =
+    (case list of
+        x :: xs ->
+            "[ " ++ x ++ "\n" ++ String.join "\n" (List.map (\y -> ", " ++ y) xs)
+
+        [] ->
+            ""
+    )
+        ++ "\n]"
+
+
+unlines : List String -> String
+unlines =
+    String.join "\n"
