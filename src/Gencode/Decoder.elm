@@ -1,7 +1,7 @@
 module Gencode.Decoder exposing (..)
 
-import Gencode.Generate exposing (..)
 import Gencode.Type exposing (..)
+import Gencode.Util exposing (..)
 
 
 decoderFromTypeName : Module -> List TypeSegment -> Result Error String
@@ -46,21 +46,9 @@ fieldRecodeSequence mod fields =
         field entry =
             generateDecoderFromType mod entry.typeName
                 |> Result.map (\t -> "(Json.Decode.field \"" ++ entry.name ++ "\" (" ++ t ++ "))")
-
-        results =
-            List.map field fields
-
-        errors =
-            toErrors results
-
-        succeeds =
-            List.filterMap Result.toMaybe results
     in
-    if List.isEmpty errors then
-        Ok (unlines succeeds)
-
-    else
-        Err <| List.concat errors
+    concatResults field fields
+        |> Result.map unlines
 
 
 generateDecoderFromType : Module -> Type -> Result Error String
@@ -247,21 +235,12 @@ generateDecoderFromTypeAlias mod alias =
 
 generateDecoder : Module -> Result Error String
 generateDecoder mod =
-    let
-        results =
-            List.map (generateDecoderFromModuleMember mod) mod.members
-
-        errors =
-            toErrors results
-    in
-    case errors of
-        _ :: _ ->
-            Err <| List.concat errors
-
-        [] ->
-            Ok <|
+    concatResults (generateDecoderFromModuleMember mod) mod.members
+        |> Result.map
+            (\results ->
                 unlines
                     [ "-- decoders -------------------------------------------------------------"
                     , ""
-                    , unlines (List.filterMap Result.toMaybe results)
+                    , unlines results
                     ]
+            )

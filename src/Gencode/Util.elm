@@ -1,4 +1,4 @@
-module Gencode.Generate exposing (..)
+module Gencode.Util exposing (..)
 
 
 type alias Error =
@@ -38,3 +38,25 @@ asList list =
 unlines : List String -> String
 unlines =
     String.join "\n"
+
+
+concatResults : (a -> Result Error String) -> List a -> Result Error (List String)
+concatResults f inputs =
+    let
+        result : List (Result Error String)
+        result =
+            List.map f inputs
+
+        errors : List Error
+        errors =
+            toErrors result
+
+        values : List String
+        values =
+            List.filterMap Result.toMaybe result
+    in
+    if List.isEmpty errors then
+        Ok <| values
+
+    else
+        Err <| List.concat errors

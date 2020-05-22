@@ -95,3 +95,31 @@ typeNameSegmentToString segment =
 
         TypeSegmentList list ->
             "(" ++ String.join " " (List.map typeNameSegmentToString list) ++ ")"
+
+
+findType : String -> Module -> Maybe ModuleMember
+findType name mod =
+    let
+        filtered =
+            List.filter
+                (\member ->
+                    case member of
+                        TypeAliasMember typeAlias ->
+                            typeAlias.head == name
+
+                        TypeMember typeDef ->
+                            typeDef.head == name
+                )
+                mod.members
+    in
+    List.head filtered
+
+
+moduleMemberName : ModuleMember -> String
+moduleMemberName member =
+    case member of
+        TypeAliasMember ta ->
+            ta.head
+
+        TypeMember t ->
+            t.head

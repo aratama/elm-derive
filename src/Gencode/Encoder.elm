@@ -1,7 +1,7 @@
 module Gencode.Encoder exposing (..)
 
-import Gencode.Generate exposing (..)
 import Gencode.Type exposing (..)
+import Gencode.Util exposing (..)
 import Result
 
 
@@ -74,25 +74,9 @@ generateEncoderFromType mod t =
                             (\k ->
                                 "(\"" ++ entry.name ++ "\", " ++ k ++ " value." ++ entry.name ++ ")"
                             )
-
-                results : List (Result Error String)
-                results =
-                    List.map field record
-
-                fields : List String
-                fields =
-                    List.filterMap Result.toMaybe results
-
-                errors : Error
-                errors =
-                    List.concat <| toErrors results
             in
-            case errors of
-                e :: es ->
-                    Err errors
-
-                [] ->
-                    Ok <| "(\\value -> Json.Encode.object \n" ++ (indent <| indent <| asList fields) ++ ")"
+            concatResults field record
+                |> Result.map (\fields -> "(\\value -> Json.Encode.object \n" ++ (indent <| indent <| asList fields) ++ ")")
 
 
 generateEncoderFromModuleMember : Module -> ModuleMember -> Result Error String
@@ -182,22 +166,9 @@ generateEncoderFromTypeAlias mod alias =
 
 generateEncoder : Module -> Result Error String
 generateEncoder mod =
-    let
-        results =
-            List.map (generateEncoderFromModuleMember mod) mod.members
-
-        members =
-            List.filterMap Result.toMaybe results
-
-        errors =
-            toErrors results
-    in
-    case errors of
-        e :: es ->
-            Err e
-
-        [] ->
-            Ok <|
+    concatResults (generateEncoderFromModuleMember mod) mod.members
+        |> Result.map
+            (\members ->
                 unlines
                     [ "-- generated automatically by elm-gencode"
                     , ""
@@ -211,3 +182,4 @@ generateEncoder mod =
                     , ""
                     , String.join "\n\n" members
                     ]
+            )

@@ -4,7 +4,9 @@ import Browser
 import Gencode
 import Gencode.Decoder
 import Gencode.Encoder
-import Gencode.Generate
+import Gencode.Generator
+import Gencode.Type exposing (..)
+import Gencode.Util
 import Gencode.Web.Type
 import Gencode.Web.Type.Gencode
 import Html
@@ -137,7 +139,22 @@ view model =
 
                 Ok result ->
                     let
-                        r : Result Gencode.Generate.Error String
+                        -- _ =
+                        --     Debug.log "dummy" <|
+                        --         List.map
+                        --             (\member -> moduleMemberName member ++ Debug.toString (Gencode.Generator.generateMember result member))
+                        --             result.members
+                        mod : Module
+                        mod =
+                            { members = [], name = [ "" ] }
+
+                        _ =
+                            Debug.log "Int" <| Gencode.Generator.generateType mod (TypeSegmentType <| TypeSegment "Int")
+
+                        _ =
+                            Debug.log "{}" <| Gencode.Generator.generateType mod (RecordType [ { name = "hoge", typeName = TypeSegmentType <| TypeSegment "Int" } ])
+
+                        r : Result Gencode.Util.Error String
                         r =
                             List.foldl
                                 (\generator current ->
