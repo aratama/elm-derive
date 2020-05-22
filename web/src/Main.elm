@@ -60,13 +60,20 @@ type alias Task =
     , id : Int
     }
 
-type Tree 
-    = Leaf String 
-    | Branch Tree Tree
 
 type Color = Red | Green | Blue
 
 type Vector = Vector { x: Float, y: Float }
+"""
+
+
+x =
+    """
+
+type Tree 
+    = Leaf String 
+    | Branch Tree Tree
+
 """
 
 
@@ -139,11 +146,23 @@ view model =
 
                 Ok result ->
                     let
-                        -- _ =
-                        --     Debug.log "dummy" <|
-                        --         List.map
-                        --             (\member -> moduleMemberName member ++ Debug.toString (Gencode.Generator.generateMember result member))
-                        --             result.members
+                        _ =
+                            Debug.log "dummy\n\n" <|
+                                String.join "    " <|
+                                    List.map
+                                        (\member ->
+                                            moduleMemberName member
+                                                ++ " ---- "
+                                                ++ (case Gencode.Generator.generateMember result member of
+                                                        Err err ->
+                                                            "Error"
+
+                                                        Ok s ->
+                                                            s
+                                                   )
+                                        )
+                                        result.members
+
                         mod : Module
                         mod =
                             { members = [], name = [ "" ] }

@@ -14,17 +14,23 @@ generateMember mod member =
             let
                 hs : List (Result Error String)
                 hs =
-                    []
-
-                -- List.map
-                --     (\variant ->
-                --         concatResults (generateType mod) variant.fields
-                --             |> Result.map (\values -> "(" ++ String.join " " values ++ ")")
-                --     )
-                --     typeDef.body
+                    List.map
+                        (\variant ->
+                            concatResults (generateType mod) variant.fields
+                                |> Result.map (\values -> "(" ++ variant.name ++ " " ++ String.join " " values ++ ")")
+                        )
+                        typeDef.body
             in
             concatResults identity hs
-                |> Result.map (\values -> String.join " " (typeDef.head :: values))
+                |> Result.map
+                    (\values ->
+                        case List.head values of
+                            Nothing ->
+                                "No Variants?"
+
+                            Just v ->
+                                v
+                    )
 
 
 generateType : Module -> Type -> Result Error String
@@ -35,33 +41,43 @@ generateType mod t =
                 |> Result.map (\values -> "{ " ++ (String.join ", " <| List.map2 (\f v -> f.name ++ " = " ++ v) record values) ++ " }")
 
         TypeSegmentType segmentTree ->
-            case segmentTree of
-                TypeSegment segment ->
-                    case segment of
-                        "Int" ->
-                            Ok "0"
+            let
+                go seg =
+                    case seg of
+                        TypeSegment segment ->
+                            case segment of
+                                "Int" ->
+                                    Ok "0"
 
-                        "Bool" ->
-                            Ok "False"
+                                "Bool" ->
+                                    Ok "False"
 
-                        "Float" ->
-                            Ok "0.0"
+                                "Float" ->
+                                    Ok "0.0"
 
-                        "String" ->
-                            Ok "\"\""
+                                "String" ->
+                                    Ok "\"hoge\""
 
-                        _ ->
-                            case findType segment mod of
-                                Nothing ->
-                                    Err [ "Unsupported type" ]
+                                _ ->
+                                    case findType segment mod of
+                                        Nothing ->
+                                            Err [ "Unsupported type: " ++ Debug.toString segment ]
 
-                                Just member ->
-                                    generateMember mod member
+                                        Just member ->
+                                            generateMember mod member
 
-                TypeSegmentList segments ->
-                    case segments of
-                        [ TypeSegment "List", _ ] ->
-                            Ok "[]"
+                        TypeSegmentList segments ->
+                            case segments of
+                                [ x ] ->
+                                    go x
 
-                        _ ->
-                            Err [ "Unsuported Type" ]
+                                [ TypeSegment "List", _ ] ->
+                                    Ok "[]"
+
+                                [ TypeSegment "Maybe", _ ] ->
+                                    Ok "Nothing"
+
+                                _ ->
+                                    Err [ "Unsuported Type: " ++ Debug.toString segments ]
+            in
+            go segmentTree
