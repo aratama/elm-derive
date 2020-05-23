@@ -60,20 +60,14 @@ type alias Task =
     , id : Int
     }
 
-
-type Color = Red | Green | Blue
-
-type Vector = Vector { x: Float, y: Float }
-"""
-
-
-x =
-    """
-
 type Tree 
     = Leaf String 
     | Branch Tree Tree
 
+
+type Color = Red | Green | Blue
+
+type Vector = Vector { x: Float, y: Float }
 """
 
 
@@ -146,33 +140,6 @@ view model =
 
                 Ok result ->
                     let
-                        _ =
-                            Debug.log "dummy\n\n" <|
-                                String.join "    " <|
-                                    List.map
-                                        (\member ->
-                                            moduleMemberName member
-                                                ++ " ---- "
-                                                ++ (case Gencode.Generator.generateMember result member of
-                                                        Err err ->
-                                                            "Error"
-
-                                                        Ok s ->
-                                                            s
-                                                   )
-                                        )
-                                        result.members
-
-                        mod : Module
-                        mod =
-                            { members = [], name = [ "" ] }
-
-                        _ =
-                            Debug.log "Int" <| Gencode.Generator.generateType mod (TypeSegmentType <| TypeSegment "Int")
-
-                        _ =
-                            Debug.log "{}" <| Gencode.Generator.generateType mod (RecordType [ { name = "hoge", typeName = TypeSegmentType <| TypeSegment "Int" } ])
-
                         r : Result Gencode.Util.Error String
                         r =
                             List.foldl
@@ -192,6 +159,7 @@ view model =
                                 (Ok "")
                                 [ Gencode.Encoder.generateEncoder
                                 , Gencode.Decoder.generateDecoder
+                                , Gencode.Generator.generateGenerator
                                 ]
                     in
                     [ case r of

@@ -4,6 +4,38 @@ import Gencode.Type exposing (..)
 import Gencode.Util exposing (..)
 
 
+generateGenerator : Module -> Result Error String
+generateGenerator mod =
+    concatResults (generateTopLevel mod) mod.members
+        |> Result.map
+            (\results ->
+                unlines
+                    [ "-- sample data geenerators ----------------------------------"
+                    , ""
+                    , "type alias Context = { generator: Generator a }"
+                    , ""
+                    , String.join "\n\n" results
+                    ]
+            )
+
+
+generateTopLevel : Module -> ModuleMember -> Result Error String
+generateTopLevel mod member =
+    let
+        name =
+            moduleMemberName member
+    in
+    generateMember mod member
+        |> Result.map
+            (\gen ->
+                unlines
+                    [ "generate" ++ name ++ " : Context -> " ++ name
+                    , "generate" ++ name ++ " context = "
+                    , indent gen
+                    ]
+            )
+
+
 generateMember : Module -> ModuleMember -> Result Error String
 generateMember mod member =
     case member of
@@ -12,25 +44,19 @@ generateMember mod member =
 
         TypeMember typeDef ->
             let
-                hs : List (Result Error String)
-                hs =
-                    List.map
-                        (\variant ->
-                            concatResults (generateType mod) variant.fields
-                                |> Result.map (\values -> "(" ++ variant.name ++ " " ++ String.join " " values ++ ")")
-                        )
-                        typeDef.body
+                -- select non-recursive variants
+                nonRecursiveVariants : List Variant
+                nonRecursiveVariants =
+                    List.filter (\variant -> List.all (\field -> field /= TypeSegmentType (TypeSegment typeDef.head)) variant.fields) typeDef.body
             in
-            concatResults identity hs
-                |> Result.map
-                    (\values ->
-                        case List.head values of
-                            Nothing ->
-                                "No Variants?"
+            case List.head nonRecursiveVariants of
+                Nothing ->
+                    Err [ "Recursize Type" ]
 
-                            Just v ->
-                                v
-                    )
+                Just variant ->
+                    concatResults (generateType mod) variant.fields
+                        |> Result.map (\values -> "(" ++ variant.name ++ " " ++ String.join " " values ++ ")")
+                        |> Result.map (\values -> typeDef.head ++ " " ++ values)
 
 
 generateType : Module -> Type -> Result Error String

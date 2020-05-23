@@ -176,6 +176,7 @@ generateEncoder mod =
                     , ""
                     , "import Json.Encode"
                     , "import Json.Decode"
+                    , "import Random"
                     , "import " ++ String.join "." mod.name ++ " exposing (..)"
                     , ""
                     , "-- encoders -------------------------------------------------------------"
