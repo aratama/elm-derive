@@ -1,10 +1,11 @@
--- generated automatically by elm-gencode
+-- generated automatically by elm-derive
 
-module Gencode.Web.Type.Gencode exposing (..)
+module Derive.Web.Type.Derive exposing (..)
 
 import Json.Encode
 import Json.Decode
-import Gencode.Web.Type exposing (..)
+import Random
+import Derive.Web.Type exposing (..)
 
 -- encoders -------------------------------------------------------------
 

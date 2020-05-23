@@ -1,7 +1,7 @@
-module Gencode.Encoder exposing (..)
+module Derive.Encoder exposing (..)
 
-import Gencode.Type exposing (..)
-import Gencode.Util exposing (..)
+import Derive.Type exposing (..)
+import Derive.Util exposing (..)
 import Result
 
 
@@ -170,9 +170,9 @@ generateEncoder mod =
         |> Result.map
             (\members ->
                 unlines
-                    [ "-- generated automatically by elm-gencode"
+                    [ "-- generated automatically by elm-derive"
                     , ""
-                    , "module " ++ String.join "." mod.name ++ ".Gencode exposing (..)"
+                    , "module " ++ String.join "." mod.name ++ ".Derive exposing (..)"
                     , ""
                     , "import Json.Encode"
                     , "import Json.Decode"

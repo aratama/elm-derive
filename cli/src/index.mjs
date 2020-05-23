@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import elm from "../dist/elm-gencode.js";
+import elm from "../dist/elm-derive.js";
 import fs from "fs";
 import fsx from "fs-extra";
 import path from "path";
@@ -15,11 +15,11 @@ if (file) {
     const outputPath = path.join(
       path.dirname(file),
       path.basename(file, ".elm"),
-      "Gencode.elm"
+      "Derive.elm"
     );
     fsx.ensureDir(path.dirname(outputPath));
     fs.writeFileSync(outputPath, value);
   });
 } else {
-  console.log("elm-gencode v0.0.1");
+  console.log("elm-derive v0.0.1");
 }

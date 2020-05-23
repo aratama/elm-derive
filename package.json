@@ -1,22 +1,22 @@
 {
-  "name": "elm-gencode",
+  "name": "elm-derive",
   "version": "1.0.0",
   "description": "WIP: JSON Encoder/Decoder code generator for Elm",
   "main": "",
   "bin": {
-    "elm-gencode": "./bin/index.js"
+    "elm-derive": "./bin/index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aratama/elm-gencode.git"
+    "url": "git+https://github.com/aratama/elm-derive.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/aratama/elm-gencode/issues"
+    "url": "https://github.com/aratama/elm-derive/issues"
   },
-  "homepage": "https://github.com/aratama/elm-gencode#readme"
+  "homepage": "https://github.com/aratama/elm-derive#readme"
 }

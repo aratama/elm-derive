@@ -1,7 +1,7 @@
-module Gencode.Decoder exposing (..)
+module Derive.Decoder exposing (..)
 
-import Gencode.Type exposing (..)
-import Gencode.Util exposing (..)
+import Derive.Type exposing (..)
+import Derive.Util exposing (..)
 
 
 decoderFromTypeName : Module -> List TypeSegment -> Result Error String

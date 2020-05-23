@@ -1,4 +1,4 @@
-module Gencode.Type exposing (..)
+module Derive.Type exposing (..)
 
 
 type alias TypeName =

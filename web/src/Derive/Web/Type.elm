@@ -1,4 +1,4 @@
-module Gencode.Web.Type exposing (..)
+module Derive.Web.Type exposing (..)
 
 
 type alias Model =

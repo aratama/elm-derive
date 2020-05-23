@@ -1,7 +1,7 @@
-module Gencode.Generator exposing (..)
+module Derive.Generator exposing (..)
 
-import Gencode.Type exposing (..)
-import Gencode.Util exposing (..)
+import Derive.Type exposing (..)
+import Derive.Util exposing (..)
 
 
 generateGenerator : Module -> Result Error String
@@ -87,7 +87,7 @@ generateType mod t =
                                 _ ->
                                     case findType segment mod of
                                         Nothing ->
-                                            Err [ "Unsupported type: " ++ Debug.toString segment ]
+                                            Err [ "Unsupported type in TypeSegment" ]
 
                                         Just member ->
                                             generateMember mod member
@@ -104,6 +104,6 @@ generateType mod t =
                                     Ok "Nothing"
 
                                 _ ->
-                                    Err [ "Unsuported Type: " ++ Debug.toString segments ]
+                                    Err [ "Unsuported Type in TypeSegmentList " ]
             in
             go segmentTree

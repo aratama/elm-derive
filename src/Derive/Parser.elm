@@ -1,6 +1,6 @@
-module Gencode.Parser exposing (..)
+module Derive.Parser exposing (..)
 
-import Gencode.Type exposing (..)
+import Derive.Type exposing (..)
 import List
 import Parser exposing (..)
 import Set

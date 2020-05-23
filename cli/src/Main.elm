@@ -1,8 +1,8 @@
 module Main exposing (main)
 
-import Gencode
-import Gencode.Decoder
-import Gencode.Encoder
+import Derive
+import Derive.Decoder
+import Derive.Encoder
 import List.Extra as List
 import Parser exposing (Problem(..))
 import Parser.Extra
@@ -36,14 +36,14 @@ main =
                 ( { source = source }
                 , Cmd.batch
                     [ Port.outputEncoder <|
-                        case Gencode.run source of
+                        case Derive.run source of
                             Err err ->
                                 String.join "\n" <| List.map (Parser.Extra.deadEndToString source) err
 
                             Ok result ->
                                 let
                                     encoder =
-                                        case Gencode.Encoder.generateEncoder result of
+                                        case Derive.Encoder.generateEncoder result of
                                             Err err ->
                                                 String.join "\n" <| List.map (\e -> "[Error] " ++ e) err
 
@@ -51,7 +51,7 @@ main =
                                                 generated
 
                                     decoder =
-                                        case Gencode.Decoder.generateDecoder result of
+                                        case Derive.Decoder.generateDecoder result of
                                             Err err ->
                                                 String.join "\n" <| List.map (\e -> "[Error] " ++ e) err
 

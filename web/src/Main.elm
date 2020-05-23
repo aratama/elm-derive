@@ -1,14 +1,14 @@
 module Main exposing (main)
 
 import Browser
-import Gencode
-import Gencode.Decoder
-import Gencode.Encoder
-import Gencode.Generator
-import Gencode.Type exposing (..)
-import Gencode.Util
-import Gencode.Web.Type
-import Gencode.Web.Type.Gencode
+import Derive
+import Derive.Decoder
+import Derive.Encoder
+import Derive.Generator
+import Derive.Type exposing (..)
+import Derive.Util
+import Derive.Web.Type
+import Derive.Web.Type.Derive
 import Html
 import Html.Attributes exposing (class)
 import Html.Events
@@ -35,9 +35,9 @@ sampleSource =
 -- * Dict String a 
 -- * Maybe a
 -- 
--- elm-gencode has a CLI. Try the following command in your terminal:
+-- elm-derive has a CLI. Try the following command in your terminal:
 -- 
--- $ npx aratama/elm-gencode src/Type/TodoList.Elm
+-- $ npx aratama/elm-derive src/Type/TodoList.Elm
 -- 
 -- Have fun at Elm programming!
 
@@ -85,14 +85,14 @@ update msg model =
             { model | source = s }
 
 
-encode : Gencode.Web.Type.Model -> Json.Encode.Value
+encode : Derive.Web.Type.Model -> Json.Encode.Value
 encode m =
-    Gencode.Web.Type.Gencode.encodeModel m
+    Derive.Web.Type.Derive.encodeModel m
 
 
-decode : Json.Encode.Value -> Result Json.Decode.Error Gencode.Web.Type.Model
+decode : Json.Encode.Value -> Result Json.Decode.Error Derive.Web.Type.Model
 decode value =
-    Json.Decode.decodeValue Gencode.Web.Type.Gencode.decodeModel value
+    Json.Decode.decodeValue Derive.Web.Type.Derive.decodeModel value
 
 
 main : Program () Model Msg
@@ -126,7 +126,7 @@ view model =
             , Html.textarea [ Html.Events.onInput Input ] [ Html.text <| String.trim model.source ]
             ]
         , Html.div [] <|
-            case Gencode.run model.source of
+            case Derive.run model.source of
                 Err err ->
                     [ Html.pre [ class "syntactic-error" ]
                         [ Html.text <|
@@ -140,7 +140,7 @@ view model =
 
                 Ok result ->
                     let
-                        r : Result Gencode.Util.Error String
+                        r : Result Derive.Util.Error String
                         r =
                             List.foldl
                                 (\generator current ->
@@ -157,9 +157,9 @@ view model =
                                                     Ok <| generated ++ "\n" ++ generated_ ++ "\n"
                                 )
                                 (Ok "")
-                                [ Gencode.Encoder.generateEncoder
-                                , Gencode.Decoder.generateDecoder
-                                , Gencode.Generator.generateGenerator
+                                [ Derive.Encoder.generateEncoder
+                                , Derive.Decoder.generateDecoder
+                                , Derive.Generator.generateGenerator
                                 ]
                     in
                     [ case r of

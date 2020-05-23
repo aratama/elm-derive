@@ -1,4 +1,4 @@
-module Gencode.Util exposing (..)
+module Derive.Util exposing (..)
 
 
 type alias Error =
