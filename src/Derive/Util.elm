@@ -7,7 +7,7 @@ type alias Error =
 
 indent : String -> String
 indent xs =
-    String.lines xs |> List.map (\x -> "    " ++ x) |> String.join "\n"
+    String.lines xs |> List.map (\x -> "    " ++ x) |> unlines
 
 
 toErrors : List (Result Error String) -> List Error
@@ -27,7 +27,7 @@ asList : List String -> String
 asList list =
     (case list of
         x :: xs ->
-            "[ " ++ x ++ "\n" ++ String.join "\n" (List.map (\y -> ", " ++ y) xs)
+            "[ " ++ x ++ "\n" ++ unlines (List.map (\y -> ", " ++ y) xs)
 
         [] ->
             ""
@@ -60,3 +60,12 @@ concatResults f inputs =
 
     else
         Err <| List.concat errors
+
+
+errorToString : Error -> String
+errorToString err =
+    let
+        total =
+            List.length err
+    in
+    unlines <| List.indexedMap (\i e -> "Error (" ++ String.fromInt i ++ " / " ++ String.fromInt total ++ "):\n " ++ e ++ "\n") err

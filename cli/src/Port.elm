@@ -1,4 +1,4 @@
 port module Port exposing (..)
 
 
-port outputEncoder : String -> Cmd msg
+port outputEncoder : { tag : String, value : String } -> Cmd msg
