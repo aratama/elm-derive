@@ -10,9 +10,6 @@ import Derive.Web.Type exposing (..)
 
 -- encoders -------------------------------------------------------------
 
-
--- encoders -------------------------------------------------------------
-
 encodeModel : Model -> Json.Encode.Value
 encodeModel
     = (\value -> Json.Encode.object 

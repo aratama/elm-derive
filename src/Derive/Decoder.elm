@@ -186,6 +186,7 @@ generateDecoderFromModuleMember mod member =
                                         branches
                                     ]
                            )
+                    , ""
                     ]
 
 
@@ -223,6 +224,7 @@ generateDecoderFromTypeAlias mod alias =
                                 ++ " "
                                 ++ alias.head
                             , indent seq
+                            , ""
                             ]
 
         _ ->
@@ -230,6 +232,7 @@ generateDecoderFromTypeAlias mod alias =
                 unlines
                     [ encoderName ++ " : Json.Decode.Decoder " ++ alias.head
                     , encoderName ++ " = " ++ decoder
+                    , ""
                     ]
 
 

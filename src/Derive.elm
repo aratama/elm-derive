@@ -26,39 +26,17 @@ header mod =
         , "import Dict"
         , "import " ++ String.join "." mod.name ++ " exposing (..)"
         , ""
-        , "-- encoders -------------------------------------------------------------"
-        , ""
         ]
 
 
 generate : Module -> Result Error String
 generate mod =
-    let
-        r : Result Derive.Util.Error String
-        r =
-            List.foldl
-                (\generator current ->
-                    case current of
-                        Err err ->
-                            Err err
-
-                        Ok generated ->
-                            case generator mod of
-                                Err err ->
-                                    Err err
-
-                                Ok generated_ ->
-                                    Ok <| generated ++ "\n" ++ generated_ ++ "\n"
-                )
-                (Ok "")
-                [ Derive.Encoder.generateEncoder
-                , Derive.Decoder.generateDecoder
-                , Derive.Generator.generateGenerator
-                ]
-    in
-    case r of
-        Err err ->
-            Err err
-
-        Ok generated ->
-            Ok <| header mod ++ "\n" ++ generated
+    List.foldl
+        (\generator current ->
+            Result.map2 (\a b -> b ++ "\n" ++ a ++ "\n") generator current
+        )
+        (Ok <| header mod)
+        [ Derive.Encoder.generateEncoder mod
+        , Derive.Decoder.generateDecoder mod
+        , Derive.Generator.generateGenerator mod
+        ]

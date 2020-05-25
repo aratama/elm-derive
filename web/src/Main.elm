@@ -56,8 +56,7 @@ type alias Task =
 type Tree 
     = Leaf String 
     | Branch Tree Tree
-
-
+    
 type Color = Red | Green | Blue
 
 type Vector = Vector { x: Float, y: Float }"""

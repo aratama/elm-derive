@@ -10,9 +10,6 @@ import TodoList exposing (..)
 
 -- encoders -------------------------------------------------------------
 
-
--- encoders -------------------------------------------------------------
-
 encodeTask : Task -> Json.Encode.Value
 encodeTask
     = (\value -> Json.Encode.object 
