@@ -1,0 +1,12 @@
+{
+  "name": "example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "cd ../cli && npm run build && cd ../example && node ../bin/index.js src/TodoList.elm && elm make src/TodoList.elm src/TodoList/Derive.elm"
+  },
+  "author": "",
+  "license": "ISC"
+}

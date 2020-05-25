@@ -11,7 +11,7 @@
 -- * Dict String a 
 -- * Maybe a
 
-module TodoList.Type exposing (..)
+module TodoList exposing (..)
 
 import Maybe exposing (..)
 import Dict exposing (..)

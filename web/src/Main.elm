@@ -67,8 +67,7 @@ type Tree
 
 type Color = Red | Green | Blue
 
-type Vector = Vector { x: Float, y: Float }
-"""
+type Vector = Vector { x: Float, y: Float }"""
 
 
 type alias Model =
@@ -117,15 +116,9 @@ view model =
     Html.div [ class "root" ]
         [ SyntaxHighlight.useTheme SyntaxHighlight.oneDark
         , Html.div [ class "left" ]
-            [ Html.div [ class "generated" ]
-                [ SyntaxHighlight.elm (String.trim model.source)
-                    |> Result.map (SyntaxHighlight.toBlockHtml (Just 1))
-                    |> Result.withDefault
-                        (Html.pre [] [ Html.code [] [ Html.text (String.trim model.source) ] ])
-                ]
-            , Html.textarea [ Html.Events.onInput Input ] [ Html.text <| String.trim model.source ]
+            [ Html.textarea [ Html.Events.onInput Input ] [ Html.text <| model.source ]
             ]
-        , Html.div [] <|
+        , Html.div [ class "right" ] <|
             case Derive.run model.source of
                 Err err ->
                     [ Html.pre [ class "syntactic-error" ]
@@ -167,6 +160,23 @@ view model =
                             Html.pre [ class "generation-error" ] [ Html.text <| errorToString err ]
 
                         Ok generated ->
+                            let
+                                header =
+                                    """-- generated automatically by elm-derive
+
+module """
+                                        ++ String.join "." result.name
+                                        ++ """.Derive exposing (..)
+
+import Json.Encode
+import Json.Decode
+import Random
+import """
+                                        ++ String.join "." result.name
+                                        ++ """ exposing (..)
+                                    
+"""
+                            in
                             Html.div [ class "generated" ]
                                 [ SyntaxHighlight.elm generated
                                     |> Result.map (SyntaxHighlight.toBlockHtml (Just 1))

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "parcel ./src/index.html",
-    "build": "node ../bin/index.js src/Derive/Web/Type.elm && parcel build ./src/index.html"
+    "build": "cd ../cli && npm run build && cd ../web && node ../bin/index.js src/Derive/Web/Type.elm && parcel build ./src/index.html"
   },
   "author": "",
   "license": "ISC",

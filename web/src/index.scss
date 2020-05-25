@@ -7,14 +7,6 @@ pre {
   color: white;
 }
 
-.left > * {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 50vw;
-  height: 100%;
-}
-
 * {
   margin: 0;
   padding: 0;
@@ -39,45 +31,67 @@ body,
   width: 50vw;
 }
 
+pre {
+  font-family: "Fira Code", monospace;
+  font-size: 14px;
+  line-height: 1.5em;
+  letter-spacing: 0;
+}
+
+code,
 textarea {
-  padding: 1em;
-  overflow: scroll;
-  resize: none;
-  background-color: transparent;
-  color: transparent;
-  caret-color: white;
-  border: none;
-  outline: none;
-
   font-family: "Fira Code", monospace;
   font-size: 14px;
   line-height: 1.5em;
   letter-spacing: 0;
 }
 
-.generated {
-  height: 100vh;
-  overflow: scroll;
-
-  font-family: "Fira Code", monospace;
-  font-size: 14px;
-  line-height: 1.5em;
-  letter-spacing: 0;
-}
-
-.generated code {
-  font-family: "Fira Code", monospace;
-  font-size: 14px;
-  line-height: 1.5em;
-  letter-spacing: 0;
+.elmsh-line {
+  height: 21px;
 }
 
 .generated pre.elmsh {
   min-height: 100vh;
 }
 
-.left .generated {
-  min-height: 100vh;
+.left {
+  & > * {
+    left: 0;
+    top: 0;
+    width: 50vw;
+  }
+
+  textarea {
+    overflow: scroll;
+    width: 50vw;
+    height: 100vh;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 50vw;
+    white-space: nowrap;
+
+    padding: 1em;
+    resize: none;
+
+    border: none;
+    outline: none;
+
+    font-family: "Fira Code", monospace;
+    font-size: 14px;
+    line-height: 1.5em;
+    letter-spacing: 0;
+
+    background-color: #282c34;
+    color: #dddddd;
+  }
+}
+
+.right {
+  .generated {
+    height: 100vh;
+    overflow: scroll;
+  }
 }
 
 .syntactic-error {

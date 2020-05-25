@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "elm make src/Main.elm  --optimize --output=./dist/elm-derive.js && esbuild ./src/index.mjs --minify --bundle --outfile=../bin/index.js --platform=node",
-    "start": "node ../bin/index.js example/TodoList.elm"
+    "start": "node ../bin/index.js example/TodoList.elm",
+    "example": "npm run build && node ../bin/index.js ../example/TodoList.elm"
   },
   "author": "",
   "license": "ISC",

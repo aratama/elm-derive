@@ -10,10 +10,26 @@ generateGenerator mod =
         |> Result.map
             (\results ->
                 unlines
-                    [ "-- sample data geenerators ----------------------------------"
-                    , ""
-                    , "type alias Context = { generator: Generator a }"
-                    , ""
+                    [ """
+-- sample data geenerators ----------------------------------"
+type alias Context = { int : Dict String (Generator Int) }
+
+defaultContext : Context
+defaultContext = {
+    todoList: 
+        { tasks = taskGenerator
+        , field = stringGenerator
+        , uid = intDefaultGenerator
+        , visibility = stringGenerator
+    },
+    string: Dict.fromList [
+        ("*", Random.int 0 100)
+    ]
+}
+
+stringGeneratorFromList : Generator String 
+stringGeneratorFromList = ["Json", "Ken"]
+"""
                     , String.join "\n\n" results
                     ]
             )
@@ -56,7 +72,7 @@ generateMember mod member =
                 Just variant ->
                     concatResults (generateType mod) variant.fields
                         |> Result.map (\values -> "(" ++ variant.name ++ " " ++ String.join " " values ++ ")")
-                        |> Result.map (\values -> typeDef.head ++ " " ++ values)
+                        |> Result.map (\values -> values)
 
 
 generateType : Module -> Type -> Result Error String
