@@ -170,16 +170,7 @@ generateEncoder mod =
         |> Result.map
             (\members ->
                 unlines
-                    [ "-- generated automatically by elm-derive"
-                    , ""
-                    , "module " ++ String.join "." mod.name ++ ".Derive exposing (..)"
-                    , ""
-                    , "import Json.Encode"
-                    , "import Json.Decode"
-                    , "import Random"
-                    , "import " ++ String.join "." mod.name ++ " exposing (..)"
-                    , ""
-                    , "-- encoders -------------------------------------------------------------"
+                    [ "-- encoders -------------------------------------------------------------"
                     , ""
                     , String.join "\n\n" members
                     ]

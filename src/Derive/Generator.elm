@@ -12,11 +12,13 @@ generateGenerator mod =
                 unlines
                     [ """
 -- sample data geenerators ----------------------------------"
-type alias Context = { int : Dict String (Generator Int) }
+type alias Context = { int : Dict.Dict String (Random.Generator Int) }
 
+
+{-
 defaultContext : Context
 defaultContext = {
-    todoList: 
+    todoList = 
         { tasks = taskGenerator
         , field = stringGenerator
         , uid = intDefaultGenerator
@@ -26,9 +28,10 @@ defaultContext = {
         ("*", Random.int 0 100)
     ]
 }
+-}
 
-stringGeneratorFromList : Generator String 
-stringGeneratorFromList = ["Json", "Ken"]
+-- stringGeneratorFromList : Random.Generator String 
+-- stringGeneratorFromList = ["Json", "Ken"]
 """
                     , String.join "\n\n" results
                     ]

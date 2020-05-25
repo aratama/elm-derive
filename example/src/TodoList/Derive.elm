@@ -5,7 +5,11 @@ module TodoList.Derive exposing (..)
 import Json.Encode
 import Json.Decode
 import Random
+import Dict
 import TodoList exposing (..)
+
+-- encoders -------------------------------------------------------------
+
 
 -- encoders -------------------------------------------------------------
 
@@ -25,7 +29,9 @@ encodeModel
         , ("field", Json.Encode.string value.field)
         , ("uid", Json.Encode.int value.uid)
         , ("visibility", Json.Encode.string value.visibility)
-        ])-- decoders -------------------------------------------------------------
+        ])
+
+-- decoders -------------------------------------------------------------
 
 decodeTask : Json.Decode.Decoder Task
 decodeTask = Json.Decode.map4 Task
@@ -39,3 +45,34 @@ decodeModel = Json.Decode.map4 Model
     (Json.Decode.field "field" (Json.Decode.string))
     (Json.Decode.field "uid" (Json.Decode.int))
     (Json.Decode.field "visibility" (Json.Decode.string))
+
+
+-- sample data geenerators ----------------------------------"
+type alias Context = { int : Dict.Dict String (Random.Generator Int) }
+
+
+{-
+defaultContext : Context
+defaultContext = {
+    todoList = 
+        { tasks = taskGenerator
+        , field = stringGenerator
+        , uid = intDefaultGenerator
+        , visibility = stringGenerator
+    },
+    string: Dict.fromList [
+        ("*", Random.int 0 100)
+    ]
+}
+-}
+
+-- stringGeneratorFromList : Random.Generator String 
+-- stringGeneratorFromList = ["Json", "Ken"]
+
+generateTask : Context -> Task
+generateTask context = 
+    { description = "hoge", completed = False, edits = Nothing, id = 0 }
+
+generateModel : Context -> Model
+generateModel context = 
+    { tasks = [], field = "hoge", uid = 0, visibility = "hoge" }

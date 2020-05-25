@@ -132,51 +132,11 @@ view model =
                     ]
 
                 Ok result ->
-                    let
-                        r : Result Derive.Util.Error String
-                        r =
-                            List.foldl
-                                (\generator current ->
-                                    case current of
-                                        Err err ->
-                                            Err err
-
-                                        Ok generated ->
-                                            case generator result of
-                                                Err err ->
-                                                    Err err
-
-                                                Ok generated_ ->
-                                                    Ok <| generated ++ "\n" ++ generated_ ++ "\n"
-                                )
-                                (Ok "")
-                                [ Derive.Encoder.generateEncoder
-                                , Derive.Decoder.generateDecoder
-                                , Derive.Generator.generateGenerator
-                                ]
-                    in
-                    [ case r of
+                    [ case Derive.generate result of
                         Err err ->
                             Html.pre [ class "generation-error" ] [ Html.text <| errorToString err ]
 
                         Ok generated ->
-                            let
-                                header =
-                                    """-- generated automatically by elm-derive
-
-module """
-                                        ++ String.join "." result.name
-                                        ++ """.Derive exposing (..)
-
-import Json.Encode
-import Json.Decode
-import Random
-import """
-                                        ++ String.join "." result.name
-                                        ++ """ exposing (..)
-                                    
-"""
-                            in
                             Html.div [ class "generated" ]
                                 [ SyntaxHighlight.elm generated
                                     |> Result.map (SyntaxHighlight.toBlockHtml (Just 1))

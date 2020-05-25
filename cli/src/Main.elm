@@ -40,25 +40,13 @@ main =
                             Err err ->
                                 String.join "\n" <| List.map (Parser.Extra.deadEndToString source) err
 
-                            Ok result ->
-                                let
-                                    encoder =
-                                        case Derive.Encoder.generateEncoder result of
-                                            Err err ->
-                                                String.join "\n" <| List.map (\e -> "[Error] " ++ e) err
+                            Ok mod ->
+                                case Derive.generate mod of
+                                    Err err ->
+                                        "Generation Error: " ++ String.join " " err
 
-                                            Ok generated ->
-                                                generated
-
-                                    decoder =
-                                        case Derive.Decoder.generateDecoder result of
-                                            Err err ->
-                                                String.join "\n" <| List.map (\e -> "[Error] " ++ e) err
-
-                                            Ok generated ->
-                                                generated
-                                in
-                                encoder ++ decoder
+                                    Ok generated ->
+                                        generated
                     ]
                 )
         , update = update
