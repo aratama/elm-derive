@@ -12,10 +12,14 @@ generateGenerator mod =
                 unlines
                     [ """
 -- sample data geenerators ----------------------------------"
+
 type alias Context = { int : Dict.Dict String (Random.Generator Int) }
 
 
 {-
+
+todoListGenerationContext : 
+
 defaultContext : Context
 defaultContext = {
     todoList = 

@@ -10,7 +10,7 @@ indent xs =
     String.lines xs |> List.map (\x -> "    " ++ x) |> unlines
 
 
-toErrors : List (Result Error String) -> List Error
+toErrors : List (Result b a) -> List b
 toErrors =
     List.filterMap
         (\r ->
@@ -40,18 +40,18 @@ unlines =
     String.join "\n"
 
 
-concatResults : (a -> Result Error String) -> List a -> Result Error (List String)
+concatResults : (from -> Result (List err) to) -> List from -> Result (List err) (List to)
 concatResults f inputs =
     let
-        result : List (Result Error String)
+        result : List (Result (List err) to)
         result =
             List.map f inputs
 
-        errors : List Error
+        errors : List (List err)
         errors =
             toErrors result
 
-        values : List String
+        values : List to
         values =
             List.filterMap Result.toMaybe result
     in
@@ -69,3 +69,14 @@ errorToString err =
             List.length err
     in
     unlines <| List.indexedMap (\i e -> "Error (" ++ String.fromInt i ++ " / " ++ String.fromInt total ++ "):\n " ++ e ++ "\n") err
+
+
+alphabets : Int -> List Char
+alphabets n =
+    List.range 0 (n - 1)
+        |> List.map alphabet
+
+
+alphabet : Int -> Char
+alphabet i =
+    Char.fromCode (97 + i)

@@ -99,8 +99,7 @@ generateEncoderFromModuleMember mod member =
                             else
                                 let
                                     abc =
-                                        List.range 0 (List.length variant.fields - 1)
-                                            |> List.map (\i -> Char.fromCode (97 + i))
+                                        alphabets (List.length variant.fields)
 
                                     vars =
                                         abc

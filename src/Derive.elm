@@ -4,11 +4,13 @@ import Derive.Decoder
 import Derive.Encoder
 import Derive.Generator
 import Derive.Parser
+import Derive.Show
 import Derive.Type exposing (..)
 import Derive.Util exposing (..)
 import Parser
 
 
+run : String -> Result (List Parser.DeadEnd) Module
 run source =
     Parser.run Derive.Parser.parser source
 
@@ -20,10 +22,10 @@ header mod =
         , ""
         , "module " ++ String.join "." mod.name ++ ".Derive exposing (..)"
         , ""
+        , "import Dict"
         , "import Json.Encode"
         , "import Json.Decode"
         , "import Random"
-        , "import Dict"
         , "import " ++ String.join "." mod.name ++ " exposing (..)"
         , ""
         ]
@@ -32,11 +34,10 @@ header mod =
 generate : Module -> Result Error String
 generate mod =
     List.foldl
-        (\generator current ->
-            Result.map2 (\a b -> b ++ "\n" ++ a ++ "\n") generator current
-        )
+        (Result.map2 (\a b -> b ++ "\n" ++ a ++ "\n"))
         (Ok <| header mod)
-        [ Derive.Encoder.generateEncoder mod
+        [ Derive.Show.generateShow mod
+        , Derive.Encoder.generateEncoder mod
         , Derive.Decoder.generateDecoder mod
         , Derive.Generator.generateGenerator mod
         ]
