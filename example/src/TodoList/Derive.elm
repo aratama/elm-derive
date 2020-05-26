@@ -2,11 +2,43 @@
 
 module TodoList.Derive exposing (..)
 
+import Dict
 import Json.Encode
 import Json.Decode
 import Random
-import Dict
 import TodoList exposing (..)
+
+
+-- sample data geenerators ----------------------------------"
+
+generateBool : Random.Generator Bool 
+generateBool = Random.uniform True [False]
+
+generateInt : Random.Generator Int
+generateInt = Random.int 0 100
+
+generateString : Random.Generator String 
+generateString = Random.uniform "a" ["b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m"]
+
+generateFloat : Random.Generator Float
+generateFloat = Random.float 0 1
+
+
+generateTask : Random.Generator Task
+generateTask = 
+    Random.map4 (\description completed edits id -> { description = description, completed = completed, edits = edits, id = id }) 
+        (generateString)
+        (generateBool)
+        (Random.constant Nothing)
+        (generateInt)
+
+generateModel : Random.Generator Model
+generateModel = 
+    Random.map4 (\tasks field uid visibility -> { tasks = tasks, field = field, uid = uid, visibility = visibility }) 
+        (Random.andThen (\n -> Random.list (3 + n) (generateTask)) (Random.int 0 7))
+        (generateString)
+        (generateInt)
+        (generateString)
 
 -- encoders -------------------------------------------------------------
 
@@ -36,6 +68,7 @@ decodeTask = Json.Decode.map4 Task
     (Json.Decode.field "completed" (Json.Decode.bool))
     (Json.Decode.field "edits" ((Json.Decode.maybe Json.Decode.string)))
     (Json.Decode.field "id" (Json.Decode.int))
+
 decodeModel : Json.Decode.Decoder Model
 decodeModel = Json.Decode.map4 Model
     (Json.Decode.field "tasks" ((Json.Decode.list decodeTask)))
@@ -43,33 +76,3 @@ decodeModel = Json.Decode.map4 Model
     (Json.Decode.field "uid" (Json.Decode.int))
     (Json.Decode.field "visibility" (Json.Decode.string))
 
-
--- sample data geenerators ----------------------------------"
-type alias Context = { int : Dict.Dict String (Random.Generator Int) }
-
-
-{-
-defaultContext : Context
-defaultContext = {
-    todoList = 
-        { tasks = taskGenerator
-        , field = stringGenerator
-        , uid = intDefaultGenerator
-        , visibility = stringGenerator
-    },
-    string: Dict.fromList [
-        ("*", Random.int 0 100)
-    ]
-}
--}
-
--- stringGeneratorFromList : Random.Generator String 
--- stringGeneratorFromList = ["Json", "Ken"]
-
-generateTask : Context -> Task
-generateTask context = 
-    { description = "hoge", completed = False, edits = Nothing, id = 0 }
-
-generateModel : Context -> Model
-generateModel context = 
-    { tasks = [], field = "hoge", uid = 0, visibility = "hoge" }

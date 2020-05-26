@@ -2,6 +2,7 @@ module Derive exposing (..)
 
 import Derive.Decoder
 import Derive.Encoder
+import Derive.Eq
 import Derive.Generator
 import Derive.Parser
 import Derive.Show
@@ -36,8 +37,10 @@ generate mod =
     List.foldl
         (Result.map2 (\a b -> b ++ "\n" ++ a ++ "\n"))
         (Ok <| header mod)
-        [ Derive.Show.generateShow mod
+        [ Derive.Generator.generateGenerator mod
         , Derive.Encoder.generateEncoder mod
         , Derive.Decoder.generateDecoder mod
-        , Derive.Generator.generateGenerator mod
+
+        --, Derive.Eq.generateEq mod
+        --, Derive.Show.generateShow mod
         ]
