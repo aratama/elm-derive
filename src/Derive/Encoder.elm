@@ -45,7 +45,7 @@ generateEncoderFromType mod target =
             in
             case filtered of
                 [] ->
-                    Err <| [ "Unknown Data Type: `" ++ typeToString typeName ++ "`" ]
+                    Err <| [ "Unknown Data Type: `" ++ typeToString target ++ "`" ]
 
                 _ ->
                     Ok <| "encode" ++ typeName

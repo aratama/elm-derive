@@ -11,7 +11,7 @@ import Html.Attributes
 import TodoList exposing (..)
 
 viewList : (a -> Html.Html msg) -> List a -> Html.Html msg
-viewList f xs = Html.ul [] []
+viewList f xs = Html.table [] (List.indexedMap (\i x -> Html.tr [] [ Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]   ]) xs)
 
 viewMaybe : (a -> Html.Html msg) -> Maybe a -> Html.Html msg
 viewMaybe f m = case m of 
@@ -19,14 +19,24 @@ viewMaybe f m = case m of
     Just a -> f a
 
 viewBool : Bool -> Html.Html msg
-viewBool value = Html.div [] [Html.text <| if value then "True" else "False"]
+viewBool value = Html.input [Html.Attributes.value <| if value then "True" else "False"] []
+
+viewInt : Int -> Html.Html msg
+viewInt value = Html.input [Html.Attributes.value <| String.fromInt value] []
+
+viewString : String -> Html.Html msg
+viewString value = Html.input [Html.Attributes.value value] []
+
+viewFloat : Float -> Html.Html msg
+viewFloat value = Html.input [Html.Attributes.value <| String.fromFloat value] []
 
 viewTask : Task -> Html.Html msg
 viewTask value = 
-    Html.table [] 
+    Html.table [] [
+        Html.caption [] [Html.text "typeToString TODO"], Html.tbody [] 
         [ Html.tr []
             [ Html.td [] [Html.text <| "description"]
-            , Html.td [] [(\str -> Html.div [Html.Attributes.class "elm-derive-string"] [Html.text str]) value.description]
+            , Html.td [] [viewString value.description]
             ]
         , Html.tr []
             [ Html.td [] [Html.text <| "completed"]
@@ -34,34 +44,37 @@ viewTask value =
             ]
         , Html.tr []
             [ Html.td [] [Html.text <| "edits"]
-            , Html.td [] [viewMaybe (\str -> Html.div [Html.Attributes.class "elm-derive-string"] [Html.text str]) value.edits]
+            , Html.td [] [viewMaybe viewString value.edits]
             ]
         , Html.tr []
             [ Html.td [] [Html.text <| "id"]
-            , Html.td [] [(Html.text << String.fromInt) value.id]
+            , Html.td [] [viewInt value.id]
             ]
         ]
+    ]
 
 viewModel : Model -> Html.Html msg
 viewModel value = 
-    Html.table [] 
+    Html.table [] [
+        Html.caption [] [Html.text "typeToString TODO"], Html.tbody [] 
         [ Html.tr []
             [ Html.td [] [Html.text <| "tasks"]
             , Html.td [] [viewList viewTask value.tasks]
             ]
         , Html.tr []
             [ Html.td [] [Html.text <| "field"]
-            , Html.td [] [(\str -> Html.div [Html.Attributes.class "elm-derive-string"] [Html.text str]) value.field]
+            , Html.td [] [viewString value.field]
             ]
         , Html.tr []
             [ Html.td [] [Html.text <| "uid"]
-            , Html.td [] [(Html.text << String.fromInt) value.uid]
+            , Html.td [] [viewInt value.uid]
             ]
         , Html.tr []
             [ Html.td [] [Html.text <| "visibility"]
-            , Html.td [] [(\str -> Html.div [Html.Attributes.class "elm-derive-string"] [Html.text str]) value.visibility]
+            , Html.td [] [viewString value.visibility]
             ]
         ]
+    ]
 
 
 
@@ -74,7 +87,7 @@ generateInt : Random.Generator Int
 generateInt = Random.int 0 100
 
 generateString : Random.Generator String 
-generateString = Random.uniform "a" ["b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m"]
+generateString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "GOlf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
 
 generateFloat : Random.Generator Float
 generateFloat = Random.float 0 1
@@ -85,7 +98,7 @@ generateTask =
     Random.map4 (\description completed edits id -> { description = description, completed = completed, edits = edits, id = id }) 
         (generateString)
         (generateBool)
-        (Random.constant Nothing)
+        ((Random.andThen (\n -> Random.uniform Nothing [Just n]) generateString))
         (generateInt)
 
 generateModel : Random.Generator Model

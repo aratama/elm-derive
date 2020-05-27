@@ -20,7 +20,7 @@ generateInt : Random.Generator Int
 generateInt = Random.int 0 100
 
 generateString : Random.Generator String 
-generateString = Random.uniform "a" ["b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m"]
+generateString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "GOlf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
 
 generateFloat : Random.Generator Float
 generateFloat = Random.float 0 1
@@ -157,7 +157,11 @@ generateType mod t =
                     )
 
         TypeRef "Maybe" [ content ] ->
-            Ok "Random.constant Nothing"
+            generateType mod content
+                |> Result.map
+                    (\s ->
+                        "(Random.andThen (\\n -> Random.uniform Nothing [Just n]) " ++ s ++ ")"
+                    )
 
         TypeRef name [] ->
             if List.isEmpty (List.filter (\member -> moduleMemberName member == name) mod.members) then

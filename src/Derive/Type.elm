@@ -125,5 +125,6 @@ moduleMemberName member =
             t.name
 
 
+typeToString : Type -> String
 typeToString _ =
     "typeToString TODO"

@@ -70,7 +70,7 @@ generateViewModule mod =
             (\results ->
                 unlines
                     [ "viewList : (a -> Html.Html msg) -> List a -> Html.Html msg"
-                    , "viewList f xs = Html.ul [] []"
+                    , "viewList f xs = Html.table [] (List.indexedMap (\\i x -> Html.tr [] [ Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]   ]) xs)"
                     , ""
                     , "viewMaybe : (a -> Html.Html msg) -> Maybe a -> Html.Html msg"
                     , "viewMaybe f m = case m of "
@@ -78,7 +78,16 @@ generateViewModule mod =
                     , "    Just a -> f a"
                     , ""
                     , "viewBool : Bool -> Html.Html msg"
-                    , "viewBool value = Html.div [] [Html.text <| if value then \"True\" else \"False\"]"
+                    , "viewBool value = Html.input [Html.Attributes.value <| if value then \"True\" else \"False\"] []"
+                    , ""
+                    , "viewInt : Int -> Html.Html msg"
+                    , "viewInt value = Html.input [Html.Attributes.value <| String.fromInt value] []"
+                    , ""
+                    , "viewString : String -> Html.Html msg"
+                    , "viewString value = Html.input [Html.Attributes.value value] []"
+                    , ""
+                    , "viewFloat : Float -> Html.Html msg"
+                    , "viewFloat value = Html.input [Html.Attributes.value <| String.fromFloat value] []"
                     , ""
                     , unlines results
                     ]
@@ -98,7 +107,8 @@ generateViewFromType mod t =
                 |> Result.map
                     (\results ->
                         unlines
-                            [ "Html.table [] "
+                            [ "Html.table [] ["
+                            , indent <| "Html.caption [] [Html.text \"" ++ typeToString t ++ "\"], Html.tbody [] "
                             , indent <|
                                 asList
                                     (List.map
@@ -114,14 +124,21 @@ generateViewFromType mod t =
                                         )
                                         results
                                     )
+                            , "]"
                             ]
                     )
 
         TypeRef "Int" [] ->
-            Ok "(Html.text << String.fromInt)"
+            Ok "viewInt"
 
         TypeRef "Bool" [] ->
             Ok "viewBool"
+
+        TypeRef "String" [] ->
+            Ok "viewString"
+
+        TypeRef "Float" [] ->
+            Ok "viewFloat"
 
         TypeRef "List" [ content ] ->
             generateViewFromType mod content
@@ -130,12 +147,6 @@ generateViewFromType mod t =
         TypeRef "Maybe" [ content ] ->
             generateViewFromType mod content
                 |> Result.map (\f -> "viewMaybe " ++ f)
-
-        TypeRef "String" [] ->
-            Ok "(\\str -> Html.div [Html.Attributes.class \"elm-derive-string\"] [Html.text str])"
-
-        TypeRef "Float" [] ->
-            Ok "(Html.text << String.fromFloat)"
 
         TypeRef name [] ->
             if List.isEmpty (List.filter (\member -> moduleMemberName member == name) mod.members) then

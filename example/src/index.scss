@@ -1,0 +1,12 @@
+td {
+  border: solid 1px black;
+  padding: 0.5em;
+}
+
+tr:nth-child(odd) {
+  background-color: white;
+}
+
+tr:nth-child(even) {
+  background-color: rgba(240, 240, 250, 1);
+}
