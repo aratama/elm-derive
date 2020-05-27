@@ -60,12 +60,12 @@ generateMember mod member =
                     True
             in
             if recursive then
-                case typeDef.body of
+                case typeDef.variants of
                     [] ->
                         Err [ "generateMember" ]
 
                     v :: vs ->
-                        typeDef.body
+                        typeDef.variants
                             |> concatResults
                                 (\variant ->
                                     concatResults (generateType mod) variant.fields
@@ -108,7 +108,7 @@ generateMember mod member =
                     -- select non-recursive variants
                     nonRecursiveVariants : List Variant
                     nonRecursiveVariants =
-                        List.filter (\variant -> List.all (\field -> field /= TypeSegmentType (TypeSegment typeDef.head)) variant.fields) typeDef.body
+                        List.filter (\variant -> List.all (\field -> field /= TypeRef typeDef.name []) variant.fields) typeDef.variants
                 in
                 case List.head nonRecursiveVariants of
                     Nothing ->
@@ -137,51 +137,27 @@ generateType mod t =
                                 ]
                     )
 
-        TypeSegmentType segmentTree ->
-            let
-                go seg =
-                    case seg of
-                        TypeSegment segment ->
-                            case segment of
-                                "Int" ->
-                                    Ok "generateInt"
+        TypeRef "Int" [] ->
+            Ok "generateInt"
 
-                                "Bool" ->
-                                    Ok "generateBool"
+        TypeRef "Bool" [] ->
+            Ok "generateBool"
 
-                                "Float" ->
-                                    Ok "generateFloat"
+        TypeRef "Float" [] ->
+            Ok "generateFloat"
 
-                                "String" ->
-                                    Ok "generateString"
+        TypeRef "String" [] ->
+            Ok "generateString"
 
-                                _ ->
-                                    case findType segment mod of
-                                        Nothing ->
-                                            Err [ "Unsupported type in TypeSegment" ]
+        TypeRef "List" [ content ] ->
+            generateType mod content
+                |> Result.map
+                    (\s ->
+                        "Random.andThen (\\n -> Random.list (3 + n) (" ++ s ++ ")) (Random.int 0 7)"
+                    )
 
-                                        Just _ ->
-                                            Ok <| "generate" ++ segment
+        TypeRef "Maybe" [ content ] ->
+            Ok "Random.constant Nothing"
 
-                        TypeSegmentList segments ->
-                            case segments of
-                                [ TypeSegment "Float" ] ->
-                                    Ok "generateFloat"
-
-                                [ x ] ->
-                                    go x
-
-                                [ TypeSegment "List", target ] ->
-                                    generateType mod (TypeSegmentType target)
-                                        |> Result.map
-                                            (\s ->
-                                                "Random.andThen (\\n -> Random.list (3 + n) (" ++ s ++ ")) (Random.int 0 7)"
-                                            )
-
-                                [ TypeSegment "Maybe", _ ] ->
-                                    Ok "Random.constant Nothing"
-
-                                _ ->
-                                    Err [ "Unsuported Type in TypeSegmentList " ]
-            in
-            go segmentTree
+        _ ->
+            Ok "Generaor TODO:  Unsuported Type in TypeSegmentList "

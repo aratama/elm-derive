@@ -57,7 +57,7 @@ nameAndType =
         |. skip
         |. symbol ":"
         |. skip
-        |= topLevelTypeParser
+        |= lazy (\_ -> typeParser)
         |. skip
 
 
@@ -79,7 +79,7 @@ typeHead =
 
 typeAlias : Parser TypeAliasDef
 typeAlias =
-    succeed (\head body -> { head = head, body = body })
+    succeed (\name body -> { name = name, body = body })
         |. keyword "alias"
         |. skip
         |= typeNameSegment
@@ -106,7 +106,7 @@ record =
 
 typeMember : Parser TypeDef
 typeMember =
-    succeed (\head body -> { head = head, body = body })
+    succeed (\name variants -> { name = name, variants = variants })
         |= typeNameSegment
         |. skip
         |. symbol "="
@@ -119,43 +119,48 @@ variant =
     succeed Variant
         |= typeNameSegment
         |. skip
-        |= many (typeParser |. skip)
+        |= many typeArgument
 
 
 typeParser : Parser Type
 typeParser =
     oneOf
-        [ map RecordType record
-        , map TypeSegmentType typeSegment
+        [ -- { a : A }
+          map RecordType record
+        , -- (List String)
+          typeSegmentList
+        , -- List String
+          succeed TypeRef
+            |= typeNameSegment
+            |. skip
+            |= many typeArgument
         ]
 
 
-topLevelTypeParser : Parser Type
-topLevelTypeParser =
-    lazy <|
-        \() ->
-            oneOf
-                [ map (TypeSegmentType << TypeSegmentList) typeSegmentList
-                , Parser.map (TypeSegmentType << TypeSegmentList) <| oneOrMore typeSegment
-                , map (TypeSegmentType << TypeSegment) typeNameSegment
-                , map RecordType record
-                ]
-
-
-typeSegment : Parser TypeSegment
-typeSegment =
+typeArgument : Parser Type
+typeArgument =
     oneOf
-        [ map TypeSegmentList typeSegmentList
-        , map TypeSegment typeNameSegment
+        [ -- { a : A }
+          map RecordType record
+        , -- (List String)
+          typeSegmentList
+        , -- List String
+          succeed (\x -> TypeRef x [])
+            |= typeNameSegment
         ]
 
 
-typeSegmentList : Parser (List TypeSegment)
+typeSegmentSequence : Parser (List Type)
+typeSegmentSequence =
+    oneOrMore typeArgument
+
+
+typeSegmentList : Parser Type
 typeSegmentList =
     succeed identity
         |. symbol "("
         |. skip
-        |= oneOrMore (lazy <| \() -> typeSegment)
+        |= (lazy <| \() -> typeParser)
         |. symbol ")"
         |. skip
 

@@ -18,14 +18,14 @@ type alias TypeVariable =
 
 
 type alias TypeAliasDef =
-    { head : TypeNameHead
+    { name : TypeNameHead
     , body : Type
     }
 
 
 type alias TypeDef =
-    { head : TypeNameHead
-    , body : List Variant
+    { name : TypeNameHead
+    , variants : List Variant
     }
 
 
@@ -48,7 +48,7 @@ type TypeSegment
 
 type Type
     = RecordType Record
-    | TypeSegmentType TypeSegment
+    | TypeRef String (List Type)
 
 
 type alias Variant =
@@ -105,10 +105,10 @@ findType name mod =
                 (\member ->
                     case member of
                         TypeAliasMember typeAlias ->
-                            typeAlias.head == name
+                            typeAlias.name == name
 
                         TypeMember typeDef ->
-                            typeDef.head == name
+                            typeDef.name == name
                 )
                 mod.members
     in
@@ -119,7 +119,11 @@ moduleMemberName : ModuleMember -> String
 moduleMemberName member =
     case member of
         TypeAliasMember ta ->
-            ta.head
+            ta.name
 
         TypeMember t ->
-            t.head
+            t.name
+
+
+typeToString _ =
+    "typeToString TODO"

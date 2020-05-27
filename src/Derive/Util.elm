@@ -25,14 +25,12 @@ toErrors =
 
 asList : List String -> String
 asList list =
-    (case list of
+    case list of
         x :: xs ->
-            "[ " ++ x ++ "\n" ++ unlines (List.map (\y -> ", " ++ y) xs)
+            "[ " ++ x ++ "\n" ++ unlines (List.map (\y -> ", " ++ y) xs) ++ "\n]"
 
         [] ->
-            ""
-    )
-        ++ "\n]"
+            "[]"
 
 
 unlines : List String -> String

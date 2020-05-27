@@ -17,7 +17,7 @@ generateEq mod =
                     Ok "TODO"
 
                 TypeMember t ->
-                    t.body
+                    t.variants
                         |> concatResults
                             (\variant ->
                                 Ok <|
@@ -53,13 +53,11 @@ generateEqFromType t =
         RecordType record ->
             Ok "TODO"
 
-        TypeSegmentType segs ->
-            case segs of
-                TypeSegmentList [ TypeSegment "Int" ] ->
-                    Ok "(==)"
+        TypeRef "Int" [] ->
+            Ok "(==)"
 
-                TypeSegmentList [ TypeSegment "String" ] ->
-                    Ok "(==)"
+        TypeRef "String" [] ->
+            Ok "(==)"
 
-                _ ->
-                    Ok "TODO"
+        _ ->
+            Ok "TODO"

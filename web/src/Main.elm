@@ -39,6 +39,8 @@ module TodoList.Type exposing (..)
 import Maybe exposing (..)
 import Dict exposing (..)
 
+type alias Names = List String
+
 type alias TodoList =
     { tasks : List Task
     , field : String

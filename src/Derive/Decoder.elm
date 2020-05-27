@@ -54,13 +54,38 @@ fieldRecodeSequence mod fields =
 generateDecoderFromType : Module -> Type -> Result Error String
 generateDecoderFromType mod ty =
     case ty of
-        TypeSegmentType segment ->
-            case segment of
-                TypeSegment seg ->
-                    decoderFromTypeName mod [ TypeSegment seg ]
+        TypeRef name args ->
+            case TypeRef name args of
+                TypeRef "Int" [] ->
+                    Ok
+                        "Json.Decode.int"
 
-                TypeSegmentList segs ->
-                    decoderFromTypeName mod segs
+                TypeRef "String" [] ->
+                    Ok
+                        "Json.Decode.string"
+
+                TypeRef "Float" [] ->
+                    Ok
+                        "Json.Decode.float"
+
+                TypeRef "Bool" [] ->
+                    Ok
+                        "Json.Decode.bool"
+
+                TypeRef "Dict" [ TypeRef "String" [] ] ->
+                    generateDecoderFromType mod (TypeRef "String" []) |> Result.map (\t -> "(Json.Decode.dict identity " ++ t ++ ")")
+
+                TypeRef "List" [ contntType ] ->
+                    generateDecoderFromType mod contntType |> Result.map (\t -> "(Json.Decode.list " ++ t ++ ")")
+
+                TypeRef "Maybe" [ contntType ] ->
+                    generateDecoderFromType mod contntType |> Result.map (\t -> "(Json.Decode.maybe " ++ t ++ ")")
+
+                TypeRef typeName [] ->
+                    Ok <| "decode" ++ typeName
+
+                _ ->
+                    Err [ "Unsupported Data Type: `" ++ typeToString name ++ "`" ]
 
         RecordType fields ->
             let
@@ -104,13 +129,13 @@ generateDecoderFromModuleMember mod member =
         TypeMember typeMember ->
             let
                 decoderName =
-                    "decode" ++ typeMember.head
+                    "decode" ++ typeMember.name
 
                 singleVariants =
-                    List.filter (\variant -> List.length variant.fields == 0) typeMember.body
+                    List.filter (\variant -> List.length variant.fields == 0) typeMember.variants
 
                 variantsHasFields =
-                    List.filter (\variant -> 0 < List.length variant.fields) typeMember.body
+                    List.filter (\variant -> 0 < List.length variant.fields) typeMember.variants
 
                 branches =
                     List.concat
@@ -173,7 +198,7 @@ generateDecoderFromModuleMember mod member =
             in
             Ok <|
                 unlines
-                    [ decoderName ++ " : Json.Decode.Decoder " ++ typeMember.head
+                    [ decoderName ++ " : Json.Decode.Decoder " ++ typeMember.name
                     , decoderName
                         ++ " = "
                         ++ (if List.length branches == 1 then
@@ -194,7 +219,7 @@ generateDecoderFromTypeAlias : Module -> TypeAliasDef -> Result Error String
 generateDecoderFromTypeAlias mod alias =
     let
         encoderName =
-            "decode" ++ alias.head
+            "decode" ++ alias.name
 
         decoder =
             case generateDecoderFromType mod alias.body of
@@ -214,15 +239,15 @@ generateDecoderFromTypeAlias mod alias =
                     Ok <|
                         unlines
                             [ "decode"
-                                ++ alias.head
+                                ++ alias.name
                                 ++ " : Json.Decode.Decoder "
-                                ++ alias.head
+                                ++ alias.name
                             , "decode"
-                                ++ alias.head
+                                ++ alias.name
                                 ++ " = Json.Decode.map"
                                 ++ String.fromInt (List.length record)
                                 ++ " "
-                                ++ alias.head
+                                ++ alias.name
                             , indent seq
                             , ""
                             ]
@@ -230,7 +255,7 @@ generateDecoderFromTypeAlias mod alias =
         _ ->
             Ok <|
                 unlines
-                    [ encoderName ++ " : Json.Decode.Decoder " ++ alias.head
+                    [ encoderName ++ " : Json.Decode.Decoder " ++ alias.name
                     , encoderName ++ " = " ++ decoder
                     , ""
                     ]

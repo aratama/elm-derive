@@ -29,7 +29,7 @@ generateShow mod =
                                 )
 
                     TypeMember tm ->
-                        tm.body
+                        tm.variants
                             |> concatResults
                                 (\variant ->
                                     concatResults generateShowFromType variant.fields
@@ -39,8 +39,8 @@ generateShow mod =
                             |> Result.map
                                 (\results ->
                                     unlines
-                                        [ "show" ++ tm.head ++ " : " ++ tm.head ++ " -> String"
-                                        , "show" ++ tm.head ++ " value = case value of"
+                                        [ "show" ++ tm.name ++ " : " ++ tm.name ++ " -> String"
+                                        , "show" ++ tm.name ++ " value = case value of"
                                         , indent <|
                                             unlines <|
                                                 List.map
@@ -86,13 +86,11 @@ generateShowFromType t =
                             ++ " ++ \" }\""
                     )
 
-        TypeSegmentType segs ->
-            case segs of
-                TypeSegmentList [ TypeSegment "Int" ] ->
-                    Ok "String.fromInt"
+        TypeRef "Int" [] ->
+            Ok "String.fromInt"
 
-                TypeSegmentList [ TypeSegment "String" ] ->
-                    Ok "identity"
+        TypeRef "String" [] ->
+            Ok "identity"
 
-                _ ->
-                    Ok "TODO"
+        _ ->
+            Ok "TODO"
