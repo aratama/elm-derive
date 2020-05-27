@@ -40,8 +40,3 @@ view maybeModel =
                 [ Html.h1 [] [ Html.text "Todo List" ]
                 , TodoList.Derive.viewModel model
                 ]
-
-
-viewTask : TodoList.Task -> Html.Html msg
-viewTask task =
-    Html.li [] [ Html.text <| String.fromInt task.id ]

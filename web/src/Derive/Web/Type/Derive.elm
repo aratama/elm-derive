@@ -6,32 +6,52 @@ import Dict
 import Json.Encode
 import Json.Decode
 import Random
+import Html
+import Html.Attributes
 import Derive.Web.Type exposing (..)
 
-viewModel : Model -> Html msg
+viewList : (a -> Html.Html msg) -> List a -> Html.Html msg
+viewList f xs = Html.table [] [Html.caption [] [Html.text "List"], Html.tbody [] (List.indexedMap (\i x -> Html.tr [] [ Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]   ]) xs)]
+
+viewMaybe : (a -> Html.Html msg) -> Maybe a -> Html.Html msg
+viewMaybe f m = case m of 
+    Nothing -> Html.div [] [Html.text "null"]
+    Just a -> f a
+
+viewBool : Bool -> Html.Html msg
+viewBool value = Html.input [Html.Attributes.value <| if value then "True" else "False"] []
+
+viewInt : Int -> Html.Html msg
+viewInt value = Html.input [Html.Attributes.value <| String.fromInt value] []
+
+viewString : String -> Html.Html msg
+viewString value = Html.input [Html.Attributes.value value] []
+
+viewFloat : Float -> Html.Html msg
+viewFloat value = Html.input [Html.Attributes.value <| String.fromFloat value] []
+
+viewModel : Model -> Html.Html msg
 viewModel value = 
-    Html.table [] 
-        [     [ Html.tr []
-            ,     [ Html.td [] [Html.text "source"]
-                , Html.td [] [Html.text (\str -> Html.div [Html.Attributes.class "elm-derive-string"] [Html.text str]) source]
-                ]
+    Html.table [] [
+        Html.caption [] [Html.text "typeToString TODO"], Html.tbody [] 
+        [ Html.tr []
+            [ Html.td [] [Html.text <| "source"]
+            , Html.td [] [viewString value.source]
             ]
-        ,     [ Html.tr []
-            ,     [ Html.td [] [Html.text "encoderVisible"]
-                , Html.td [] [Html.text Html.text encoderVisible]
-                ]
+        , Html.tr []
+            [ Html.td [] [Html.text <| "encoderVisible"]
+            , Html.td [] [viewBool value.encoderVisible]
             ]
-        ,     [ Html.tr []
-            ,     [ Html.td [] [Html.text "decoderVisible"]
-                , Html.td [] [Html.text Html.text decoderVisible]
-                ]
+        , Html.tr []
+            [ Html.td [] [Html.text <| "decoderVisible"]
+            , Html.td [] [viewBool value.decoderVisible]
             ]
-        ,     [ Html.tr []
-            ,     [ Html.td [] [Html.text "loadStorageVisible"]
-                , Html.td [] [Html.text Html.text loadStorageVisible]
-                ]
+        , Html.tr []
+            [ Html.td [] [Html.text <| "loadStorageVisible"]
+            , Html.td [] [viewBool value.loadStorageVisible]
             ]
         ]
+    ]
 
 
 
@@ -44,7 +64,7 @@ generateInt : Random.Generator Int
 generateInt = Random.int 0 100
 
 generateString : Random.Generator String 
-generateString = Random.uniform "a" ["b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m"]
+generateString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "GOlf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
 
 generateFloat : Random.Generator Float
 generateFloat = Random.float 0 1

@@ -11,7 +11,7 @@ import Html.Attributes
 import TodoList exposing (..)
 
 viewList : (a -> Html.Html msg) -> List a -> Html.Html msg
-viewList f xs = Html.table [] (List.indexedMap (\i x -> Html.tr [] [ Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]   ]) xs)
+viewList f xs = Html.table [] [Html.caption [] [Html.text "List"], Html.tbody [] (List.indexedMap (\i x -> Html.tr [] [ Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]   ]) xs)]
 
 viewMaybe : (a -> Html.Html msg) -> Maybe a -> Html.Html msg
 viewMaybe f m = case m of 

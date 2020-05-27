@@ -1,5 +1,5 @@
 td {
-  border: solid 1px black;
+  border: solid 1px dimgray;
   padding: 0.5em;
 }
 
@@ -9,4 +9,12 @@ tr:nth-child(odd) {
 
 tr:nth-child(even) {
   background-color: rgba(240, 240, 250, 1);
+}
+
+input {
+  width: 100%;
+}
+
+table {
+  border-collapse: collapse;
 }

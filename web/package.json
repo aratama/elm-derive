@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "elm-test",
-    "start": "parcel ./src/index.html",
+    "start": "npm run build && parcel ./src/index.html",
     "build": "cd ../cli && npm run build && cd ../web && node ../bin/index.js src/Derive/Web/Type.elm && parcel build ./src/index.html"
   },
   "author": "",
