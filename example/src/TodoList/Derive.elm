@@ -6,9 +6,63 @@ import Dict
 import Json.Encode
 import Json.Decode
 import Random
+import Html
+import Html.Attributes
 import TodoList exposing (..)
 
--- Todo
+viewList : (a -> Html.Html msg) -> List a -> Html.Html msg
+viewList f xs = Html.ul [] []
+
+viewMaybe : (a -> Html.Html msg) -> Maybe a -> Html.Html msg
+viewMaybe f m = case m of 
+    Nothing -> Html.div [] [Html.text "null"]
+    Just a -> f a
+
+viewBool : Bool -> Html.Html msg
+viewBool value = Html.div [] [Html.text <| if value then "True" else "False"]
+
+viewTask : Task -> Html.Html msg
+viewTask value = 
+    Html.table [] 
+        [ Html.tr []
+            [ Html.td [] [Html.text <| "description"]
+            , Html.td [] [(\str -> Html.div [Html.Attributes.class "elm-derive-string"] [Html.text str]) value.description]
+            ]
+        , Html.tr []
+            [ Html.td [] [Html.text <| "completed"]
+            , Html.td [] [viewBool value.completed]
+            ]
+        , Html.tr []
+            [ Html.td [] [Html.text <| "edits"]
+            , Html.td [] [viewMaybe (\str -> Html.div [Html.Attributes.class "elm-derive-string"] [Html.text str]) value.edits]
+            ]
+        , Html.tr []
+            [ Html.td [] [Html.text <| "id"]
+            , Html.td [] [(Html.text << String.fromInt) value.id]
+            ]
+        ]
+
+viewModel : Model -> Html.Html msg
+viewModel value = 
+    Html.table [] 
+        [ Html.tr []
+            [ Html.td [] [Html.text <| "tasks"]
+            , Html.td [] [viewList viewTask value.tasks]
+            ]
+        , Html.tr []
+            [ Html.td [] [Html.text <| "field"]
+            , Html.td [] [(\str -> Html.div [Html.Attributes.class "elm-derive-string"] [Html.text str]) value.field]
+            ]
+        , Html.tr []
+            [ Html.td [] [Html.text <| "uid"]
+            , Html.td [] [(Html.text << String.fromInt) value.uid]
+            ]
+        , Html.tr []
+            [ Html.td [] [Html.text <| "visibility"]
+            , Html.td [] [(\str -> Html.div [Html.Attributes.class "elm-derive-string"] [Html.text str]) value.visibility]
+            ]
+        ]
+
 
 
 -- sample data geenerators ----------------------------------"

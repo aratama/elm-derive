@@ -6,8 +6,15 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "cd ../cli && npm run build && cd ../example && node ../bin/index.js src/TodoList.elm && elm make src/TodoList.elm src/TodoList/Derive.elm",
-    "start": "elm reactor"
+    "start": "npm run build && parcel src/index.html"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "parcel-bundler": "^1.12.4"
+  },
+  "devDependencies": {
+    "elm-hot": "^1.1.4",
+    "node-elm-compiler": "^5.0.4"
+  }
 }

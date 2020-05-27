@@ -159,5 +159,12 @@ generateType mod t =
         TypeRef "Maybe" [ content ] ->
             Ok "Random.constant Nothing"
 
+        TypeRef name [] ->
+            if List.isEmpty (List.filter (\member -> moduleMemberName member == name) mod.members) then
+                Err [ "Type not found: " ++ name ]
+
+            else
+                Ok <| "generate" ++ name
+
         _ ->
             Ok "Generaor TODO:  Unsuported Type in TypeSegmentList "

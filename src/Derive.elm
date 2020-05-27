@@ -28,6 +28,8 @@ header mod =
         , "import Json.Encode"
         , "import Json.Decode"
         , "import Random"
+        , "import Html"
+        , "import Html.Attributes"
         , "import " ++ String.join "." mod.name ++ " exposing (..)"
         , ""
         ]

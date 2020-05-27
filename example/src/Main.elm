@@ -38,7 +38,7 @@ view maybeModel =
         Just model ->
             Html.article []
                 [ Html.h1 [] [ Html.text "Todo List" ]
-                , Html.ul [] (List.map viewTask model.tasks)
+                , TodoList.Derive.viewModel model
                 ]
 
 

@@ -56,7 +56,7 @@ generateViewModule mod =
                 |> Result.map
                     (\result ->
                         unlines
-                            [ "view" ++ name ++ " : " ++ name ++ " -> Html msg"
+                            [ "view" ++ name ++ " : " ++ name ++ " -> Html.Html msg"
                             , "view"
                                 ++ name
                                 ++ " value = "
@@ -66,7 +66,23 @@ generateViewModule mod =
                     )
         )
         mod.members
-        |> Result.map (\results -> unlines results)
+        |> Result.map
+            (\results ->
+                unlines
+                    [ "viewList : (a -> Html.Html msg) -> List a -> Html.Html msg"
+                    , "viewList f xs = Html.ul [] []"
+                    , ""
+                    , "viewMaybe : (a -> Html.Html msg) -> Maybe a -> Html.Html msg"
+                    , "viewMaybe f m = case m of "
+                    , "    Nothing -> Html.div [] [Html.text \"null\"]"
+                    , "    Just a -> f a"
+                    , ""
+                    , "viewBool : Bool -> Html.Html msg"
+                    , "viewBool value = Html.div [] [Html.text <| if value then \"True\" else \"False\"]"
+                    , ""
+                    , unlines results
+                    ]
+            )
 
 
 generateViewFromType : Module -> Type -> Result Error String
@@ -87,15 +103,14 @@ generateViewFromType mod t =
                                 asList
                                     (List.map
                                         (\{ field, fieldResult } ->
-                                            indent <|
-                                                asList
-                                                    [ "Html.tr []"
-                                                    , indent <|
-                                                        asList
-                                                            [ "Html.td [] [Html.text \"" ++ field.name ++ "\"]"
-                                                            , "Html.td [] [Html.text " ++ fieldResult ++ " " ++ field.name ++ "]"
-                                                            ]
-                                                    ]
+                                            unlines
+                                                [ "Html.tr []"
+                                                , indent <|
+                                                    asList
+                                                        [ "Html.td [] [Html.text <| \"" ++ field.name ++ "\"]"
+                                                        , "Html.td [] [" ++ fieldResult ++ " value." ++ field.name ++ "]"
+                                                        ]
+                                                ]
                                         )
                                         results
                                     )
@@ -106,10 +121,15 @@ generateViewFromType mod t =
             Ok "(Html.text << String.fromInt)"
 
         TypeRef "Bool" [] ->
-            Ok "Html.text"
+            Ok "viewBool"
 
-        TypeRef "List" [ _ ] ->
-            Ok "List <TODO>"
+        TypeRef "List" [ content ] ->
+            generateViewFromType mod content
+                |> Result.map (\f -> "viewList " ++ f)
+
+        TypeRef "Maybe" [ content ] ->
+            generateViewFromType mod content
+                |> Result.map (\f -> "viewMaybe " ++ f)
 
         TypeRef "String" [] ->
             Ok "(\\str -> Html.div [Html.Attributes.class \"elm-derive-string\"] [Html.text str])"
