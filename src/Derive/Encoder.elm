@@ -113,7 +113,7 @@ generateEncoderFromModuleMember mod member =
                                                 "(\"" ++ String.fromChar c ++ "\", " ++ encoder ++ " " ++ String.fromChar c ++ ")"
                                             )
                                             variant.fields
-                                            |> (::) ("(\"tag\", \"" ++ variant.name ++ "\")")
+                                            |> (::) ("(\"tag\", Json.Encode.string \"" ++ variant.name ++ "\")")
                                             |> asList
                                 in
                                 variant.name ++ " " ++ vars ++ " -> Json.Encode.object\n" ++ indent fields

@@ -88,9 +88,9 @@ generateMember mod member =
                                                                     "Random.map " ++ variant.name ++ " " ++ String.join " " fields
 
                                                                 else
-                                                                    "Random.map" ++ String.fromInt (List.length variant.fields) ++ " " ++ String.join " " fields
+                                                                    "Random.map" ++ String.fromInt (List.length variant.fields) ++ " " ++ variant.name ++ " " ++ String.join " " fields
                                                         in
-                                                        String.toLower variant.name ++ " = " ++ map
+                                                        String.toLower variant.name ++ " () = " ++ map
                                                     )
                                                     variantResults
                                         , "in"
@@ -99,7 +99,8 @@ generateMember mod member =
                                                 String.toLower v.name
 
                                             else
-                                                "Random.map2 Random.uniform " ++ String.toLower v.name ++ " [" ++ String.join ", " (List.map (String.toLower << .name) vs) ++ "]"
+                                                "Random.uniform " ++ String.toLower v.name ++ " [" ++ String.join ", " (List.map (String.toLower << .name) vs) ++ "]"
+                                        , indent <| indent "|> Random.andThen ((|>) ())"
                                         ]
                                 )
 

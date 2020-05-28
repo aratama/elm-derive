@@ -162,10 +162,26 @@ generateDecoderFromModuleMember mod member =
                                         unlines <|
                                             List.map
                                                 (\variant ->
+                                                    let
+                                                        fieldCount =
+                                                            List.length variant.fields
+
+                                                        map =
+                                                            case fieldCount of
+                                                                0 ->
+                                                                    ""
+
+                                                                1 ->
+                                                                    "Json.Decode.map"
+
+                                                                _ ->
+                                                                    "Json.Decode.map" ++ String.fromInt fieldCount
+                                                    in
                                                     "\""
                                                         ++ variant.name
                                                         ++ "\" -> "
-                                                        ++ "Json.Decode.object "
+                                                        ++ map
+                                                        ++ " "
                                                         ++ variant.name
                                                         ++ "\n"
                                                         ++ indent
@@ -192,6 +208,8 @@ generateDecoderFromModuleMember mod member =
                                                             )
                                                 )
                                                 variantsHasFields
+                                , indent <| indent <| "_ -> Json.Decode.fail (\"Unexpected tag name: \" ++ tag)"
+                                , indent ")"
                                 ]
                             ]
                         ]

@@ -11,7 +11,10 @@ import Html.Attributes
 import TodoList exposing (..)
 
 viewList : (a -> Html.Html msg) -> List a -> Html.Html msg
-viewList f xs = Html.table [] [Html.caption [] [Html.text "List"], Html.tbody [] (List.indexedMap (\i x -> Html.tr [] [ Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]   ]) xs)]
+viewList f xs = Html.table [] 
+    [ Html.caption [] [Html.text "List"]
+    , Html.tbody [] (List.indexedMap (\i x -> Html.tr [] [ Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]   ]) xs)
+    ]
 
 viewMaybe : (a -> Html.Html msg) -> Maybe a -> Html.Html msg
 viewMaybe f m = case m of 
@@ -43,10 +46,6 @@ viewTask value =
             , Html.td [] [viewBool value.completed]
             ]
         , Html.tr []
-            [ Html.td [] [Html.text <| "edits"]
-            , Html.td [] [viewMaybe viewString value.edits]
-            ]
-        , Html.tr []
             [ Html.td [] [Html.text <| "id"]
             , Html.td [] [viewInt value.id]
             ]
@@ -66,15 +65,25 @@ viewModel value =
             , Html.td [] [viewString value.field]
             ]
         , Html.tr []
-            [ Html.td [] [Html.text <| "uid"]
-            , Html.td [] [viewInt value.uid]
-            ]
-        , Html.tr []
-            [ Html.td [] [Html.text <| "visibility"]
-            , Html.td [] [viewString value.visibility]
+            [ Html.td [] [Html.text <| "tree"]
+            , Html.td [] [viewTree value.tree]
             ]
         ]
     ]
+
+viewTree : Tree -> Html.Html msg
+viewTree value = 
+    Html.div [Html.Attributes.class "elm-derive-type"] <|
+        case value of
+            Leaf a -> 
+                [ Html.div [Html.Attributes.class "elm-derive-variant"] [ Html.text "Leaf"]
+                , viewString a
+                ]
+            Branch a b -> 
+                [ Html.div [Html.Attributes.class "elm-derive-variant"] [ Html.text "Branch"]
+                , viewTree a
+                , viewTree b
+                ]
 
 
 
@@ -95,19 +104,26 @@ generateFloat = Random.float 0 1
 
 generateTask : Random.Generator Task
 generateTask = 
-    Random.map4 (\description completed edits id -> { description = description, completed = completed, edits = edits, id = id }) 
+    Random.map3 (\description completed id -> { description = description, completed = completed, id = id }) 
         (generateString)
         (generateBool)
-        ((Random.andThen (\n -> Random.uniform Nothing [Just n]) generateString))
         (generateInt)
 
 generateModel : Random.Generator Model
 generateModel = 
-    Random.map4 (\tasks field uid visibility -> { tasks = tasks, field = field, uid = uid, visibility = visibility }) 
+    Random.map3 (\tasks field tree -> { tasks = tasks, field = field, tree = tree }) 
         (Random.andThen (\n -> Random.list (3 + n) (generateTask)) (Random.int 0 7))
         (generateString)
-        (generateInt)
-        (generateString)
+        (generateTree)
+
+generateTree : Random.Generator Tree
+generateTree = 
+    let
+        leaf () = Random.map Leaf generateString
+        branch () = Random.map2 Branch generateTree generateTree
+    in
+        Random.uniform leaf [branch]
+            |> Random.andThen ((|>) ())
 
 -- encoders -------------------------------------------------------------
 
@@ -116,7 +132,6 @@ encodeTask
     = (\value -> Json.Encode.object 
         [ ("description", Json.Encode.string value.description)
         , ("completed", Json.Encode.bool value.completed)
-        , ("edits", (Maybe.withDefault Json.Encode.null << Maybe.map Json.Encode.string) value.edits)
         , ("id", Json.Encode.int value.id)
         ])
 
@@ -125,23 +140,44 @@ encodeModel
     = (\value -> Json.Encode.object 
         [ ("tasks", Json.Encode.list encodeTask value.tasks)
         , ("field", Json.Encode.string value.field)
-        , ("uid", Json.Encode.int value.uid)
-        , ("visibility", Json.Encode.string value.visibility)
+        , ("tree", encodeTree value.tree)
         ])
+
+encodeTree : Tree -> Json.Encode.Value
+encodeTree value
+    = case value of
+        Leaf a -> Json.Encode.object
+            [ ("tag", Json.Encode.string "Leaf")
+            , ("a", Json.Encode.string a)
+            ]
+        Branch a b -> Json.Encode.object
+            [ ("tag", Json.Encode.string "Branch")
+            , ("a", encodeTree a)
+            , ("b", encodeTree b)
+            ]
 
 -- decoders -------------------------------------------------------------
 
 decodeTask : Json.Decode.Decoder Task
-decodeTask = Json.Decode.map4 Task
+decodeTask = Json.Decode.map3 Task
     (Json.Decode.field "description" (Json.Decode.string))
     (Json.Decode.field "completed" (Json.Decode.bool))
-    (Json.Decode.field "edits" ((Json.Decode.maybe Json.Decode.string)))
     (Json.Decode.field "id" (Json.Decode.int))
 
 decodeModel : Json.Decode.Decoder Model
-decodeModel = Json.Decode.map4 Model
+decodeModel = Json.Decode.map3 Model
     (Json.Decode.field "tasks" ((Json.Decode.list decodeTask)))
     (Json.Decode.field "field" (Json.Decode.string))
-    (Json.Decode.field "uid" (Json.Decode.int))
-    (Json.Decode.field "visibility" (Json.Decode.string))
+    (Json.Decode.field "tree" (decodeTree))
+
+decodeTree : Json.Decode.Decoder Tree
+decodeTree = Json.Decode.field "tag" Json.Decode.string |> Json.Decode.andThen
+    (\tag -> case tag of
+        "Leaf" -> Json.Decode.map Leaf
+            (Json.Decode.field "a" (Json.Decode.string))
+        "Branch" -> Json.Decode.map2 Branch
+            (Json.Decode.field "a" (decodeTree))
+            (Json.Decode.field "b" (decodeTree))
+        _ -> Json.Decode.fail ("Unexpected tag name: " ++ tag)
+    )
 

@@ -5,7 +5,33 @@ import Derive.Type exposing (..)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Parser
+import Random
 import Test exposing (..)
+
+
+type Tree
+    = Leaf String
+    | Branch Tree Tree
+
+
+generateString : Random.Generator String
+generateString =
+    Random.uniform "Alpha" [ "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "GOlf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu" ]
+
+
+generateTree : Random.Generator Tree
+generateTree =
+    let
+        leaf : () -> Random.Generator Tree
+        leaf () =
+            Random.map Leaf generateString
+
+        branch : () -> Random.Generator Tree
+        branch () =
+            Random.map2 Branch generateTree generateTree
+    in
+    Random.uniform leaf [ branch ]
+        |> Random.andThen ((|>) ())
 
 
 suite : Test
