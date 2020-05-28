@@ -29,6 +29,7 @@ type alias Model =
     { tasks : List Task
     , field : String
     , tree : Tree
+    , maybe : Maybe String
     }
 
 

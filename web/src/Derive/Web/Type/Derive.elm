@@ -36,7 +36,7 @@ viewFloat value = Html.input [Html.Attributes.value <| String.fromFloat value] [
 viewModel : Model -> Html.Html msg
 viewModel value = 
     Html.table [] [
-        Html.caption [] [Html.text "typeToString TODO"], Html.tbody [] 
+        Html.caption [] [Html.text "Record"], Html.tbody [] 
         [ Html.tr []
             [ Html.td [] [Html.text <| "source"]
             , Html.td [] [viewString value.source]
@@ -71,6 +71,9 @@ generateString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "F
 
 generateFloat : Random.Generator Float
 generateFloat = Random.float 0 1
+
+generateList : Random.Generator a -> Random.Generator (List a)
+generateList gen = Random.andThen (\n -> Random.list (3 + n) gen) (Random.int 0 7)
 
 
 generateModel : Random.Generator Model

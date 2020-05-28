@@ -45,7 +45,7 @@ generateViewModule mod =
 
                                                                     body =
                                                                         unlines
-                                                                            [ "Html.div [Html.Attributes.class \"elm-variant-fields\"] "
+                                                                            [ "Html.div [Html.Attributes.class \"elm-derive-variant-fields\"] "
                                                                             , indent <| asList [ "Html.text \"" ++ variant.name ++ "\"" ]
                                                                             ]
                                                                 in
@@ -57,7 +57,7 @@ generateViewModule mod =
                                                                         (asList <|
                                                                             [ "Html.div [Html.Attributes.class \"elm-derive-variant\", Html.Attributes.class \"elm-derive-variant-" ++ String.fromInt variantIndex ++ "\"] [ Html.text \"" ++ variant.name ++ "\"]"
                                                                             , unlines
-                                                                                [ "Html.div [Html.Attributes.class \"elm-variant-fields\"]"
+                                                                                [ "Html.div [Html.Attributes.class \"elm-derive-variant-fields\"]"
                                                                                 , indent <| asList <| List.indexedMap (\fieldIndex field -> field ++ " " ++ String.fromChar (alphabet fieldIndex)) fields
                                                                                 ]
                                                                             ]
@@ -92,20 +92,20 @@ generateViewModule mod =
                     , ""
                     , "viewMaybe : (a -> Html.Html msg) -> Maybe a -> Html.Html msg"
                     , "viewMaybe f m = case m of "
-                    , "    Nothing -> Html.div [] [Html.text \"null\"]"
-                    , "    Just a -> f a"
+                    , "    Nothing -> Html.div [Html.Attributes.class \"elm-derive-maybe\"] [Html.text \"null\"]"
+                    , "    Just a -> Html.div [Html.Attributes.class \"elm-derive-maybe\"] [f a]"
                     , ""
                     , "viewBool : Bool -> Html.Html msg"
-                    , "viewBool value = Html.input [Html.Attributes.value <| if value then \"True\" else \"False\"] []"
+                    , "viewBool value = Html.div [Html.Attributes.class \"elm-derive-primitive\"] [Html.text <| if value then \"True\" else \"False\"]"
                     , ""
                     , "viewInt : Int -> Html.Html msg"
-                    , "viewInt value = Html.input [Html.Attributes.value <| String.fromInt value] []"
+                    , "viewInt value = Html.div [Html.Attributes.class \"elm-derive-primitive\"] [Html.text <| String.fromInt value]"
                     , ""
                     , "viewString : String -> Html.Html msg"
-                    , "viewString value = Html.input [Html.Attributes.value value] []"
+                    , "viewString value = Html.div [Html.Attributes.class \"elm-derive-primitive\"] [Html.text value]"
                     , ""
                     , "viewFloat : Float -> Html.Html msg"
-                    , "viewFloat value = Html.input [Html.Attributes.value <| String.fromFloat value] []"
+                    , "viewFloat value = Html.div [Html.Attributes.class \"elm-derive-primitive\"] [Html.text <| String.fromFloat value]"
                     , ""
                     , unlines results
                     ]
@@ -126,7 +126,7 @@ generateViewFromType mod t =
                     (\results ->
                         unlines
                             [ "Html.table [] ["
-                            , indent <| "Html.caption [] [], Html.tbody [] "
+                            , indent <| "Html.caption [] [Html.text \"Record\"], Html.tbody [] "
                             , indent <|
                                 asList
                                     (List.map

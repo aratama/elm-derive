@@ -25,6 +25,11 @@ generateString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "F
 generateFloat : Random.Generator Float
 generateFloat = Random.float 0 1
 
+generateList : Random.Generator a -> Random.Generator (List a)
+generateList gen = Random.andThen (\\n -> Random.list (3 + n) gen) (Random.int 0 7)
+
+generateMaybe : Random.Generator a -> Random.Generator (Maybe a)
+generateMaybe gen = Random.andThen (\\n -> Random.uniform Nothing [Just n]) gen
 """
                     , String.join "\n\n" results
                     ]
@@ -152,17 +157,11 @@ generateType mod t =
 
         TypeRef "List" [ content ] ->
             generateType mod content
-                |> Result.map
-                    (\s ->
-                        "Random.andThen (\\n -> Random.list (3 + n) (" ++ s ++ ")) (Random.int 0 7)"
-                    )
+                |> Result.map (\s -> "generateList (" ++ s ++ ")")
 
         TypeRef "Maybe" [ content ] ->
             generateType mod content
-                |> Result.map
-                    (\s ->
-                        "(Random.andThen (\\n -> Random.uniform Nothing [Just n]) " ++ s ++ ")"
-                    )
+                |> Result.map (\s -> "generateMaybe (" ++ s ++ ")")
 
         TypeRef name [] ->
             if List.isEmpty (List.filter (\member -> moduleMemberName member == name) mod.members) then
