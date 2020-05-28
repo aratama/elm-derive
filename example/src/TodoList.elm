@@ -28,4 +28,9 @@ type alias Task =
 type alias TodoList =
     { tasks : List Task
     , field : String
+    , dict : Dictionary
     }
+
+
+type alias Dictionary =
+    Dict String Int

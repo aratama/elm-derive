@@ -26,8 +26,9 @@ And you can use the following types as a field type:
 
 * Primitive Types (Int/Float/String/Bool)
 * Records
-* List
-* Maybe
+* List a
+* Maybe a
+* Dict String a
 
 elm-derive has a CLI. Try the following command in your terminal:
 
@@ -61,7 +62,12 @@ type Tree
     
 type Color = Red | Green | Blue
 
-type Vector = Vector { x: Float, y: Float }"""
+type Vector = Vector { x: Float, y: Float }
+
+type alias Grid = List (List Int)
+
+type alias Dictionary = Dict String Int 
+"""
 
 
 type alias Model =

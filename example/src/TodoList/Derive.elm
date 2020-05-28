@@ -25,7 +25,12 @@ encodeTodoList
     = (\value -> Json.Encode.object 
         [ ("tasks", (Json.Encode.list encodeTask) value.tasks)
         , ("field", Json.Encode.string value.field)
+        , ("dict", encodeDictionary value.dict)
         ])
+
+encodeDictionary : Dictionary -> Json.Encode.Value
+encodeDictionary
+    = (Json.Encode.dict identity Json.Encode.int)
 
 -- decoders -------------------------------------------------------------
 
@@ -36,9 +41,13 @@ decodeTask = Json.Decode.map3 Task
     (Json.Decode.field "completed" (Json.Decode.bool))
 
 decodeTodoList : Json.Decode.Decoder TodoList
-decodeTodoList = Json.Decode.map2 TodoList
+decodeTodoList = Json.Decode.map3 TodoList
     (Json.Decode.field "tasks" ((Json.Decode.list decodeTask)))
     (Json.Decode.field "field" (Json.Decode.string))
+    (Json.Decode.field "dict" (decodeDictionary))
+
+decodeDictionary : Json.Decode.Decoder Dictionary
+decodeDictionary = (Json.Decode.dict Json.Decode.int)
 
 
 
@@ -51,7 +60,7 @@ generateInt : Random.Generator Int
 generateInt = Random.int 0 100
 
 generateString : Random.Generator String 
-generateString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "GOlf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
+generateString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
 
 generateFloat : Random.Generator Float
 generateFloat = Random.float 0 1
@@ -62,6 +71,9 @@ generateList gen = Random.andThen (\n -> Random.list (3 + n) gen) (Random.int 0 
 generateMaybe : Random.Generator a -> Random.Generator (Maybe a)
 generateMaybe gen = Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
 
+generateDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
+generateDict gen = Random.map Dict.fromList (generateList (Random.map2 (\k v -> (k, v)) generateString gen))
+
 generateTask : Random.Generator Task
 generateTask = 
     Random.map3 (\id description completed -> { id = id, description = description, completed = completed }) 
@@ -71,9 +83,16 @@ generateTask =
 
 generateTodoList : Random.Generator TodoList
 generateTodoList = 
-    Random.map2 (\tasks field -> { tasks = tasks, field = field }) 
-        (generateList (generateTask))
+    Random.map3 (\tasks field dict -> { tasks = tasks, field = field, dict = dict }) 
+        ((generateList generateTask))
         (generateString)
+        (generateDictionary)
+
+generateDictionary : Random.Generator Dictionary
+generateDictionary = 
+    (generateDict generateInt)
+
+
 
 viewList : (a -> Html.Html msg) -> List a -> Html.Html msg
 viewList f xs = Html.table [] 
@@ -97,6 +116,12 @@ viewString value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html
 
 viewFloat : Float -> Html.Html msg
 viewFloat value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromFloat value]
+
+viewDict : (a -> Html.Html msg) -> Dict.Dict String a -> Html.Html msg
+viewDict f dict = Html.table [] 
+    [ Html.caption [] [Html.text "Dict"]
+    , Html.tbody [] (List.map (\(k, v) -> Html.tr [] [Html.td [] [Html.text k], Html.td [] [f v]]) (Dict.toList dict))
+    ]
 
 viewTask : Task -> Html.Html msg
 viewTask = 
@@ -129,6 +154,14 @@ viewTodoList =
             [ Html.td [] [Html.text <| "field"]
             , Html.td [] [viewString value.field]
             ]
+        , Html.tr []
+            [ Html.td [] [Html.text <| "dict"]
+            , Html.td [] [viewDictionary value.dict]
+            ]
         ]
     ])
+
+viewDictionary : Dictionary -> Html.Html msg
+viewDictionary = 
+    (viewDict viewInt)
 

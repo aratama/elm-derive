@@ -72,8 +72,8 @@ generateDecoderFromType mod ty =
                     Ok
                         "Json.Decode.bool"
 
-                TypeRef "Dict" [ TypeRef "String" [] ] ->
-                    generateDecoderFromType mod (TypeRef "String" []) |> Result.map (\t -> "(Json.Decode.dict identity " ++ t ++ ")")
+                TypeRef "Dict" [ TypeRef "String" [], content ] ->
+                    generateDecoderFromType mod content |> Result.map (\t -> "(Json.Decode.dict " ++ t ++ ")")
 
                 TypeRef "List" [ contntType ] ->
                     generateDecoderFromType mod contntType |> Result.map (\t -> "(Json.Decode.list " ++ t ++ ")")

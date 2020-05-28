@@ -2,6 +2,7 @@ module Example exposing (..)
 
 import Derive.Parser exposing (..)
 import Derive.Type exposing (..)
+import Dict
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Json.Decode
@@ -9,6 +10,16 @@ import Json.Encode
 import Parser
 import Random
 import Test exposing (..)
+
+
+generateList : Random.Generator a -> Random.Generator (List a)
+generateList gen =
+    Random.andThen (\n -> Random.list (3 + n) gen) (Random.int 0 7)
+
+
+generateDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
+generateDict gen =
+    Random.map Dict.fromList (generateList (Random.map2 (\k v -> ( k, v )) generateString gen))
 
 
 type Tree

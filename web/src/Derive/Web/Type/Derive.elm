@@ -41,7 +41,7 @@ generateInt : Random.Generator Int
 generateInt = Random.int 0 100
 
 generateString : Random.Generator String 
-generateString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "GOlf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
+generateString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
 
 generateFloat : Random.Generator Float
 generateFloat = Random.float 0 1
@@ -84,8 +84,8 @@ viewFloat : Float -> Html.Html msg
 viewFloat value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromFloat value]
 
 viewModel : Model -> Html.Html msg
-viewModel value = 
-    Html.table [] [
+viewModel = 
+    (\value -> Html.table [] [
         Html.caption [] [Html.text "Record"], Html.tbody [] 
         [ Html.tr []
             [ Html.td [] [Html.text <| "source"]
@@ -104,5 +104,5 @@ viewModel value =
             , Html.td [] [viewBool value.loadStorageVisible]
             ]
         ]
-    ]
+    ])
 

@@ -20,8 +20,8 @@ generateEncoderFromType mod target =
         TypeRef "Bool" [] ->
             Ok "Json.Encode.bool"
 
-        TypeRef "Dict" [ TypeRef "String" [] ] ->
-            generateEncoderFromType mod (TypeRef "String" []) |> Result.map (\t -> "(Json.Encode.dict identity " ++ t ++ ")")
+        TypeRef "Dict" [ TypeRef "String" [], content ] ->
+            generateEncoderFromType mod content |> Result.map (\t -> "(Json.Encode.dict identity " ++ t ++ ")")
 
         TypeRef "List" [ contntType ] ->
             generateEncoderFromType mod contntType |> Result.map (\t -> "(Json.Encode.list " ++ t ++ ")")
