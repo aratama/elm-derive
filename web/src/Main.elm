@@ -15,31 +15,31 @@ import SyntaxHighlight
 
 sampleSource : String
 sampleSource =
-    """-- # Elm Encoder/Decoder Auto Generator (Prototype)
--- 
--- Put your great type definitions below.
--- This generator supports a subset of Elm syntax.
--- Note that you can define only type aliases of object as the module member.
---
--- And you can use the following types as a field type:
---
--- * Primitive Types (Int/Float/String/Bool)
--- * List a
--- * Dict String a 
--- * Maybe a
--- 
--- elm-derive has a CLI. Try the following command in your terminal:
--- 
--- $ npx aratama/elm-derive src/Type/TodoList.Elm
--- 
--- Have fun at Elm programming!
+    """{- 
+# elm-derive 
 
-module TodoList.Type exposing (..)
+elm-derive is an experimental encoder/decoder generator for Elm. 
+Put your great type definitions below.
+This generator supports a subset of Elm syntax.
+
+And you can use the following types as a field type:
+
+* Primitive Types (Int/Float/String/Bool)
+* Records
+* List
+* Maybe
+
+elm-derive has a CLI. Try the following command in your terminal:
+
+    $ npx aratama/elm-derive src/Your/Some/Module.Elm
+
+Have fun at Meta-programming in Elm! 
+-}
+
+module Example exposing (..)
 
 import Maybe exposing (..)
 import Dict exposing (..)
-
-type alias Names = List String
 
 type alias TodoList =
     { tasks : List Task

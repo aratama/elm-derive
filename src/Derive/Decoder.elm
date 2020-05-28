@@ -103,11 +103,8 @@ generateDecoderFromType mod ty =
 
                 Ok seq ->
                     let
-                        mapFunctionName =
-                            "Json.Decode.map" ++ String.fromInt (List.length fields)
-
                         decoder =
-                            "(" ++ mapFunctionName ++ " (\\" ++ String.join " " vars ++ " -> { " ++ String.join ", " assignments ++ " }) " ++ seq ++ ")"
+                            "(" ++ mapFunction fields ++ " (\\" ++ String.join " " vars ++ " -> { " ++ String.join ", " assignments ++ " }) " ++ seq ++ ")"
                     in
                     Ok <|
                         if List.length fields == 1 then
@@ -118,6 +115,23 @@ generateDecoderFromType mod ty =
 
                         else
                             decoder
+
+
+mapFunction : List a -> String
+mapFunction fields =
+    let
+        fieldCount =
+            List.length fields
+    in
+    case fieldCount of
+        0 ->
+            ""
+
+        1 ->
+            "Json.Decode.map"
+
+        _ ->
+            "Json.Decode.map" ++ String.fromInt fieldCount
 
 
 generateDecoderFromModuleMember : Module -> ModuleMember -> Result Error String
@@ -162,25 +176,10 @@ generateDecoderFromModuleMember mod member =
                                         unlines <|
                                             List.map
                                                 (\variant ->
-                                                    let
-                                                        fieldCount =
-                                                            List.length variant.fields
-
-                                                        map =
-                                                            case fieldCount of
-                                                                0 ->
-                                                                    ""
-
-                                                                1 ->
-                                                                    "Json.Decode.map"
-
-                                                                _ ->
-                                                                    "Json.Decode.map" ++ String.fromInt fieldCount
-                                                    in
                                                     "\""
                                                         ++ variant.name
                                                         ++ "\" -> "
-                                                        ++ map
+                                                        ++ mapFunction variant.fields
                                                         ++ " "
                                                         ++ variant.name
                                                         ++ "\n"
@@ -249,12 +248,9 @@ generateDecoderFromTypeAlias mod alias =
     in
     case alias.body of
         RecordType record ->
-            case fieldRecodeSequence mod record of
-                Err err ->
-                    Err err
-
-                Ok seq ->
-                    Ok <|
+            fieldRecodeSequence mod record
+                |> Result.map
+                    (\seq ->
                         unlines
                             [ "decode"
                                 ++ alias.name
@@ -262,13 +258,19 @@ generateDecoderFromTypeAlias mod alias =
                                 ++ alias.name
                             , "decode"
                                 ++ alias.name
-                                ++ " = Json.Decode.map"
-                                ++ String.fromInt (List.length record)
-                                ++ " "
-                                ++ alias.name
+                                ++ " = "
+                                ++ (if List.isEmpty record then
+                                        "Json.Decode.succeed {}"
+
+                                    else
+                                        mapFunction record
+                                            ++ " "
+                                            ++ alias.name
+                                   )
                             , indent seq
                             , ""
                             ]
+                    )
 
         _ ->
             Ok <|

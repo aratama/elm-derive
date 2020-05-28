@@ -19,20 +19,13 @@ import Maybe exposing (..)
 
 
 type alias Task =
-    { description : String
+    { id : Int
+    , description : String
     , completed : Bool
-    , id : Int
     }
 
 
-type alias Model =
+type alias TodoList =
     { tasks : List Task
     , field : String
-    , tree : Tree
-    , maybe : Maybe String
     }
-
-
-type Tree
-    = Leaf String
-    | Branch Tree Tree

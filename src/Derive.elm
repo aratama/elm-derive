@@ -40,10 +40,10 @@ generate mod =
     List.foldl
         (Result.map2 (\a b -> b ++ "\n" ++ a ++ "\n"))
         (Ok <| header mod)
-        [ Derive.Html.generateViewModule mod
-        , Derive.Generator.generateGenerator mod
-        , Derive.Encoder.generateEncoder mod
+        [ Derive.Encoder.generateEncoder mod
         , Derive.Decoder.generateDecoder mod
+        , Derive.Generator.generateGenerator mod
+        , Derive.Html.generateViewModule mod
 
         --, Derive.Eq.generateEq mod
         --, Derive.Show.generateShow mod

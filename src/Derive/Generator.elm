@@ -4,6 +4,23 @@ import Derive.Type exposing (..)
 import Derive.Util exposing (..)
 
 
+mapFunction : List a -> String
+mapFunction fields =
+    let
+        fieldCount =
+            List.length fields
+    in
+    case fieldCount of
+        0 ->
+            ""
+
+        1 ->
+            "Random.map"
+
+        _ ->
+            "Random.map" ++ String.fromInt fieldCount
+
+
 generateGenerator : Module -> Result Error String
 generateGenerator mod =
     concatResults (generateTopLevel mod) mod.members
@@ -89,11 +106,8 @@ generateMember mod member =
                                                                 if List.length variant.fields == 0 then
                                                                     "Random.constant " ++ variant.name
 
-                                                                else if List.length variant.fields == 1 then
-                                                                    "Random.map " ++ variant.name ++ " " ++ String.join " " fields
-
                                                                 else
-                                                                    "Random.map" ++ String.fromInt (List.length variant.fields) ++ " " ++ variant.name ++ " " ++ String.join " " fields
+                                                                    mapFunction variant.fields ++ " " ++ variant.name ++ " " ++ String.join " " fields
                                                         in
                                                         String.toLower variant.name ++ " () = " ++ map
                                                     )
@@ -138,7 +152,7 @@ generateType mod t =
 
                         else
                             unlines
-                                [ "Random.map" ++ String.fromInt (List.length values) ++ " (\\" ++ (String.join " " <| List.map .name record) ++ " -> { " ++ (String.join ", " <| List.map (\f -> f.name ++ " = " ++ f.name) record) ++ " }) "
+                                [ mapFunction values ++ " (\\" ++ (String.join " " <| List.map .name record) ++ " -> { " ++ (String.join ", " <| List.map (\f -> f.name ++ " = " ++ f.name) record) ++ " }) "
                                 , indent <| unlines <| List.map (\v -> "(" ++ v ++ ")") values
                                 ]
                     )
