@@ -1,10 +1,9 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser
 import Html
 import Json.Decode
 import Json.Encode
-import Port
 import Random
 import TodoList exposing (..)
 import TodoList.Derive
@@ -14,7 +13,14 @@ type Msg
     = Generated TodoList
 
 
-main : Program Json.Encode.Value (Maybe TodoList) Msg
+type alias Model =
+    Maybe TodoList
+
+
+port save : Json.Encode.Value -> Cmd msg
+
+
+main : Program Json.Encode.Value Model Msg
 main =
     Browser.element
         { init =
@@ -26,23 +32,23 @@ main =
                     Ok todoList ->
                         ( Just todoList, Cmd.none )
         , view = view
-        , update =
-            \msg model ->
-                case msg of
-                    Generated initial ->
-                        ( Just initial, Port.save <| TodoList.Derive.encodeTodoList initial )
-        , subscriptions = \_ -> Sub.none
+        , update = update
+        , subscriptions = always Sub.none
         }
 
 
-view : Maybe TodoList -> Html.Html msg
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg _ =
+    case msg of
+        Generated todoList ->
+            ( Just todoList, save <| TodoList.Derive.encodeTodoList todoList )
+
+
+view : Model -> Html.Html msg
 view maybeTodoList =
     case maybeTodoList of
         Nothing ->
-            Html.text ""
+            Html.text "Loading..."
 
         Just todoList ->
-            Html.article []
-                [ Html.h1 [] [ Html.text "Todo List" ]
-                , TodoList.Derive.viewTodoList todoList
-                ]
+            TodoList.Derive.viewTodoList todoList
