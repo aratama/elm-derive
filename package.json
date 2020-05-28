@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/aratama/elm-derive/issues"
   },
-  "homepage": "https://github.com/aratama/elm-derive#readme"
+  "homepage": "https://github.com/aratama/elm-derive#readme",
+  "dependencies": {
+    "elm": "^0.19.1-3"
+  }
 }
