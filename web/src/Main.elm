@@ -34,6 +34,7 @@ elm-derive has a CLI. Try the following command in your terminal:
 
     $ npx aratama/elm-derive src/Your/Some/Module.Elm
 
+See https://github.com/aratama/elm-derive for more information.
 Have fun at Meta-programming in Elm! 
 -}
 

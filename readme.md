@@ -1,6 +1,12 @@
 # elm-derive
 
-WIP: JSON Encoder/Decoder code generator for Elm
+Experimental code generator for Elm.
+elm-derive generates following codes from type decralations written in Elm:
+
+* JSON Encoder
+* JSON Decoder
+* Random Data Generator  
+* View Function for HTML
 
 ## Demo
 
@@ -9,11 +15,10 @@ See https://elm-derive.netlify.app/
 ## Command Line Interface
 
 ```shell
-$ npx aratama/elm-derive src/TodoList/Type.elm
+$ npx aratama/elm-derive src/Your/Type/Decralation/Module.elm
 ```
 
-Hopefully this command will generates `src/TodoList/Type/Encode.elm`, `src/TodoList/Type/Decode.elm` and `src/TodoList/Type/LocalStorage.elm`.
-
+Hopefully this command will generates `src/Your/Type/Decralation/Module/Derive.elm`.
 
 ## TODO
 
