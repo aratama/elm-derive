@@ -6,7 +6,6 @@ import Derive.Eq
 import Derive.Generator
 import Derive.Html
 import Derive.Parser
-import Derive.Show
 import Derive.Type exposing (..)
 import Derive.Util exposing (..)
 import Parser
@@ -46,5 +45,4 @@ generate mod =
         , Derive.Html.generateViewModule mod
 
         --, Derive.Eq.generateEq mod
-        --, Derive.Show.generateShow mod
         ]

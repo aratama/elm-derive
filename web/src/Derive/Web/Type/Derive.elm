@@ -52,6 +52,9 @@ generateList gen = Random.andThen (\n -> Random.list (3 + n) gen) (Random.int 0 
 generateMaybe : Random.Generator a -> Random.Generator (Maybe a)
 generateMaybe gen = Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
 
+generateDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
+generateDict gen = Random.map Dict.fromList (generateList (Random.map2 (\k v -> (k, v)) generateString gen))
+
 generateModel : Random.Generator Model
 generateModel = 
     Random.map4 (\source encoderVisible decoderVisible loadStorageVisible -> { source = source, encoderVisible = encoderVisible, decoderVisible = decoderVisible, loadStorageVisible = loadStorageVisible }) 
@@ -59,6 +62,8 @@ generateModel =
         (generateBool)
         (generateBool)
         (generateBool)
+
+
 
 viewList : (a -> Html.Html msg) -> List a -> Html.Html msg
 viewList f xs = Html.table [] 
@@ -82,6 +87,12 @@ viewString value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html
 
 viewFloat : Float -> Html.Html msg
 viewFloat value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromFloat value]
+
+viewDict : (a -> Html.Html msg) -> Dict.Dict String a -> Html.Html msg
+viewDict f dict = Html.table [] 
+    [ Html.caption [] [Html.text "Dict"]
+    , Html.tbody [] (List.map (\(k, v) -> Html.tr [] [Html.td [] [Html.text k], Html.td [] [f v]]) (Dict.toList dict))
+    ]
 
 viewModel : Model -> Html.Html msg
 viewModel = 
