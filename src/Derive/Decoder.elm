@@ -85,7 +85,7 @@ generateDecoderFromType mod ty =
                     Ok <| "decode" ++ typeName
 
                 _ ->
-                    Err [ "Unsupported Data Type: `" ++ typeToString ty ++ "`" ]
+                    Err [ "Unsupported Data Type: generateDecoderFromType" ]
 
         RecordType fields ->
             let

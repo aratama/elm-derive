@@ -1,3 +1,9 @@
+html,
+body,
+* {
+  box-sizing: border-box;
+}
+
 td {
   border: solid 1px dimgray;
   padding: 0.5em;
@@ -12,7 +18,8 @@ tr:nth-child(even) {
 }
 
 input {
-  width: 100%;
+  width: calc(100% - 8px);
+  margin: 4px;
 }
 
 table {
@@ -20,7 +27,28 @@ table {
 }
 
 .elm-derive-type {
-  padding: 1em;
-  margin-left: 1em;
+  margin: 8px;
+  margin-left: 16px;
   border: solid 1px grey;
+}
+
+.elm-derive-variant {
+  margin-bottom: 4px;
+  padding: 4px;
+}
+
+.elm-derive-variant-0 {
+  background-color: rgb(182, 224, 192);
+}
+
+.elm-derive-variant-1 {
+  background-color: rgb(219, 204, 184);
+}
+
+.elm-derive-variant-2 {
+  background-color: rgb(189, 188, 236);
+}
+
+.elm-derive-variant-3 {
+  background-color: rgb(233, 179, 186);
 }

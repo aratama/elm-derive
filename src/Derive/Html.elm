@@ -2,6 +2,8 @@ module Derive.Html exposing (..)
 
 import Derive.Type exposing (..)
 import Derive.Util exposing (..)
+import Html.String as Html
+import Html.String.Attributes as Html
 
 
 generateViewModule : Module -> Result Error String
@@ -37,15 +39,28 @@ generateViewModule mod =
                                                     unlines <|
                                                         List.indexedMap
                                                             (\variantIndex { variant, fields } ->
+                                                                let
+                                                                    heading =
+                                                                        "Html.div [Html.Attributes.class \"elm-derive-variant\", Html.Attributes.class \"elm-derive-variant-" ++ String.fromInt variantIndex ++ "\"] []"
+
+                                                                    body =
+                                                                        unlines
+                                                                            [ "Html.div [Html.Attributes.class \"elm-variant-fields\"] "
+                                                                            , indent <| asList [ "Html.text \"" ++ variant.name ++ "\"" ]
+                                                                            ]
+                                                                in
                                                                 variant.name
                                                                     ++ " "
                                                                     ++ String.fromList (List.intersperse ' ' (alphabets (List.length fields)))
                                                                     ++ " -> \n"
                                                                     ++ indent
-                                                                        (asList
-                                                                            (("Html.div [Html.Attributes.class \"elm-derive-variant\"] [ Html.text \"" ++ variant.name ++ "\"]")
-                                                                                :: List.indexedMap (\fieldIndex field -> field ++ " " ++ String.fromChar (alphabet fieldIndex)) fields
-                                                                            )
+                                                                        (asList <|
+                                                                            [ "Html.div [Html.Attributes.class \"elm-derive-variant\", Html.Attributes.class \"elm-derive-variant-" ++ String.fromInt variantIndex ++ "\"] [ Html.text \"" ++ variant.name ++ "\"]"
+                                                                            , unlines
+                                                                                [ "Html.div [Html.Attributes.class \"elm-variant-fields\"]"
+                                                                                , indent <| asList <| List.indexedMap (\fieldIndex field -> field ++ " " ++ String.fromChar (alphabet fieldIndex)) fields
+                                                                                ]
+                                                                            ]
                                                                         )
                                                             )
                                                             variants
@@ -111,7 +126,7 @@ generateViewFromType mod t =
                     (\results ->
                         unlines
                             [ "Html.table [] ["
-                            , indent <| "Html.caption [] [Html.text \"" ++ typeToString t ++ "\"], Html.tbody [] "
+                            , indent <| "Html.caption [] [], Html.tbody [] "
                             , indent <|
                                 asList
                                     (List.map

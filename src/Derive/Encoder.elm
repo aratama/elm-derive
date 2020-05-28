@@ -45,7 +45,7 @@ generateEncoderFromType mod target =
             in
             case filtered of
                 [] ->
-                    Err <| [ "Unknown Data Type: `" ++ typeToString target ++ "`" ]
+                    Err <| [ "Unknown Data Type: `" ++ typeName ++ "`" ]
 
                 _ ->
                     Ok <| "encode" ++ typeName
@@ -64,7 +64,7 @@ generateEncoderFromType mod target =
                 |> Result.map (\fields -> "(\\value -> Json.Encode.object \n" ++ (indent <| indent <| asList fields) ++ ")")
 
         _ ->
-            Err <| [ "Unsupported Data Type: `" ++ typeToString target ++ "`" ]
+            Err <| [ "Unsupported Data Type at generateEncoderFromType" ]
 
 
 generateEncoderFromModuleMember : Module -> ModuleMember -> Result Error String

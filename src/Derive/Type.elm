@@ -123,8 +123,3 @@ moduleMemberName member =
 
         TypeMember t ->
             t.name
-
-
-typeToString : Type -> String
-typeToString _ =
-    "typeToString TODO"
