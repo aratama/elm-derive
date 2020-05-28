@@ -21,10 +21,10 @@ generateEncoderFromType mod target =
             Ok "Json.Encode.bool"
 
         TypeRef "Dict" [ TypeRef "String" [] ] ->
-            generateEncoderFromType mod (TypeRef "String" []) |> Result.map (\t -> "Json.Encode.dict identity " ++ t)
+            generateEncoderFromType mod (TypeRef "String" []) |> Result.map (\t -> "(Json.Encode.dict identity " ++ t ++ ")")
 
         TypeRef "List" [ contntType ] ->
-            generateEncoderFromType mod contntType |> Result.map (\t -> "Json.Encode.list " ++ t)
+            generateEncoderFromType mod contntType |> Result.map (\t -> "(Json.Encode.list " ++ t ++ ")")
 
         TypeRef "Maybe" [ contntType ] ->
             generateEncoderFromType mod contntType |> Result.map (\t -> "(Maybe.withDefault Json.Encode.null << Maybe.map " ++ t ++ ")")

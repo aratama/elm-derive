@@ -17,4 +17,7 @@ Hopefully this command will generates `src/TodoList/Type/Encode.elm`, `src/TodoL
 
 ## TODO
 
-* https://github.com/Bogdanp/elm-ast
+* support Dict
+* support Tuple
+* support Array
+* use https://github.com/Bogdanp/elm-ast ?

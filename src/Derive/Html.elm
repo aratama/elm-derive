@@ -32,23 +32,13 @@ generateViewModule mod =
                                 |> Result.map
                                     (\variants ->
                                         unlines
-                                            [ "Html.div [Html.Attributes.class \"elm-derive-type\"] <|"
+                                            [ "\\value -> Html.div [Html.Attributes.class \"elm-derive-type\"] <|"
                                             , indent "case value of"
                                             , indent <|
                                                 indent <|
                                                     unlines <|
                                                         List.indexedMap
                                                             (\variantIndex { variant, fields } ->
-                                                                let
-                                                                    heading =
-                                                                        "Html.div [Html.Attributes.class \"elm-derive-variant\", Html.Attributes.class \"elm-derive-variant-" ++ String.fromInt variantIndex ++ "\"] []"
-
-                                                                    body =
-                                                                        unlines
-                                                                            [ "Html.div [Html.Attributes.class \"elm-derive-variant-fields\"] "
-                                                                            , indent <| asList [ "Html.text \"" ++ variant.name ++ "\"" ]
-                                                                            ]
-                                                                in
                                                                 variant.name
                                                                     ++ " "
                                                                     ++ String.fromList (List.intersperse ' ' (alphabets (List.length fields)))
@@ -74,7 +64,7 @@ generateViewModule mod =
                             [ "view" ++ name ++ " : " ++ name ++ " -> Html.Html msg"
                             , "view"
                                 ++ name
-                                ++ " value = "
+                                ++ " = "
                             , indent result
                             , ""
                             ]
@@ -125,7 +115,7 @@ generateViewFromType mod t =
                 |> Result.map
                     (\results ->
                         unlines
-                            [ "Html.table [] ["
+                            [ "(\\value -> Html.table [] ["
                             , indent <| "Html.caption [] [Html.text \"Record\"], Html.tbody [] "
                             , indent <|
                                 asList
@@ -142,7 +132,7 @@ generateViewFromType mod t =
                                         )
                                         results
                                     )
-                            , "]"
+                            , "])"
                             ]
                     )
 
@@ -160,11 +150,11 @@ generateViewFromType mod t =
 
         TypeRef "List" [ content ] ->
             generateViewFromType mod content
-                |> Result.map (\f -> "viewList " ++ f)
+                |> Result.map (\f -> "(viewList " ++ f ++ ")")
 
         TypeRef "Maybe" [ content ] ->
             generateViewFromType mod content
-                |> Result.map (\f -> "viewMaybe " ++ f)
+                |> Result.map (\f -> "(viewMaybe " ++ f ++ ")")
 
         TypeRef name [] ->
             if List.isEmpty (List.filter (\member -> moduleMemberName member == name) mod.members) then

@@ -4,6 +4,8 @@ import Derive.Parser exposing (..)
 import Derive.Type exposing (..)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
+import Json.Decode
+import Json.Encode
 import Parser
 import Random
 import Test exposing (..)
@@ -32,6 +34,24 @@ generateTree =
     in
     Random.uniform leaf [ branch ]
         |> Random.andThen ((|>) ())
+
+
+type alias Grid =
+    List (List Int)
+
+
+encodeGrid : Grid -> Json.Encode.Value
+encodeGrid =
+    Json.Encode.list (Json.Encode.list Json.Encode.int)
+
+
+
+-- decoders -------------------------------------------------------------
+
+
+decodeGrid : Json.Decode.Decoder Grid
+decodeGrid =
+    Json.Decode.list (Json.Decode.list Json.Decode.int)
 
 
 suite : Test

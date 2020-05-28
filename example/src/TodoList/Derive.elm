@@ -23,7 +23,7 @@ encodeTask
 encodeTodoList : TodoList -> Json.Encode.Value
 encodeTodoList
     = (\value -> Json.Encode.object 
-        [ ("tasks", Json.Encode.list encodeTask value.tasks)
+        [ ("tasks", (Json.Encode.list encodeTask) value.tasks)
         , ("field", Json.Encode.string value.field)
         ])
 
@@ -99,8 +99,8 @@ viewFloat : Float -> Html.Html msg
 viewFloat value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromFloat value]
 
 viewTask : Task -> Html.Html msg
-viewTask value = 
-    Html.table [] [
+viewTask = 
+    (\value -> Html.table [] [
         Html.caption [] [Html.text "Record"], Html.tbody [] 
         [ Html.tr []
             [ Html.td [] [Html.text <| "id"]
@@ -115,20 +115,20 @@ viewTask value =
             , Html.td [] [viewBool value.completed]
             ]
         ]
-    ]
+    ])
 
 viewTodoList : TodoList -> Html.Html msg
-viewTodoList value = 
-    Html.table [] [
+viewTodoList = 
+    (\value -> Html.table [] [
         Html.caption [] [Html.text "Record"], Html.tbody [] 
         [ Html.tr []
             [ Html.td [] [Html.text <| "tasks"]
-            , Html.td [] [viewList viewTask value.tasks]
+            , Html.td [] [(viewList viewTask) value.tasks]
             ]
         , Html.tr []
             [ Html.td [] [Html.text <| "field"]
             , Html.td [] [viewString value.field]
             ]
         ]
-    ]
+    ])
 
