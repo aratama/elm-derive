@@ -157,7 +157,7 @@ generateDecoderFromTypeAlias mod alias =
         encoderName =
             "decode" ++ alias.name
 
-        decoder =
+        decoder_ =
             case generateDecoderFromType mod alias.body of
                 Err _ ->
                     "<<ERROR>>"
@@ -167,7 +167,8 @@ generateDecoderFromTypeAlias mod alias =
     in
     case alias.body of
         RecordType record ->
-            concatResults (generateDecoderFromType mod) (List.map .typeName record)
+            -- concatResults (generateDecoderFromType mod) (List.map .typeName record)
+            concatResults (\pair -> generateDecoderFromType mod pair.typeName |> Result.map (\decoder -> { pair = pair, decoder = decoder })) record
                 |> Result.map
                     (\seq ->
                         unlines
@@ -182,7 +183,11 @@ generateDecoderFromTypeAlias mod alias =
                                         "Json.Decode.succeed {}"
 
                                     else
-                                        mapFunction alias.name seq
+                                        -- mapFunction alias.name seq
+                                        unlines
+                                            [ "Json.Decode.succeed " ++ alias.name
+                                            , indent <| unlines <| List.map (\{ pair, decoder } -> "|> Json.Decode.Pipeline.required \"" ++ pair.name ++ "\" (" ++ decoder ++ ")") seq
+                                            ]
                                    )
                             , ""
                             ]
@@ -192,7 +197,7 @@ generateDecoderFromTypeAlias mod alias =
             Ok <|
                 unlines
                     [ encoderName ++ " : Json.Decode.Decoder " ++ alias.name
-                    , encoderName ++ " = " ++ decoder
+                    , encoderName ++ " = " ++ decoder_
                     , ""
                     ]
 

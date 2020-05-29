@@ -52,3 +52,27 @@ type alias Grid =
 
 type alias Dictionary =
     Dict String Int
+
+
+type alias Many =
+    { a : Int
+    , b : String
+    , c : Float
+    , d : Bool
+    , e : Int
+    , f : String
+    , g : Float
+    , h : Bool
+    , i : Int
+    , j : String
+    , k : Float
+    , l : Bool
+    , m : Int
+    , n : String
+    , o : Float
+    , p : Bool
+    , q : Int
+    , r : String
+    , s : Float
+    , t : Bool
+    }
