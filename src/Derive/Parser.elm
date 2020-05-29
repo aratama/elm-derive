@@ -1,8 +1,8 @@
-module Derive.Parser exposing (..)
+module Derive.Parser exposing (parser)
 
-import Derive.Type exposing (..)
+import Derive.Type exposing (Module, ModuleMember(..), ModuleName, NameAndType, Record, Type(..), TypeAliasDef, TypeDef, TypeName, Variant)
 import List
-import Parser exposing (..)
+import Parser exposing ((|.), (|=), Nestable(..), Parser, Problem(..), Step(..), Trailing(..), chompWhile, end, getOffset, keyword, lazy, loop, map, multiComment, oneOf, sequence, spaces, succeed, symbol, variable)
 import Set
 
 

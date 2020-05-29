@@ -1,13 +1,12 @@
-module Derive exposing (..)
+module Derive exposing (generate, run)
 
 import Derive.Decoder
 import Derive.Encoder
-import Derive.Eq
 import Derive.Generator
 import Derive.Html
 import Derive.Parser
-import Derive.Type exposing (..)
-import Derive.Util exposing (..)
+import Derive.Type exposing (Module)
+import Derive.Util exposing (Error, unlines)
 import Parser
 
 

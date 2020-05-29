@@ -1,7 +1,7 @@
-module Derive.Encoder exposing (..)
+module Derive.Encoder exposing (generateEncoder)
 
-import Derive.Type exposing (..)
-import Derive.Util exposing (..)
+import Derive.Type exposing (Module, ModuleMember(..), NameAndType, Type(..), TypeAliasDef)
+import Derive.Util exposing (Error, alphabets, asList, concatResults, indent, unlines)
 import Result
 
 

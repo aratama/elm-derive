@@ -22,6 +22,9 @@ Hopefully this command will generates `src/Your/Type/Decralation/Module/Derive.e
 
 ## TODO
 
-* support Tuple
-* support Array
+* support Char?
+* support Result?
+* support Tuple?
+* support Array?
+* support Set?
 * use https://github.com/Bogdanp/elm-ast ?

@@ -1,7 +1,7 @@
-module Derive.Generator exposing (..)
+module Derive.Generator exposing (generateGenerator)
 
-import Derive.Type exposing (..)
-import Derive.Util exposing (..)
+import Derive.Type exposing (Module, ModuleMember(..), Type(..), Variant, moduleMemberName)
+import Derive.Util exposing (Error, concatResults, indent, unlines)
 
 
 mapFunction : List a -> String

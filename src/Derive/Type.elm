@@ -1,4 +1,4 @@
-module Derive.Type exposing (..)
+module Derive.Type exposing (Module, ModuleMember(..), ModuleName, NameAndType, Record, Type(..), TypeAliasDef, TypeDef, TypeName, TypeNameHead, TypeNameRef, TypeVariable, Variant, moduleMemberName, typeNameToString)
 
 
 type alias TypeName =

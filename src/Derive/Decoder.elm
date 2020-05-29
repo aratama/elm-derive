@@ -1,42 +1,7 @@
-module Derive.Decoder exposing (..)
+module Derive.Decoder exposing (generateDecoder)
 
-import Derive.Type exposing (..)
-import Derive.Util exposing (..)
-
-
-decoderFromTypeName : Module -> List TypeSegment -> Result Error String
-decoderFromTypeName mod name =
-    case name of
-        [ TypeSegment "Int" ] ->
-            Ok
-                "Json.Decode.int"
-
-        [ TypeSegment "String" ] ->
-            Ok
-                "Json.Decode.string"
-
-        [ TypeSegment "Float" ] ->
-            Ok
-                "Json.Decode.float"
-
-        [ TypeSegment "Bool" ] ->
-            Ok
-                "Json.Decode.bool"
-
-        [ TypeSegment "Dict", TypeSegment "String", contntType ] ->
-            decoderFromTypeName mod [ contntType ] |> Result.map (\t -> "(Json.Decode.dict identity " ++ t ++ ")")
-
-        [ TypeSegment "List", contntType ] ->
-            decoderFromTypeName mod [ contntType ] |> Result.map (\t -> "(Json.Decode.list " ++ t ++ ")")
-
-        [ TypeSegment "Maybe", contntType ] ->
-            decoderFromTypeName mod [ contntType ] |> Result.map (\t -> "(Json.Decode.maybe " ++ t ++ ")")
-
-        [ TypeSegment typeName ] ->
-            Ok <| "decode" ++ typeName
-
-        _ ->
-            Err [ "Unsupported Data Type: `" ++ typeNameSegmentsToString name ++ "`" ]
+import Derive.Type exposing (Module, ModuleMember(..), NameAndType, Record, Type(..), TypeAliasDef)
+import Derive.Util exposing (Error, asList, concatResults, indent, unlines)
 
 
 fieldRecodeSequence : Module -> Record -> Result Error String
