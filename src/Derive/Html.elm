@@ -65,8 +65,8 @@ generateViewModule mod =
                                 |> Result.map
                                     (\variants ->
                                         unlines
-                                            [ "\\value -> Html.div [Html.Attributes.class \"elm-derive-type\"] <|"
-                                            , indent "case value of"
+                                            [ "\\typeValue -> Html.div [Html.Attributes.class \"elm-derive-type\"] <|"
+                                            , indent "case typeValue of"
                                             , indent <|
                                                 indent <|
                                                     unlines <|

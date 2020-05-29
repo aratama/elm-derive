@@ -4,21 +4,17 @@ import Derive.Type exposing (Module, ModuleMember(..), Type(..), Variant, module
 import Derive.Util exposing (Error, concatResults, indent, unlines)
 
 
-mapFunction : List a -> String
-mapFunction fields =
-    let
-        fieldCount =
-            List.length fields
-    in
-    case fieldCount of
-        0 ->
-            ""
+mapFunction : String -> List String -> String
+mapFunction constructor generators =
+    case generators of
+        g :: gs ->
+            unlines
+                [ "Random.map " ++ constructor ++ " (" ++ g ++ ")"
+                , indent <| unlines (List.map (\gen -> "|> Random.Extra.andMap (" ++ gen ++ ")") gs)
+                ]
 
-        1 ->
-            "Random.map"
-
-        _ ->
-            "Random.map" ++ String.fromInt fieldCount
+        [] ->
+            "<<<INTERNAL ERROR>>>"
 
 
 generateRandom : Module -> Result Error String
@@ -50,6 +46,7 @@ randomMaybe gen = Random.andThen (\\n -> Random.uniform Nothing [Just n]) gen
 
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen = Random.map Dict.fromList (randomList (Random.map2 (\\k v -> (k, v)) randomString gen))
+
 """
                     , String.join "\n\n" results
                     ]
@@ -110,7 +107,7 @@ generateRandomMember mod member =
                                                                     "Random.constant " ++ variant.name
 
                                                                 else
-                                                                    mapFunction variant.fields ++ " " ++ variant.name ++ " " ++ String.join " " fields
+                                                                    mapFunction variant.name fields
                                                         in
                                                         String.toLower variant.name ++ " () = " ++ map
                                                     )
@@ -118,7 +115,7 @@ generateRandomMember mod member =
                                         , "in"
                                         , indent <|
                                             if List.length variantResults == 1 then
-                                                String.toLower v.name
+                                                "Random.constant " ++ String.toLower v.name
 
                                             else
                                                 "Random.uniform " ++ String.toLower v.name ++ " [" ++ String.join ", " (List.map (String.toLower << .name) vs) ++ "]"
@@ -154,10 +151,11 @@ generateRandomType mod t =
                             "Random.constant {}"
 
                         else
-                            unlines
-                                [ mapFunction values ++ " (\\" ++ (String.join " " <| List.map .name record) ++ " -> { " ++ (String.join ", " <| List.map (\f -> f.name ++ " = " ++ f.name) record) ++ " }) "
-                                , indent <| unlines <| List.map (\v -> "(" ++ v ++ ")") values
-                                ]
+                            let
+                                constructor =
+                                    " (\\" ++ (String.join " " <| List.map .name record) ++ " -> { " ++ (String.join ", " <| List.map (\f -> f.name ++ " = " ++ f.name) record) ++ " }) "
+                            in
+                            mapFunction constructor values
                     )
 
         TypeRef "Int" [] ->

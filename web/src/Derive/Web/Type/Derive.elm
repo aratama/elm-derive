@@ -3,11 +3,13 @@
 module Derive.Web.Type.Derive exposing (..)
 
 import Dict
-import Json.Encode
-import Json.Decode
-import Random
 import Html
 import Html.Attributes
+import Json.Encode
+import Json.Decode
+import Json.Decode.Pipeline
+import Random
+import Random.Extra
 import Derive.Web.Type exposing (..)
 
 -- encoders -------------------------------------------------------------
@@ -24,11 +26,19 @@ encodeModel
 -- decoders -------------------------------------------------------------
 
 decodeModel : Json.Decode.Decoder Model
-decodeModel = Json.Decode.map4 Model
-    (Json.Decode.field "source" (Json.Decode.string))
-    (Json.Decode.field "encoderVisible" (Json.Decode.bool))
-    (Json.Decode.field "decoderVisible" (Json.Decode.bool))
-    (Json.Decode.field "loadStorageVisible" (Json.Decode.bool))
+decodeModel = Json.Decode.map Model (Json.Decode.field "source" (Json.Decode.string))
+    |> andMap (Json.Decode.field "encoderVisible" (Json.Decode.bool))
+    |> andMap (Json.Decode.field "decoderVisible" (Json.Decode.bool))
+    |> andMap (Json.Decode.field "loadStorageVisible" (Json.Decode.bool))
+
+
+
+andMap : Json.Decode.Decoder a -> Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b
+andMap =
+    Json.Decode.map2 (|>)
+
+
+
 
 
 
@@ -55,13 +65,13 @@ randomMaybe gen = Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen = Random.map Dict.fromList (randomList (Random.map2 (\k v -> (k, v)) randomString gen))
 
+
 randomModel : Random.Generator Model
 randomModel = 
-    Random.map4 (\source encoderVisible decoderVisible loadStorageVisible -> { source = source, encoderVisible = encoderVisible, decoderVisible = decoderVisible, loadStorageVisible = loadStorageVisible }) 
-        (randomString)
-        (randomBool)
-        (randomBool)
-        (randomBool)
+    Random.map  (\source encoderVisible decoderVisible loadStorageVisible -> { source = source, encoderVisible = encoderVisible, decoderVisible = decoderVisible, loadStorageVisible = loadStorageVisible })  randomString
+        |> Random.Extra.andMap randomBool
+        |> Random.Extra.andMap randomBool
+        |> Random.Extra.andMap randomBool
 
 
 

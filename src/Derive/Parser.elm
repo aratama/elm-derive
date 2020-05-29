@@ -1,4 +1,4 @@
-module Derive.Parser exposing (parser)
+module Derive.Parser exposing (many, parser, typeAlias, typeArgument, typeParser, variant)
 
 import Derive.Type exposing (Module, ModuleMember(..), ModuleName, NameAndType, Record, Type(..), TypeAliasDef, TypeDef, TypeName, Variant)
 import List

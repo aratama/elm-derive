@@ -123,8 +123,8 @@ generateEncoderFromModuleMember mod member =
             Ok <|
                 unlines
                     [ encoderName ++ " : " ++ typeMember.name ++ " -> Json.Encode.Value"
-                    , encoderName ++ " value"
-                    , indent "= case value of"
+                    , encoderName ++ " variant"
+                    , indent "= case variant of"
                     , indent <| indent <| unlines variants
                     ]
 

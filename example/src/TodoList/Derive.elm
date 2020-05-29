@@ -3,11 +3,13 @@
 module TodoList.Derive exposing (..)
 
 import Dict
-import Json.Encode
-import Json.Decode
-import Random
 import Html
 import Html.Attributes
+import Json.Encode
+import Json.Decode
+import Json.Decode.Pipeline
+import Random
+import Random.Extra
 import TodoList exposing (..)
 
 -- encoders -------------------------------------------------------------
@@ -25,8 +27,42 @@ encodeTodoList
     = (\value -> Json.Encode.object 
         [ ("tasks", (Json.Encode.list encodeTask) value.tasks)
         , ("field", Json.Encode.string value.field)
-        , ("dict", encodeDictionary value.dict)
         ])
+
+encodeTree : Tree -> Json.Encode.Value
+encodeTree variant
+    = case variant of
+        Leaf a -> Json.Encode.object
+            [ ("tag", Json.Encode.string "Leaf")
+            , ("a", Json.Encode.string a)
+            ]
+        Branch a b -> Json.Encode.object
+            [ ("tag", Json.Encode.string "Branch")
+            , ("a", encodeTree a)
+            , ("b", encodeTree b)
+            ]
+
+encodeColor : Color -> Json.Encode.Value
+encodeColor variant
+    = case variant of
+        Red -> Json.Encode.string "Red"
+        Green -> Json.Encode.string "Green"
+        Blue -> Json.Encode.string "Blue"
+
+encodeVector : Vector -> Json.Encode.Value
+encodeVector variant
+    = case variant of
+        Vector a -> Json.Encode.object
+            [ ("tag", Json.Encode.string "Vector")
+            , ("a", (\value -> Json.Encode.object 
+                    [ ("x", Json.Encode.float value.x)
+                    , ("y", Json.Encode.float value.y)
+                    ]) a)
+            ]
+
+encodeGrid : Grid -> Json.Encode.Value
+encodeGrid
+    = (Json.Encode.list (Json.Encode.list Json.Encode.int))
 
 encodeDictionary : Dictionary -> Json.Encode.Value
 encodeDictionary
@@ -35,19 +71,53 @@ encodeDictionary
 -- decoders -------------------------------------------------------------
 
 decodeTask : Json.Decode.Decoder Task
-decodeTask = Json.Decode.map3 Task
-    (Json.Decode.field "id" (Json.Decode.int))
-    (Json.Decode.field "description" (Json.Decode.string))
-    (Json.Decode.field "completed" (Json.Decode.bool))
+decodeTask = Json.Decode.map Task (Json.Decode.int)
+    |> andMap (Json.Decode.string)
+    |> andMap (Json.Decode.bool)
 
 decodeTodoList : Json.Decode.Decoder TodoList
-decodeTodoList = Json.Decode.map3 TodoList
-    (Json.Decode.field "tasks" ((Json.Decode.list decodeTask)))
-    (Json.Decode.field "field" (Json.Decode.string))
-    (Json.Decode.field "dict" (decodeDictionary))
+decodeTodoList = Json.Decode.map TodoList ((Json.Decode.list decodeTask))
+    |> andMap (Json.Decode.string)
+
+decodeTree : Json.Decode.Decoder Tree
+decodeTree = Json.Decode.field "tag" Json.Decode.string |> Json.Decode.andThen
+    (\tag -> case tag of
+        "Leaf" -> Json.Decode.map Leaf (Json.Decode.string)
+            
+        "Branch" -> Json.Decode.map Branch (decodeTree)
+            |> andMap (decodeTree)
+        _ -> Json.Decode.fail ("Unexpected tag name: " ++ tag)
+    )
+
+decodeColor : Json.Decode.Decoder Color
+decodeColor = Json.Decode.string |> Json.Decode.andThen
+    (\variant -> case variant of
+        "Red" -> Json.Decode.succeed Red
+        "Green" -> Json.Decode.succeed Green
+        "Blue" -> Json.Decode.succeed Blue
+        _ -> Json.Decode.fail ("Unexpected Variant: " ++ variant)
+    )
+
+decodeVector : Json.Decode.Decoder Vector
+decodeVector = Json.Decode.field "tag" Json.Decode.string |> Json.Decode.andThen
+    (\tag -> case tag of
+        "Vector" -> Json.Decode.map Vector (Json.Decode.map  (\x y -> { x = x, y = y })  ((Json.Decode.field "x" (Json.Decode.float)))
+            |> andMap ((Json.Decode.field "y" (Json.Decode.float))))
+            
+        _ -> Json.Decode.fail ("Unexpected tag name: " ++ tag)
+    )
+
+decodeGrid : Json.Decode.Decoder Grid
+decodeGrid = (Json.Decode.list (Json.Decode.list Json.Decode.int))
 
 decodeDictionary : Json.Decode.Decoder Dictionary
 decodeDictionary = (Json.Decode.dict Json.Decode.int)
+
+
+
+andMap : Json.Decode.Decoder a -> Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b
+andMap =
+    Json.Decode.map2 (|>)
 
 
 
@@ -74,19 +144,52 @@ randomMaybe gen = Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen = Random.map Dict.fromList (randomList (Random.map2 (\k v -> (k, v)) randomString gen))
 
+
 randomTask : Random.Generator Task
 randomTask = 
-    Random.map3 (\id description completed -> { id = id, description = description, completed = completed }) 
-        (randomInt)
-        (randomString)
-        (randomBool)
+    Random.map  (\id description completed -> { id = id, description = description, completed = completed })  (randomInt)
+        |> Random.Extra.andMap (randomString)
+        |> Random.Extra.andMap (randomBool)
 
 randomTodoList : Random.Generator TodoList
 randomTodoList = 
-    Random.map3 (\tasks field dict -> { tasks = tasks, field = field, dict = dict }) 
-        ((randomList randomTask))
-        (randomString)
-        (randomDictionary)
+    Random.map  (\tasks field -> { tasks = tasks, field = field })  ((randomList randomTask))
+        |> Random.Extra.andMap (randomString)
+
+randomTree : Random.Generator Tree
+randomTree = 
+    let
+        leaf () = Random.map Leaf (randomString)
+            
+        branch () = Random.map Branch (randomTree)
+            |> Random.Extra.andMap (randomTree)
+    in
+        Random.uniform leaf [branch]
+            |> Random.andThen ((|>) ())
+
+randomColor : Random.Generator Color
+randomColor = 
+    let
+        red () = Random.constant Red
+        green () = Random.constant Green
+        blue () = Random.constant Blue
+    in
+        Random.uniform red [green, blue]
+            |> Random.andThen ((|>) ())
+
+randomVector : Random.Generator Vector
+randomVector = 
+    let
+        vector () = Random.map Vector (Random.map  (\x y -> { x = x, y = y })  (randomFloat)
+            |> Random.Extra.andMap (randomFloat))
+            
+    in
+        Random.constant vector
+            |> Random.andThen ((|>) ())
+
+randomGrid : Random.Generator Grid
+randomGrid = 
+    (randomList (randomList randomInt))
 
 randomDictionary : Random.Generator Dictionary
 randomDictionary = 
@@ -154,12 +257,74 @@ viewTodoList =
             [ Html.td [] [Html.text <| "field"]
             , Html.td [] [viewString value.field]
             ]
-        , Html.tr []
-            [ Html.td [] [Html.text <| "dict"]
-            , Html.td [] [viewDictionary value.dict]
-            ]
         ]
     ])
+
+viewTree : Tree -> Html.Html msg
+viewTree = 
+    \typeValue -> Html.div [Html.Attributes.class "elm-derive-type"] <|
+        case typeValue of
+            Leaf a -> 
+                [ Html.div [Html.Attributes.class "elm-derive-variant", Html.Attributes.class "elm-derive-variant-0"] [ Html.text "Leaf"]
+                , Html.div [Html.Attributes.class "elm-derive-variant-fields"]
+                    [ viewString a
+                    
+                    ]
+                ]
+            Branch a b -> 
+                [ Html.div [Html.Attributes.class "elm-derive-variant", Html.Attributes.class "elm-derive-variant-1"] [ Html.text "Branch"]
+                , Html.div [Html.Attributes.class "elm-derive-variant-fields"]
+                    [ viewTree a
+                    , viewTree b
+                    ]
+                ]
+
+viewColor : Color -> Html.Html msg
+viewColor = 
+    \typeValue -> Html.div [Html.Attributes.class "elm-derive-type"] <|
+        case typeValue of
+            Red  -> 
+                [ Html.div [Html.Attributes.class "elm-derive-variant", Html.Attributes.class "elm-derive-variant-0"] [ Html.text "Red"]
+                , Html.div [Html.Attributes.class "elm-derive-variant-fields"]
+                    []
+                ]
+            Green  -> 
+                [ Html.div [Html.Attributes.class "elm-derive-variant", Html.Attributes.class "elm-derive-variant-1"] [ Html.text "Green"]
+                , Html.div [Html.Attributes.class "elm-derive-variant-fields"]
+                    []
+                ]
+            Blue  -> 
+                [ Html.div [Html.Attributes.class "elm-derive-variant", Html.Attributes.class "elm-derive-variant-2"] [ Html.text "Blue"]
+                , Html.div [Html.Attributes.class "elm-derive-variant-fields"]
+                    []
+                ]
+
+viewVector : Vector -> Html.Html msg
+viewVector = 
+    \typeValue -> Html.div [Html.Attributes.class "elm-derive-type"] <|
+        case typeValue of
+            Vector a -> 
+                [ Html.div [Html.Attributes.class "elm-derive-variant", Html.Attributes.class "elm-derive-variant-0"] [ Html.text "Vector"]
+                , Html.div [Html.Attributes.class "elm-derive-variant-fields"]
+                    [ (\value -> Html.table [] [
+                        Html.caption [] [Html.text "Record"], Html.tbody [] 
+                        [ Html.tr []
+                            [ Html.td [] [Html.text <| "x"]
+                            , Html.td [] [viewFloat value.x]
+                            ]
+                        , Html.tr []
+                            [ Html.td [] [Html.text <| "y"]
+                            , Html.td [] [viewFloat value.y]
+                            ]
+                        ]
+                    ]) a
+                    
+                    ]
+                ]
+
+viewGrid : Grid -> Html.Html msg
+viewGrid = 
+    (viewList (viewList viewInt))
 
 viewDictionary : Dictionary -> Html.Html msg
 viewDictionary = 

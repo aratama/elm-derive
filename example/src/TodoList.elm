@@ -28,8 +28,26 @@ type alias Task =
 type alias TodoList =
     { tasks : List Task
     , field : String
-    , dict : Dictionary
     }
+
+
+type Tree
+    = Leaf String
+    | Branch Tree Tree
+
+
+type Color
+    = Red
+    | Green
+    | Blue
+
+
+type Vector
+    = Vector { x : Float, y : Float }
+
+
+type alias Grid =
+    List (List Int)
 
 
 type alias Dictionary =
