@@ -27,7 +27,7 @@ main =
             \flag ->
                 case Json.Decode.decodeValue TodoList.Derive.decodeTodoList flag of
                     Err _ ->
-                        ( Nothing, Random.generate Generated TodoList.Derive.generateTodoList )
+                        ( Nothing, Random.generate Generated TodoList.Derive.randomTodoList )
 
                     Ok todoList ->
                         ( Just todoList, Cmd.none )

@@ -1,4 +1,4 @@
-module Derive.Generator exposing (generateGenerator)
+module Derive.Random exposing (generateRandom)
 
 import Derive.Type exposing (Module, ModuleMember(..), Type(..), Variant, moduleMemberName)
 import Derive.Util exposing (Error, concatResults, indent, unlines)
@@ -21,63 +21,63 @@ mapFunction fields =
             "Random.map" ++ String.fromInt fieldCount
 
 
-generateGenerator : Module -> Result Error String
-generateGenerator mod =
-    concatResults (generateTopLevel mod) mod.members
+generateRandom : Module -> Result Error String
+generateRandom mod =
+    concatResults (generateRandomModuleMember mod) mod.members
         |> Result.map
             (\results ->
                 unlines
                     [ """
--- sample data geenerators ----------------------------------"
+-- random data generators ----------------------------------"
 
-generateBool : Random.Generator Bool 
-generateBool = Random.uniform True [False]
+randomBool : Random.Generator Bool 
+randomBool = Random.uniform True [False]
 
-generateInt : Random.Generator Int
-generateInt = Random.int 0 100
+randomInt : Random.Generator Int
+randomInt = Random.int 0 100
 
-generateString : Random.Generator String 
-generateString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
+randomString : Random.Generator String 
+randomString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
 
-generateFloat : Random.Generator Float
-generateFloat = Random.float 0 1
+randomFloat : Random.Generator Float
+randomFloat = Random.float 0 1
 
-generateList : Random.Generator a -> Random.Generator (List a)
-generateList gen = Random.andThen (\\n -> Random.list (3 + n) gen) (Random.int 0 7)
+randomList : Random.Generator a -> Random.Generator (List a)
+randomList gen = Random.andThen (\\n -> Random.list (3 + n) gen) (Random.int 0 7)
 
-generateMaybe : Random.Generator a -> Random.Generator (Maybe a)
-generateMaybe gen = Random.andThen (\\n -> Random.uniform Nothing [Just n]) gen
+randomMaybe : Random.Generator a -> Random.Generator (Maybe a)
+randomMaybe gen = Random.andThen (\\n -> Random.uniform Nothing [Just n]) gen
 
-generateDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
-generateDict gen = Random.map Dict.fromList (generateList (Random.map2 (\\k v -> (k, v)) generateString gen))
+randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
+randomDict gen = Random.map Dict.fromList (randomList (Random.map2 (\\k v -> (k, v)) randomString gen))
 """
                     , String.join "\n\n" results
                     ]
             )
 
 
-generateTopLevel : Module -> ModuleMember -> Result Error String
-generateTopLevel mod member =
+generateRandomModuleMember : Module -> ModuleMember -> Result Error String
+generateRandomModuleMember mod member =
     let
         name =
             moduleMemberName member
     in
-    generateMember mod member
+    generateRandomMember mod member
         |> Result.map
             (\gen ->
                 unlines
-                    [ "generate" ++ name ++ " : Random.Generator " ++ name
-                    , "generate" ++ name ++ " = "
+                    [ "random" ++ name ++ " : Random.Generator " ++ name
+                    , "random" ++ name ++ " = "
                     , indent gen
                     ]
             )
 
 
-generateMember : Module -> ModuleMember -> Result Error String
-generateMember mod member =
+generateRandomMember : Module -> ModuleMember -> Result Error String
+generateRandomMember mod member =
     case member of
         TypeAliasMember typeAlias ->
-            generateType mod typeAlias.body
+            generateRandomType mod typeAlias.body
 
         TypeMember typeDef ->
             let
@@ -87,13 +87,13 @@ generateMember mod member =
             if recursive then
                 case typeDef.variants of
                     [] ->
-                        Err [ "generateMember" ]
+                        Err [ "generateRandomMember" ]
 
                     v :: vs ->
                         typeDef.variants
                             |> concatResults
                                 (\variant ->
-                                    concatResults (generateType mod) variant.fields
+                                    concatResults (generateRandomType mod) variant.fields
                                         |> Result.map (\generators -> { variant = variant, fields = generators })
                                 )
                             |> Result.map
@@ -138,16 +138,16 @@ generateMember mod member =
                         Err [ "Recursize Type" ]
 
                     Just variant ->
-                        concatResults (generateType mod) variant.fields
+                        concatResults (generateRandomType mod) variant.fields
                             |> Result.map (\values -> "(" ++ variant.name ++ " " ++ String.join " " values ++ ")")
                             |> Result.map (\values -> values)
 
 
-generateType : Module -> Type -> Result Error String
-generateType mod t =
+generateRandomType : Module -> Type -> Result Error String
+generateRandomType mod t =
     case t of
         RecordType record ->
-            concatResults (generateType mod) (List.map .typeName record)
+            concatResults (generateRandomType mod) (List.map .typeName record)
                 |> Result.map
                     (\values ->
                         if List.length values == 0 then
@@ -161,35 +161,35 @@ generateType mod t =
                     )
 
         TypeRef "Int" [] ->
-            Ok "generateInt"
+            Ok "randomInt"
 
         TypeRef "Bool" [] ->
-            Ok "generateBool"
+            Ok "randomBool"
 
         TypeRef "Float" [] ->
-            Ok "generateFloat"
+            Ok "randomFloat"
 
         TypeRef "String" [] ->
-            Ok "generateString"
+            Ok "randomString"
 
         TypeRef "List" [ content ] ->
-            generateType mod content
-                |> Result.map (\s -> "(generateList " ++ s ++ ")")
+            generateRandomType mod content
+                |> Result.map (\s -> "(randomList " ++ s ++ ")")
 
         TypeRef "Maybe" [ content ] ->
-            generateType mod content
-                |> Result.map (\s -> "(generateMaybe " ++ s ++ ")")
+            generateRandomType mod content
+                |> Result.map (\s -> "(randomMaybe " ++ s ++ ")")
 
         TypeRef "Dict" [ TypeRef "String" [], content ] ->
-            generateType mod content
-                |> Result.map (\s -> "(generateDict " ++ s ++ ")")
+            generateRandomType mod content
+                |> Result.map (\s -> "(randomDict " ++ s ++ ")")
 
         TypeRef name [] ->
             if List.isEmpty (List.filter (\member -> moduleMemberName member == name) mod.members) then
                 Err [ "Type not found: " ++ name ]
 
             else
-                Ok <| "generate" ++ name
+                Ok <| "random" ++ name
 
         _ ->
-            Ok "Generaor TODO:  Unsuported Type in TypeSegmentList "
+            Ok "Random TODO:  Unsuported Type in TypeSegmentList "

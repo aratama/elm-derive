@@ -2,9 +2,9 @@ module Derive exposing (generate, run)
 
 import Derive.Decoder
 import Derive.Encoder
-import Derive.Generator
 import Derive.Html
 import Derive.Parser
+import Derive.Random
 import Derive.Type exposing (Module)
 import Derive.Util exposing (Error, unlines)
 import Parser
@@ -40,8 +40,6 @@ generate mod =
         (Ok <| header mod)
         [ Derive.Encoder.generateEncoder mod
         , Derive.Decoder.generateDecoder mod
-        , Derive.Generator.generateGenerator mod
+        , Derive.Random.generateRandom mod
         , Derive.Html.generateViewModule mod
-
-        --, Derive.Eq.generateEq mod
         ]

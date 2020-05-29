@@ -32,36 +32,36 @@ decodeModel = Json.Decode.map4 Model
 
 
 
--- sample data geenerators ----------------------------------"
+-- random data generators ----------------------------------"
 
-generateBool : Random.Generator Bool 
-generateBool = Random.uniform True [False]
+randomBool : Random.Generator Bool 
+randomBool = Random.uniform True [False]
 
-generateInt : Random.Generator Int
-generateInt = Random.int 0 100
+randomInt : Random.Generator Int
+randomInt = Random.int 0 100
 
-generateString : Random.Generator String 
-generateString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
+randomString : Random.Generator String 
+randomString = Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
 
-generateFloat : Random.Generator Float
-generateFloat = Random.float 0 1
+randomFloat : Random.Generator Float
+randomFloat = Random.float 0 1
 
-generateList : Random.Generator a -> Random.Generator (List a)
-generateList gen = Random.andThen (\n -> Random.list (3 + n) gen) (Random.int 0 7)
+randomList : Random.Generator a -> Random.Generator (List a)
+randomList gen = Random.andThen (\n -> Random.list (3 + n) gen) (Random.int 0 7)
 
-generateMaybe : Random.Generator a -> Random.Generator (Maybe a)
-generateMaybe gen = Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
+randomMaybe : Random.Generator a -> Random.Generator (Maybe a)
+randomMaybe gen = Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
 
-generateDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
-generateDict gen = Random.map Dict.fromList (generateList (Random.map2 (\k v -> (k, v)) generateString gen))
+randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
+randomDict gen = Random.map Dict.fromList (randomList (Random.map2 (\k v -> (k, v)) randomString gen))
 
-generateModel : Random.Generator Model
-generateModel = 
+randomModel : Random.Generator Model
+randomModel = 
     Random.map4 (\source encoderVisible decoderVisible loadStorageVisible -> { source = source, encoderVisible = encoderVisible, decoderVisible = decoderVisible, loadStorageVisible = loadStorageVisible }) 
-        (generateString)
-        (generateBool)
-        (generateBool)
-        (generateBool)
+        (randomString)
+        (randomBool)
+        (randomBool)
+        (randomBool)
 
 
 
