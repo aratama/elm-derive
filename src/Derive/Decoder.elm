@@ -2,6 +2,15 @@ module Derive.Decoder exposing (generateDecoder)
 
 import Derive.Type exposing (Module, ModuleMember(..), NameAndType, Record, Type(..), TypeAliasDef)
 import Derive.Util exposing (Error, alphabets, asList, concatResults, indent, unlines)
+import Elm.Syntax.Declaration exposing (Declaration(..))
+import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
+import Elm.Syntax.File exposing (File)
+import Elm.Syntax.ModuleName exposing (ModuleName)
+import Elm.Syntax.Node exposing (..)
+import Elm.Syntax.Pattern exposing (Pattern(..))
+import Elm.Syntax.Signature exposing (Signature)
+import Elm.Syntax.Type exposing (ValueConstructor)
+import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
 
 
 fieldRecodeSequence : Module -> Record -> Result Error (List String)

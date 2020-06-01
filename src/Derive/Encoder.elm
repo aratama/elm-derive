@@ -193,7 +193,7 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
                 |> Result.map
                     (\encoder -> Application [ node <| FunctionOrValue [ "Json", "Encode" ] "list", node encoder ])
 
-        Typed (Node _ ( [], "Dict" )) [ Node _ content ] ->
+        Typed (Node _ ( [], "Dict" )) [ Node _ (Typed (Node _ ( [], "String" )) _), Node _ content ] ->
             generateEncoderFromTypeAnnotation file content
                 |> Result.map
                     (\encoder -> Application [ node <| FunctionOrValue [ "Json", "Encode" ] "dict", node <| FunctionOrValue [] "identity", node encoder ])
@@ -256,15 +256,17 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
             concatResults field record
                 |> Result.map
                     (\fields ->
-                        LambdaExpression
-                            { args = [ node <| VarPattern "value" ]
-                            , expression =
-                                node <|
-                                    Application
-                                        [ node <| FunctionOrValue [ "Json", "Encode" ] "object"
-                                        , node <| ListExpr <| List.map node fields
-                                        ]
-                            }
+                        ParenthesizedExpression <|
+                            node <|
+                                LambdaExpression
+                                    { args = [ node <| VarPattern "value" ]
+                                    , expression =
+                                        node <|
+                                            Application
+                                                [ node <| FunctionOrValue [ "Json", "Encode" ] "object"
+                                                , node <| ListExpr <| List.map node fields
+                                                ]
+                                    }
                     )
 
         _ ->
