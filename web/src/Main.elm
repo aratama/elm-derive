@@ -4,6 +4,9 @@ import Browser
 import Derive
 import Derive.Type exposing (..)
 import Derive.Util exposing (..)
+import Elm.Parser
+import Elm.Processing
+import Elm.Writer
 import Html
 import Html.Attributes exposing (class)
 import Html.Events
@@ -104,7 +107,7 @@ view model =
             [ Html.textarea [ Html.Events.onInput Input ] [ Html.text <| model.source ]
             ]
         , Html.div [ class "right" ] <|
-            case Derive.run model.source of
+            case Elm.Parser.parse model.source of
                 Err err ->
                     [ Html.pre [ class "syntactic-error" ]
                         [ Html.text <|
@@ -116,17 +119,28 @@ view model =
                         ]
                     ]
 
-                Ok result ->
-                    [ case Derive.generate result of
+                Ok rawFile ->
+                    let
+                        file =
+                            Elm.Processing.process Elm.Processing.init rawFile
+
+                        result =
+                            Derive.generate file
+                    in
+                    [ case result of
                         Err err ->
                             Html.pre [ class "generation-error" ] [ Html.text <| errorToString err ]
 
                         Ok generated ->
+                            let
+                                str =
+                                    Elm.Writer.write (Elm.Writer.writeFile generated)
+                            in
                             Html.div [ class "generated" ]
-                                [ SyntaxHighlight.elm generated
+                                [ SyntaxHighlight.elm str
                                     |> Result.map (SyntaxHighlight.toBlockHtml (Just 1))
                                     |> Result.withDefault
-                                        (Html.pre [] [ Html.code [] [ Html.text generated ] ])
+                                        (Html.pre [] [ Html.code [] [ Html.text str ] ])
                                 ]
                     ]
         ]

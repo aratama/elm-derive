@@ -1,4 +1,24 @@
-module Derive.Util exposing (Error, alphabet, alphabets, asList, concatResults, errorToString, indent, toErrors, unlines)
+module Derive.Util exposing (Error, alphabet, alphabets, asList, concatResults, derivedModuleName, errorToString, indent, node, nodeValue, toErrors, unlines)
+
+import Elm.Syntax.File
+import Elm.Syntax.Module exposing (Module, moduleName)
+import Elm.Syntax.Node
+import Elm.Syntax.Range
+
+
+node : a -> Elm.Syntax.Node.Node a
+node =
+    Elm.Syntax.Node.Node Elm.Syntax.Range.emptyRange
+
+
+nodeValue : Elm.Syntax.Node.Node a -> a
+nodeValue =
+    Elm.Syntax.Node.value
+
+
+derivedModuleName : Elm.Syntax.File.File -> List String
+derivedModuleName file =
+    moduleName (nodeValue file.moduleDefinition) ++ [ "Derive" ]
 
 
 type alias Error =
