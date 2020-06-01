@@ -55,7 +55,10 @@ import Parser
 
 generate : Elm.Syntax.File.File -> Result Error Elm.Syntax.File.File
 generate file =
-    concatResults (\gen -> gen file) [ Derive.Encoder.generateEncoder ]
+    [ Derive.Encoder.generateEncoder
+    , Derive.Decoder.generateDecoder
+    ]
+        |> concatResults (\gen -> gen file)
         |> Result.map
             (\results ->
                 { moduleDefinition =
