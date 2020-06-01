@@ -100,20 +100,20 @@ generateDecoderFromDeclaration file delaration =
                             typeName =
                                 nodeValue aliasDecl.name
 
-                            name =
+                            decoderName =
                                 "decode" ++ typeName
 
                             functionImplementation : FunctionImplementation
                             functionImplementation =
-                                { name = node <| name
+                                { name = node <| decoderName
                                 , arguments = []
                                 , expression = node decoder
                                 }
 
                             signature : Signature
                             signature =
-                                { name = node name
-                                , typeAnnotation = node <| functionAnnotation ( [], typeName ) ( [ "Json", "Decode" ], "Value" )
+                                { name = node decoderName
+                                , typeAnnotation = node <| Typed (node ( [ "Json", "Decode" ], "Decoder" )) [ node <| Typed (node ( [], typeName )) [] ]
                                 }
 
                             function : Function
