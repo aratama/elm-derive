@@ -1,6 +1,5 @@
 module Derive.Encoder exposing (generateEncoder)
 
-import Derive.Type exposing (ModuleMember(..), Type(..))
 import Derive.Util exposing (Error, alphabets, concatResults, node, nodeValue)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)

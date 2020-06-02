@@ -1,4 +1,7 @@
 module Derive.Web.Type.Derive exposing (..)
+import Dict  
+import Html  
+import Html.Attributes  
 import Json.Encode  
 import Json.Decode  
 import Random  
