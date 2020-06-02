@@ -89,7 +89,14 @@ generateEncoderFromDeclaration file declaration =
 
                                 first : Expression
                                 first =
-                                    TupledExpression [ node <| Literal "tag", node <| Literal (nodeValue constructor.name) ]
+                                    TupledExpression
+                                        [ node <| Literal "tag"
+                                        , node <|
+                                            Application
+                                                [ node <| FunctionOrValue [ "Json", "Encode" ] "string"
+                                                , node <| Literal (nodeValue constructor.name)
+                                                ]
+                                        ]
 
                                 fields : Result Error (List Expression)
                                 fields =
@@ -157,11 +164,11 @@ generateEncoderFromDeclaration file declaration =
                             , declaration =
                                 node <|
                                     { name = node <| encoderName
-                                    , arguments = [ node <| VarPattern "value" ]
+                                    , arguments = [ node <| VarPattern "val" ]
                                     , expression =
                                         node <|
                                             CaseExpression
-                                                { expression = node <| FunctionOrValue [] "value"
+                                                { expression = node <| FunctionOrValue [] "val"
                                                 , cases = cases
                                                 }
                                     }
@@ -191,17 +198,17 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
         Typed (Node _ ( [], "List" )) [ Node _ content ] ->
             generateEncoderFromTypeAnnotation file content
                 |> Result.map
-                    (\encoder -> Application [ node <| FunctionOrValue [ "Json", "Encode" ] "list", node encoder ])
+                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "list", node encoder ])
 
         Typed (Node _ ( [], "Dict" )) [ Node _ (Typed (Node _ ( [], "String" )) _), Node _ content ] ->
             generateEncoderFromTypeAnnotation file content
                 |> Result.map
-                    (\encoder -> Application [ node <| FunctionOrValue [ "Json", "Encode" ] "dict", node <| FunctionOrValue [] "identity", node encoder ])
+                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "dict", node <| FunctionOrValue [] "identity", node encoder ])
 
         Typed (Node _ ( [], "Maybe" )) [ Node _ content ] ->
             generateEncoderFromTypeAnnotation file content
                 |> Result.map
-                    (\encoder -> Application [ node <| FunctionOrValue [ "Json", "Encode" ] "maybe", node encoder ])
+                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "maybe", node encoder ])
 
         Typed (Node _ ( [], moduleMemberTypeName )) [] ->
             let

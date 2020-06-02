@@ -12,6 +12,7 @@ import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Exposing exposing (Exposing(..))
 import Elm.Syntax.Expression exposing (Expression(..))
 import Elm.Syntax.File
+import Elm.Syntax.Import exposing (Import)
 import Elm.Syntax.Module exposing (DefaultModuleData, Module(..), moduleName)
 import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Pattern exposing (Pattern(..))
@@ -68,7 +69,28 @@ generate file =
                             , exposingList = node (All emptyRange)
                             }
                         )
-                , imports = []
+                , imports =
+                    [ node
+                        { moduleName = node [ "Json", "Encode" ]
+                        , moduleAlias = Nothing
+                        , exposingList = Nothing
+                        }
+                    , node
+                        { moduleName = node [ "Json", "Decode" ]
+                        , moduleAlias = Nothing
+                        , exposingList = Nothing
+                        }
+                    , node
+                        { moduleName = node [ "Random" ]
+                        , moduleAlias = Nothing
+                        , exposingList = Nothing
+                        }
+                    , node
+                        { moduleName = node <| moduleName <| nodeValue file.moduleDefinition
+                        , moduleAlias = Nothing
+                        , exposingList = Just <| node <| All emptyRange
+                        }
+                    ]
                 , declarations = List.concat [ List.map node (List.concat results) ]
                 , comments = []
                 }
