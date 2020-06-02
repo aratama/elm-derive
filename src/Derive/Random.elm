@@ -80,16 +80,16 @@ generateRandomFromType file typeAnnotation =
                     )
 
         Typed (Node _ ( [], "Bool" )) [] ->
-            Ok (FunctionOrValue [ "Random" ] "bool")
+            Ok (FunctionOrValue [] "randomBool")
 
         Typed (Node _ ( [], "Int" )) [] ->
-            Ok (FunctionOrValue [ "Random" ] "int")
+            Ok (FunctionOrValue [] "randomInt")
 
         Typed (Node _ ( [], "Float" )) [] ->
-            Ok (FunctionOrValue [ "Random" ] "float")
+            Ok (FunctionOrValue [] "randomFloat")
 
         Typed (Node _ ( [], "String" )) [] ->
-            Ok (FunctionOrValue [ "Random" ] "string")
+            Ok (FunctionOrValue [] "randomString")
 
         Typed (Node _ ( [], "List" )) [ Node _ content ] ->
             generateRandomFromType file content
@@ -97,7 +97,7 @@ generateRandomFromType file typeAnnotation =
                     (\decoder ->
                         ParenthesizedExpression <|
                             application
-                                [ functionOrValue [ "Random" ] "list"
+                                [ functionOrValue [] "randomList"
                                 , node decoder
                                 ]
                     )
@@ -108,7 +108,7 @@ generateRandomFromType file typeAnnotation =
                     (\decoder ->
                         ParenthesizedExpression <|
                             application
-                                [ functionOrValue [ "Random" ] "dict"
+                                [ functionOrValue [] "randomDict"
                                 , node decoder
                                 ]
                     )
@@ -119,7 +119,7 @@ generateRandomFromType file typeAnnotation =
                     (\decoder ->
                         ParenthesizedExpression <|
                             application
-                                [ functionOrValue [ "Random" ] "maybe"
+                                [ functionOrValue [] "randomMaybe"
                                 , node decoder
                                 ]
                     )
