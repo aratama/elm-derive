@@ -2,7 +2,6 @@ module Main exposing (main)
 
 import Browser
 import Derive
-import Derive.Type exposing (..)
 import Derive.Util exposing (..)
 import Elm.Parser
 import Elm.Processing

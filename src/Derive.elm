@@ -20,6 +20,7 @@ generate : Elm.Syntax.File.File -> Result Error Elm.Syntax.File.File
 generate file =
     [ Derive.Encoder.generateEncoder
     , Derive.Decoder.generateDecoder
+    , Derive.Random.generateRandom
     ]
         |> concatResults (\gen -> gen file)
         |> Result.map

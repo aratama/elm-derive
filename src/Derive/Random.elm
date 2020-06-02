@@ -1,8 +1,80 @@
 module Derive.Random exposing (..)
 
+import Derive.Util exposing (Error, concatResults, nodeValue)
+import Elm.Syntax.Declaration exposing (Declaration(..))
+import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
+import Elm.Syntax.File exposing (File)
+import Elm.Syntax.Infix exposing (InfixDirection(..))
+import Elm.Syntax.ModuleName exposing (ModuleName)
+import Elm.Syntax.Node exposing (..)
+import Elm.Syntax.Pattern exposing (Pattern(..))
+import Elm.Syntax.Signature exposing (Signature)
+import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
 
-foo =
-    42
+
+generateRandom : File -> Result Error (List Declaration)
+generateRandom file =
+    concatResults (\node -> generateRandomFromDeclaration file (nodeValue node)) file.declarations
+        |> Result.map List.concat
+
+
+generateRandomFromDeclaration : File -> Declaration -> Result Error (List Declaration)
+generateRandomFromDeclaration file declaration =
+    case declaration of
+        AliasDeclaration aliasDecl ->
+            Ok []
+
+        CustomTypeDeclaration customTypeDecl ->
+            Ok []
+
+        _ ->
+            Ok []
+
+
+generateRandomFromType : File -> TypeAnnotation -> Result Error Expression
+generateRandomFromType file typeAnnotation =
+    case typeAnnotation of
+        -- RecordType record ->
+        --     concatResults (generateRandomType mod) (List.map .typeName record)
+        --         |> Result.map
+        --             (\values ->
+        --                 if List.length values == 0 then
+        --                     "Random.constant {}"
+        --                 else
+        --                     let
+        --                         constructor =
+        --                             " (\\" ++ (String.join " " <| List.map .name record) ++ " -> { " ++ (String.join ", " <| List.map (\f -> f.name ++ " = " ++ f.name) record) ++ " }) "
+        --                     in
+        --                     mapFunction constructor values
+        --             )
+        Typed (Node _ ( [], "Bool" )) [] ->
+            Ok (FunctionOrValue [ "Random" ] "bool")
+
+        Typed (Node _ ( [], "Int" )) [] ->
+            Ok (FunctionOrValue [ "Random" ] "int")
+
+        -- TypeRef "Bool" [] ->
+        --     Ok "randomBool"
+        -- TypeRef "Float" [] ->
+        --     Ok "randomFloat"
+        -- TypeRef "String" [] ->
+        --     Ok "randomString"
+        -- TypeRef "List" [ content ] ->
+        --     generateRandomType mod content
+        --         |> Result.map (\s -> "(randomList " ++ s ++ ")")
+        -- TypeRef "Maybe" [ content ] ->
+        --     generateRandomType mod content
+        --         |> Result.map (\s -> "(randomMaybe " ++ s ++ ")")
+        -- TypeRef "Dict" [ TypeRef "String" [], content ] ->
+        --     generateRandomType mod content
+        --         |> Result.map (\s -> "(randomDict " ++ s ++ ")")
+        -- TypeRef name [] ->
+        --     if List.isEmpty (List.filter (\member -> moduleMemberName member == name) mod.members) then
+        --         Err [ "Type not found: " ++ name ]
+        --     else
+        --         Ok <| "random" ++ name
+        _ ->
+            Err [ "Random" ]
 
 
 
