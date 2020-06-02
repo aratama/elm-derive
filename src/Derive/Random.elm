@@ -1,6 +1,6 @@
 module Derive.Random exposing (..)
 
-import Derive.Util exposing (Error, concatResults, nodeValue)
+import Derive.Util exposing (Error, application, concatResults, functionAnnotation, functionOrValue, node, nodeValue, objectConstructor)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
 import Elm.Syntax.File exposing (File)
@@ -22,7 +22,40 @@ generateRandomFromDeclaration : File -> Declaration -> Result Error (List Declar
 generateRandomFromDeclaration file declaration =
     case declaration of
         AliasDeclaration aliasDecl ->
-            Ok []
+            generateRandomFromType file (nodeValue aliasDecl.typeAnnotation)
+                |> Result.map
+                    (\decoder ->
+                        let
+                            typeName : String
+                            typeName =
+                                nodeValue aliasDecl.name
+
+                            decoderName : String
+                            decoderName =
+                                "random" ++ typeName
+
+                            functionImplementation : FunctionImplementation
+                            functionImplementation =
+                                { name = node <| decoderName
+                                , arguments = []
+                                , expression = node decoder
+                                }
+
+                            signature : Signature
+                            signature =
+                                { name = node decoderName
+                                , typeAnnotation = node <| Typed (node <| ( [ "Random" ], "Generator" )) [ node <| Typed (node <| ( [], typeName )) [] ]
+                                }
+
+                            function : Function
+                            function =
+                                { documentation = Nothing
+                                , signature = Just <| node signature
+                                , declaration = node functionImplementation
+                                }
+                        in
+                        [ FunctionDeclaration function ]
+                    )
 
         CustomTypeDeclaration customTypeDecl ->
             Ok []
@@ -34,45 +67,66 @@ generateRandomFromDeclaration file declaration =
 generateRandomFromType : File -> TypeAnnotation -> Result Error Expression
 generateRandomFromType file typeAnnotation =
     case typeAnnotation of
-        -- RecordType record ->
-        --     concatResults (generateRandomType mod) (List.map .typeName record)
-        --         |> Result.map
-        --             (\values ->
-        --                 if List.length values == 0 then
-        --                     "Random.constant {}"
-        --                 else
-        --                     let
-        --                         constructor =
-        --                             " (\\" ++ (String.join " " <| List.map .name record) ++ " -> { " ++ (String.join ", " <| List.map (\f -> f.name ++ " = " ++ f.name) record) ++ " }) "
-        --                     in
-        --                     mapFunction constructor values
-        --             )
+        Record fields ->
+            concatResults (\(Node _ ( Node _ name, Node _ anno )) -> generateRandomFromType file anno) fields
+                |> Result.map
+                    (\randoms ->
+                        Application
+                            ([ node <| FunctionOrValue [ "Random" ] ("map" ++ String.fromInt (List.length fields))
+                             , node <| objectConstructor fields
+                             ]
+                                ++ List.map node randoms
+                            )
+                    )
+
         Typed (Node _ ( [], "Bool" )) [] ->
             Ok (FunctionOrValue [ "Random" ] "bool")
 
         Typed (Node _ ( [], "Int" )) [] ->
             Ok (FunctionOrValue [ "Random" ] "int")
 
-        -- TypeRef "Bool" [] ->
-        --     Ok "randomBool"
-        -- TypeRef "Float" [] ->
-        --     Ok "randomFloat"
-        -- TypeRef "String" [] ->
-        --     Ok "randomString"
-        -- TypeRef "List" [ content ] ->
-        --     generateRandomType mod content
-        --         |> Result.map (\s -> "(randomList " ++ s ++ ")")
-        -- TypeRef "Maybe" [ content ] ->
-        --     generateRandomType mod content
-        --         |> Result.map (\s -> "(randomMaybe " ++ s ++ ")")
-        -- TypeRef "Dict" [ TypeRef "String" [], content ] ->
-        --     generateRandomType mod content
-        --         |> Result.map (\s -> "(randomDict " ++ s ++ ")")
-        -- TypeRef name [] ->
-        --     if List.isEmpty (List.filter (\member -> moduleMemberName member == name) mod.members) then
-        --         Err [ "Type not found: " ++ name ]
-        --     else
-        --         Ok <| "random" ++ name
+        Typed (Node _ ( [], "Float" )) [] ->
+            Ok (FunctionOrValue [ "Random" ] "float")
+
+        Typed (Node _ ( [], "String" )) [] ->
+            Ok (FunctionOrValue [ "Random" ] "string")
+
+        Typed (Node _ ( [], "List" )) [ Node _ content ] ->
+            generateRandomFromType file content
+                |> Result.map
+                    (\decoder ->
+                        ParenthesizedExpression <|
+                            application
+                                [ functionOrValue [ "Random" ] "list"
+                                , node decoder
+                                ]
+                    )
+
+        Typed (Node _ ( [], "Dict" )) [ Node _ (Typed (Node _ ( [], "String" )) _), Node _ content ] ->
+            generateRandomFromType file content
+                |> Result.map
+                    (\decoder ->
+                        ParenthesizedExpression <|
+                            application
+                                [ functionOrValue [ "Random" ] "dict"
+                                , node decoder
+                                ]
+                    )
+
+        Typed (Node _ ( [], "Maybe" )) [ Node _ content ] ->
+            generateRandomFromType file content
+                |> Result.map
+                    (\decoder ->
+                        ParenthesizedExpression <|
+                            application
+                                [ functionOrValue [ "Random" ] "maybe"
+                                , node decoder
+                                ]
+                    )
+
+        Typed (Node _ ( [], name )) [] ->
+            Ok <| FunctionOrValue [] ("random" ++ name)
+
         _ ->
             Err [ "Random" ]
 

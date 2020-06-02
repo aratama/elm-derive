@@ -1,6 +1,6 @@
 module Derive.Decoder exposing (generateDecoder)
 
-import Derive.Util exposing (Error, alphabets, concatResults, indent, node, nodeValue, unlines)
+import Derive.Util exposing (Error, alphabets, concatResults, indent, node, nodeValue, objectConstructor, unlines)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
 import Elm.Syntax.File exposing (File)
@@ -86,30 +86,17 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                                             , node decoder
                                             ]
                             )
-
-                argumentNames : List String
-                argumentNames =
-                    List.map (\(Node _ ( Node _ name, _ )) -> name) fields
             in
             concatResults (\field -> fieldToDecoder field |> Result.map (\decoder -> { field = field, decoder = decoder })) fields
                 |> Result.map
                     (\fieldDecoders ->
                         let
-                            constructor : Expression
-                            constructor =
-                                ParenthesizedExpression <|
-                                    node <|
-                                        LambdaExpression
-                                            { args = List.map (node << VarPattern) argumentNames
-                                            , expression = node <| RecordExpr <| List.map (\c -> node ( node <| c, node <| FunctionOrValue [] c )) argumentNames
-                                            }
-
                             map =
                                 "map" ++ String.fromInt (List.length fieldDecoders)
                         in
                         Application
                             ([ node <| FunctionOrValue [ "Json", "Decode" ] map
-                             , node <| constructor
+                             , node <| objectConstructor fields
                              ]
                                 ++ List.map (\{ decoder } -> node decoder) fieldDecoders
                             )

@@ -1,9 +1,50 @@
-module Derive.Util exposing (Error, alphabet, alphabets, asList, concatResults, derivedModuleName, errorToString, indent, node, nodeValue, toErrors, unlines)
+module Derive.Util exposing (Error, alphabet, alphabets, application, asList, concatResults, derivedModuleName, errorToString, functionAnnotation, functionOrValue, indent, node, nodeValue, objectConstructor, toErrors, unlines)
 
-import Elm.Syntax.File
-import Elm.Syntax.Module exposing (Module, moduleName)
-import Elm.Syntax.Node
+import Elm.Syntax.Declaration exposing (Declaration(..))
+import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
+import Elm.Syntax.File exposing (File)
+import Elm.Syntax.Infix exposing (InfixDirection(..))
+import Elm.Syntax.Module exposing (DefaultModuleData, Module(..), moduleName)
+import Elm.Syntax.ModuleName exposing (ModuleName)
+import Elm.Syntax.Node exposing (..)
+import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Range
+import Elm.Syntax.Signature exposing (Signature)
+import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, RecordField, TypeAnnotation(..))
+
+
+
+-- create a (\x y -> {x = x, y = y}) like function from { x: X, y: Y } like object definition
+
+
+objectConstructor : RecordDefinition -> Expression
+objectConstructor fields =
+    let
+        argumentNames : List String
+        argumentNames =
+            List.map (\(Node _ ( Node _ name, _ )) -> name) fields
+    in
+    ParenthesizedExpression <|
+        node <|
+            LambdaExpression
+                { args = List.map (node << VarPattern) argumentNames
+                , expression = node <| RecordExpr <| List.map (\c -> node ( node <| c, node <| FunctionOrValue [] c )) argumentNames
+                }
+
+
+functionOrValue : ModuleName -> String -> Node Expression
+functionOrValue mod name =
+    node <| FunctionOrValue mod name
+
+
+application : List (Node Expression) -> Node Expression
+application =
+    node << Application
+
+
+functionAnnotation : ( ModuleName, String ) -> ( ModuleName, String ) -> TypeAnnotation
+functionAnnotation from to =
+    FunctionTypeAnnotation (node <| Typed (node from) []) (node <| Typed (node to) [])
 
 
 node : a -> Elm.Syntax.Node.Node a

@@ -1,6 +1,6 @@
 module Derive.Encoder exposing (generateEncoder)
 
-import Derive.Util exposing (Error, alphabets, concatResults, node, nodeValue)
+import Derive.Util exposing (Error, alphabets, concatResults, functionAnnotation, node, nodeValue)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
 import Elm.Syntax.File exposing (File)
@@ -11,11 +11,6 @@ import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (ValueConstructor)
 import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
 import Result
-
-
-functionAnnotation : ( ModuleName, String ) -> ( ModuleName, String ) -> TypeAnnotation
-functionAnnotation from to =
-    FunctionTypeAnnotation (node <| Typed (node from) []) (node <| Typed (node to) [])
 
 
 generateEncoder : File -> Result Error (List Declaration)
