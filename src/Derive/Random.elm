@@ -15,10 +15,6 @@ import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
 
 generateRandom : File -> Result Error (List Declaration)
 generateRandom file =
-    -- let
-    --     _ =
-    --         Debug.log "generateRandom"
-    -- in
     concatResults (\node -> generateRandomFromDeclaration file (nodeValue node)) file.declarations
         |> Result.map List.concat
 
