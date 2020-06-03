@@ -89,11 +89,11 @@ encodeDictionary  =
 
 decodeTask : Json.Decode.Decoder Task
 decodeTask  =
-    Json.Decode.map3 Task (Json.Decode.int) (Json.Decode.string) (Json.Decode.bool)
+    Json.Decode.map3 Task (Json.Decode.field "id" (Json.Decode.int)) (Json.Decode.field "description" (Json.Decode.string)) (Json.Decode.field "completed" (Json.Decode.bool))
 
 decodeTodoList : Json.Decode.Decoder TodoList
 decodeTodoList  =
-    Json.Decode.map2 TodoList ((Json.Decode.list decodeTask)) (Json.Decode.string)
+    Json.Decode.map2 TodoList (Json.Decode.field "tasks" ((Json.Decode.list decodeTask))) (Json.Decode.field "field" (Json.Decode.string))
 
 decodeTree : Json.Decode.Decoder Tree
 decodeTree  =

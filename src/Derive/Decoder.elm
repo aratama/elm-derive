@@ -87,7 +87,8 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                                             ]
                             )
             in
-            concatResults (\field -> fieldToDecoder field |> Result.map (\decoder -> { field = field, decoder = decoder })) fields
+            fields
+                |> concatResults (\field -> fieldToDecoder field |> Result.map (\decoder -> { field = field, decoder = decoder }))
                 |> Result.map
                     (\fieldDecoders ->
                         let
@@ -140,9 +141,18 @@ generateDecoderFromDeclaration file delaration =
                     nodeValue aliasDecl.name
 
                 fieldToDecoder : Node RecordField -> Result Error Expression
-                fieldToDecoder (Node _ ( Node _ _, Node _ annotation )) =
+                fieldToDecoder (Node _ ( Node _ fieldName, Node _ annotation )) =
                     generateDecoderFromTypeAnnotation file annotation
-                        |> Result.map (\decoder -> ParenthesizedExpression <| node <| decoder)
+                        |> Result.map
+                            (\decoder ->
+                                ParenthesizedExpression <|
+                                    node <|
+                                        Application
+                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "field"
+                                            , node <| Literal fieldName
+                                            , node <| ParenthesizedExpression <| node <| decoder
+                                            ]
+                            )
             in
             case aliasDecl.typeAnnotation of
                 Node _ (Record recordFields) ->
