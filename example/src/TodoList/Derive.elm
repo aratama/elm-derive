@@ -15,6 +15,30 @@ viewTodoList : TodoList -> Html.Html msg
 viewTodoList  =
     (\value -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "tasks"], Html.td [] [(viewList viewTask) value.tasks]], Html.tr [] [Html.td [] [Html.text "field"], Html.td [] [viewString value.field]]]])
 
+viewTree : Tree -> Html.Html msg
+viewTree  =
+    (\customTypeValue -> case customTypeValue of
+      Leaf a ->
+        Html.table [] [Html.tr [] [viewString a]]
+      Branch a b ->
+        Html.table [] [Html.tr [] [viewTree a], Html.tr [] [viewTree b]])
+
+viewColor : Color -> Html.Html msg
+viewColor  =
+    (\customTypeValue -> case customTypeValue of
+      Red  ->
+        Html.table [] []
+      Green  ->
+        Html.table [] []
+      Blue  ->
+        Html.table [] [])
+
+viewVector : Vector -> Html.Html msg
+viewVector  =
+    (\customTypeValue -> case customTypeValue of
+      Vector a ->
+        Html.table [] [Html.tr [] [(\value -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "x"], Html.td [] [viewFloat value.x]], Html.tr [] [Html.td [] [Html.text "y"], Html.td [] [viewFloat value.y]]]]) a]])
+
 viewGrid : Grid -> Html.Html msg
 viewGrid  =
     (viewList (viewList viewInt))

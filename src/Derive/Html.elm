@@ -13,6 +13,7 @@ import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Range exposing (emptyRange)
 import Elm.Syntax.Signature exposing (Signature)
+import Elm.Syntax.Type exposing (ValueConstructor)
 import Elm.Syntax.TypeAnnotation exposing (TypeAnnotation(..))
 
 
@@ -63,7 +64,99 @@ generateViewFromDeclaration file declaration =
                 |> Result.map (\expr -> [ FunctionDeclaration <| function (nodeValue aliasDecl.name) expr ])
 
         CustomTypeDeclaration customTypeDecl ->
-            Ok []
+            let
+                decoderName : String -> String
+                decoderName typeName =
+                    "view" ++ typeName
+
+                functionImplementation : String -> Expression -> FunctionImplementation
+                functionImplementation typeName expr =
+                    { name = node <| decoderName typeName
+                    , arguments = []
+                    , expression = node expr
+                    }
+
+                signature : String -> Signature
+                signature typeName =
+                    { name = node <| decoderName typeName
+                    , typeAnnotation =
+                        node <|
+                            FunctionTypeAnnotation
+                                (node <| Typed (node ( [], typeName )) [])
+                                (node <|
+                                    Typed (node ( [ "Html" ], "Html" ))
+                                        [ node <| GenericType "msg"
+                                        ]
+                                )
+                    }
+
+                function : String -> Expression -> Function
+                function typeName expr =
+                    { documentation = Nothing
+                    , signature = Just <| node <| signature typeName
+                    , declaration = node <| functionImplementation typeName expr
+                    }
+            in
+            customTypeDecl.constructors
+                |> concatResults
+                    (\(Node _ constructor) ->
+                        constructor.arguments
+                            |> concatResults (\(Node _ argument) -> generateViewFromTypeAnnotation file argument)
+                            |> Result.map (\view -> { constructor = constructor, view = view })
+                    )
+                |> Result.map
+                    (\pairs ->
+                        let
+                            r : List { constructor : ValueConstructor, view : List Expression }
+                            r =
+                                pairs
+
+                            expr : Expression
+                            expr =
+                                LambdaExpression
+                                    { args = [ node <| VarPattern "customTypeValue" ]
+                                    , expression =
+                                        node <|
+                                            CaseExpression
+                                                { expression = node <| FunctionOrValue [] "customTypeValue"
+                                                , cases =
+                                                    List.map
+                                                        (\pair ->
+                                                            let
+                                                                c : Case
+                                                                c =
+                                                                    ( node <|
+                                                                        NamedPattern
+                                                                            { moduleName = []
+                                                                            , name = nodeValue pair.constructor.name
+                                                                            }
+                                                                            (List.map (node << VarPattern << String.fromChar) (Derive.Util.alphabets (List.length pair.view)))
+                                                                    , node <|
+                                                                        Application
+                                                                            [ node <|
+                                                                                element "table" [] <|
+                                                                                    List.indexedMap
+                                                                                        (\i field ->
+                                                                                            element "tr"
+                                                                                                []
+                                                                                                [ Application
+                                                                                                    [ node field
+                                                                                                    , node <| FunctionOrValue [] <| String.fromChar <| Derive.Util.alphabet i
+                                                                                                    ]
+                                                                                                ]
+                                                                                        )
+                                                                                        pair.view
+                                                                            ]
+                                                                    )
+                                                            in
+                                                            c
+                                                        )
+                                                        pairs
+                                                }
+                                    }
+                        in
+                        [ FunctionDeclaration <| function (nodeValue customTypeDecl.name) (ParenthesizedExpression <| node <| expr) ]
+                    )
 
         _ ->
             Ok []
