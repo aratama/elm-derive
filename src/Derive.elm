@@ -4,15 +4,14 @@ import Derive.Decoder
 import Derive.Encoder
 import Derive.Html
 import Derive.Random
-import Derive.Util exposing (Error, concatResults, derivedModuleName, node, nodeValue, unlines)
+import Derive.Util exposing (Error, concatResults, derivedModuleName, node, nodeValue)
 import Elm.Parser
 import Elm.Processing
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Exposing exposing (Exposing(..))
 import Elm.Syntax.Expression exposing (Expression(..))
 import Elm.Syntax.File
-import Elm.Syntax.Import exposing (Import)
-import Elm.Syntax.Module exposing (DefaultModuleData, Module(..), moduleName)
+import Elm.Syntax.Module exposing (Module(..), moduleName)
 import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Range exposing (emptyRange)
@@ -80,7 +79,7 @@ viewDict f dict = Html.table []
 generate : Elm.Syntax.File.File -> Result Error Elm.Syntax.File.File
 generate file =
     case Elm.Parser.parse template of
-        Err err ->
+        Err _ ->
             Err [ "" ]
 
         Ok templateRawFile ->

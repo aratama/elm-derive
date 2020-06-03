@@ -1,16 +1,15 @@
 module Derive.Random exposing (..)
 
-import Derive.Util exposing (Error, application, concatResults, functionAnnotation, functionOrValue, node, nodeValue, objectConstructor)
+import Derive.Util exposing (Error, application, concatResults, functionOrValue, node, nodeValue, objectConstructor)
 import Elm.Syntax.Declaration exposing (Declaration(..))
-import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation, LetBlock, LetDeclaration(..))
+import Elm.Syntax.Expression exposing (Expression(..), Function, FunctionImplementation, LetBlock, LetDeclaration(..))
 import Elm.Syntax.File exposing (File)
 import Elm.Syntax.Infix exposing (InfixDirection(..))
-import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node exposing (..)
 import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (ValueConstructor)
-import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
+import Elm.Syntax.TypeAnnotation exposing (TypeAnnotation(..))
 
 
 generateRandom : File -> Result Error (List Declaration)
@@ -198,7 +197,7 @@ generateRandomFromType : File -> TypeAnnotation -> Result Error Expression
 generateRandomFromType file typeAnnotation =
     case typeAnnotation of
         Record fields ->
-            concatResults (\(Node _ ( Node _ name, Node _ anno )) -> generateRandomFromType file anno) fields
+            concatResults (\(Node _ ( Node _ _, Node _ anno )) -> generateRandomFromType file anno) fields
                 |> Result.map
                     (\randoms ->
                         ParenthesizedExpression <|

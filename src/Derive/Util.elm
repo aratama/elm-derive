@@ -1,16 +1,15 @@
 module Derive.Util exposing (Error, alphabet, alphabets, application, asList, concatResults, derivedModuleName, errorToString, functionAnnotation, functionOrValue, indent, node, nodeValue, objectConstructor, toErrors, unlines)
 
 import Elm.Syntax.Declaration exposing (Declaration(..))
-import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
-import Elm.Syntax.File exposing (File)
+import Elm.Syntax.Expression exposing (Expression(..))
+import Elm.Syntax.File
 import Elm.Syntax.Infix exposing (InfixDirection(..))
-import Elm.Syntax.Module exposing (DefaultModuleData, Module(..), moduleName)
+import Elm.Syntax.Module exposing (Module(..), moduleName)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node exposing (..)
 import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Range
-import Elm.Syntax.Signature exposing (Signature)
-import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, RecordField, TypeAnnotation(..))
+import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, TypeAnnotation(..))
 
 
 

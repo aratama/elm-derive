@@ -1,6 +1,6 @@
 module Derive.Decoder exposing (generateDecoder)
 
-import Derive.Util exposing (Error, alphabets, concatResults, indent, node, nodeValue, objectConstructor, unlines)
+import Derive.Util exposing (Error, concatResults, indent, node, nodeValue, objectConstructor, unlines)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
 import Elm.Syntax.File exposing (File)

@@ -4,7 +4,6 @@ import Derive.Util exposing (Error, alphabets, concatResults, functionAnnotation
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
 import Elm.Syntax.File exposing (File)
-import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node exposing (..)
 import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Signature exposing (Signature)

@@ -1,17 +1,13 @@
 module Derive.Html exposing (..)
 
-import Derive.Util exposing (Error, application, concatResults, derivedModuleName, functionAnnotation, functionOrValue, node, nodeValue, unlines)
-import Elm.Parser
-import Elm.Processing
+import Derive.Util exposing (Error, application, concatResults, functionOrValue, node, nodeValue)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Exposing exposing (Exposing(..))
 import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
 import Elm.Syntax.File exposing (File)
-import Elm.Syntax.Import exposing (Import)
-import Elm.Syntax.Module exposing (DefaultModuleData, Module(..), moduleName)
+import Elm.Syntax.Module exposing (Module(..))
 import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Pattern exposing (Pattern(..))
-import Elm.Syntax.Range exposing (emptyRange)
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (ValueConstructor)
 import Elm.Syntax.TypeAnnotation exposing (TypeAnnotation(..))
@@ -160,70 +156,6 @@ generateViewFromDeclaration file declaration =
 
         _ ->
             Ok []
-
-
-
---                         TypeAliasMember ta ->
---                             generateViewFromType mod ta.body
---                         TypeMember t ->
---                             t.variants
---                                 |> concatResults
---                                     (\variant ->
---                                         concatResults (generateViewFromType mod) variant.fields
---                                             |> Result.map
---                                                 (\fields ->
---                                                     { variant = variant, fields = fields }
---                                                 )
---                                     )
---                                 |> Result.map
---                                     (\variants ->
---                                         unlines
---                                             [ "\\typeValue -> Html.div [Html.Attributes.class \"elm-derive-type\"] <|"
---                                             , indent "case typeValue of"
---                                             , indent <|
---                                                 indent <|
---                                                     unlines <|
---                                                         List.indexedMap
---                                                             (\variantIndex { variant, fields } ->
---                                                                 variant.name
---                                                                     ++ " "
---                                                                     ++ String.fromList (List.intersperse ' ' (alphabets (List.length fields)))
---                                                                     ++ " -> \n"
---                                                                     ++ indent
---                                                                         (asList <|
---                                                                             [ "Html.div [Html.Attributes.class \"elm-derive-variant\", Html.Attributes.class \"elm-derive-variant-" ++ String.fromInt variantIndex ++ "\"] [ Html.text \"" ++ variant.name ++ "\"]"
---                                                                             , unlines
---                                                                                 [ "Html.div [Html.Attributes.class \"elm-derive-variant-fields\"]"
---                                                                                 , indent <| asList <| List.indexedMap (\fieldIndex field -> field ++ " " ++ String.fromChar (alphabet fieldIndex)) fields
---                                                                                 ]
---                                                                             ]
---                                                                         )
---                                                             )
---                                                             variants
---                                             ]
---                                     )
---             in
---             results
---                 |> Result.map
---                     (\result ->
---                         unlines
---                             [ "view" ++ name ++ " : " ++ name ++ " -> Html.Html msg"
---                             , "view"
---                                 ++ name
---                                 ++ " = "
---                             , indent result
---                             , ""
---                             ]
---                     )
---         )
---         mod.members
---         |> Result.map
---             (\results ->
---                 unlines
---                     [ header
---                     , unlines results
---                     ]
---             )
 
 
 element : String -> List ( String, String ) -> List Expression -> Expression
