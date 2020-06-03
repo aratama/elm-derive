@@ -7,72 +7,21 @@ import Json.Decode
 import Random  
 import TodoList  exposing (..)
 
-randomBool : Random.Generator Bool
-randomBool  =
-    Random.uniform True [False]
+viewTask : Task -> Html.Html msg
+viewTask  =
+    (\value -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "id"], Html.td [] [viewInt value.id]], Html.tr [] [Html.td [] [Html.text "description"], Html.td [] [viewString value.description]], Html.tr [] [Html.td [] [Html.text "completed"], Html.td [] [viewBool value.completed]]]])
 
-randomInt : Random.Generator Int
-randomInt  =
-    Random.int 0 100
+viewTodoList : TodoList -> Html.Html msg
+viewTodoList  =
+    (\value -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "tasks"], Html.td [] [(viewList viewTask) value.tasks]], Html.tr [] [Html.td [] [Html.text "field"], Html.td [] [viewString value.field]]]])
 
-randomString : Random.Generator String
-randomString  =
-    Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
+viewGrid : Grid -> Html.Html msg
+viewGrid  =
+    (viewList (viewList viewInt))
 
-randomFloat : Random.Generator Float
-randomFloat  =
-    Random.float 0 1
-
-randomList : Random.Generator a -> Random.Generator (List a)
-randomList gen =
-    Random.andThen (\n -> Random.list (3 + n) gen) (Random.int 0 7)
-
-randomMaybe : Random.Generator a -> Random.Generator (Maybe a)
-randomMaybe gen =
-    Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
-
-randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
-randomDict gen =
-    Random.map Dict.fromList (randomList (Random.map2 (\k v -> (k, v)) randomString gen))
-
-viewList : (a -> Html.Html msg) -> (List a -> Html.Html msg)
-viewList f xs =
-    Html.table []
-     [Html.caption [] [Html.text "List"]
-    , Html.tbody [] (List.indexedMap (\i x -> Html.tr [] [Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]]) xs)]
-
-viewMaybe : (a -> Html.Html msg) -> (Maybe a -> Html.Html msg)
-viewMaybe f m =
-    case m of
-      Nothing  ->
-        Html.div [Html.Attributes.class "elm-derive-maybe"] [Html.text "null"]
-      Just a ->
-        Html.div [Html.Attributes.class "elm-derive-maybe"] [f a]
-
-viewBool : Bool -> Html.Html msg
-viewBool value =
-    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| if value then
-      "True"
-    else
-      "False"]
-
-viewInt : Int -> Html.Html msg
-viewInt value =
-    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromInt value]
-
-viewString : String -> Html.Html msg
-viewString value =
-    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text value]
-
-viewFloat : Float -> Html.Html msg
-viewFloat value =
-    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromFloat value]
-
-viewDict : (a -> Html.Html msg) -> (Dict.Dict String a -> Html.Html msg)
-viewDict f dict =
-    Html.table []
-     [Html.caption [] [Html.text "Dict"]
-    , Html.tbody [] (List.map (\(k, v) -> Html.tr [] [Html.td [] [Html.text k], Html.td [] [f v]]) (Dict.toList dict))]
+viewDictionary : Dictionary -> Html.Html msg
+viewDictionary  =
+    (viewDict viewInt)
 
 encodeTask : Task -> Json.Encode.Value
 encodeTask  =
@@ -217,3 +166,70 @@ randomGrid  =
 randomDictionary : Random.Generator Dictionary
 randomDictionary  =
     (randomDict randomInt)
+
+randomBool : Random.Generator Bool
+randomBool  =
+    Random.uniform True [False]
+
+randomInt : Random.Generator Int
+randomInt  =
+    Random.int 0 100
+
+randomString : Random.Generator String
+randomString  =
+    Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
+
+randomFloat : Random.Generator Float
+randomFloat  =
+    Random.float 0 1
+
+randomList : Random.Generator a -> Random.Generator (List a)
+randomList gen =
+    Random.andThen (\n -> Random.list (3 + n) gen) (Random.int 0 7)
+
+randomMaybe : Random.Generator a -> Random.Generator (Maybe a)
+randomMaybe gen =
+    Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
+
+randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
+randomDict gen =
+    Random.map Dict.fromList (randomList (Random.map2 (\k v -> (k, v)) randomString gen))
+
+viewList : (a -> Html.Html msg) -> (List a -> Html.Html msg)
+viewList f xs =
+    Html.table []
+     [Html.caption [] [Html.text "List"]
+    , Html.tbody [] (List.indexedMap (\i x -> Html.tr [] [Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]]) xs)]
+
+viewMaybe : (a -> Html.Html msg) -> (Maybe a -> Html.Html msg)
+viewMaybe f m =
+    case m of
+      Nothing  ->
+        Html.div [Html.Attributes.class "elm-derive-maybe"] [Html.text "null"]
+      Just a ->
+        Html.div [Html.Attributes.class "elm-derive-maybe"] [f a]
+
+viewBool : Bool -> Html.Html msg
+viewBool value =
+    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| if value then
+      "True"
+    else
+      "False"]
+
+viewInt : Int -> Html.Html msg
+viewInt value =
+    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromInt value]
+
+viewString : String -> Html.Html msg
+viewString value =
+    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text value]
+
+viewFloat : Float -> Html.Html msg
+viewFloat value =
+    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromFloat value]
+
+viewDict : (a -> Html.Html msg) -> (Dict.Dict String a -> Html.Html msg)
+viewDict f dict =
+    Html.table []
+     [Html.caption [] [Html.text "Dict"]
+    , Html.tbody [] (List.map (\(k, v) -> Html.tr [] [Html.td [] [Html.text k], Html.td [] [f v]]) (Dict.toList dict))]

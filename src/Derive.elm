@@ -142,8 +142,8 @@ generate file =
                             ]
                         , declarations =
                             List.concat
-                                [ templateFile.declarations
-                                , List.map node (List.concat results)
+                                [ List.map node (List.concat results)
+                                , templateFile.declarations
                                 ]
                         , comments = []
                         }

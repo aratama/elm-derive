@@ -35,6 +35,57 @@ randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen =
     Random.map Dict.fromList (randomList (Random.map2 (\k v -> (k, v)) randomString gen))
 
+viewList : (a -> Html.Html msg) -> (List a -> Html.Html msg)
+viewList f xs =
+    Html.table []
+     [Html.caption [] [Html.text "List"]
+    , Html.tbody [] (List.indexedMap (\i x -> Html.tr [] [Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]]) xs)]
+
+viewMaybe : (a -> Html.Html msg) -> (Maybe a -> Html.Html msg)
+viewMaybe f m =
+    case m of
+      Nothing  ->
+        Html.div [Html.Attributes.class "elm-derive-maybe"] [Html.text "null"]
+      Just a ->
+        Html.div [Html.Attributes.class "elm-derive-maybe"] [f a]
+
+viewBool : Bool -> Html.Html msg
+viewBool value =
+    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| if value then
+      "True"
+    else
+      "False"]
+
+viewInt : Int -> Html.Html msg
+viewInt value =
+    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromInt value]
+
+viewString : String -> Html.Html msg
+viewString value =
+    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text value]
+
+viewFloat : Float -> Html.Html msg
+viewFloat value =
+    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromFloat value]
+
+viewDict : (a -> Html.Html msg) -> (Dict.Dict String a -> Html.Html msg)
+viewDict f dict =
+    Html.table []
+     [Html.caption [] [Html.text "Dict"]
+    , Html.tbody [] (List.map (\(k, v) -> Html.tr [] [Html.td [] [Html.text k], Html.td [] [f v]]) (Dict.toList dict))]
+
+
+viewModel  =
+    (Html.table)
+
+encodeModel : Model -> Json.Encode.Value
+encodeModel  =
+    (\value -> Json.Encode.object [("source", Json.Encode.string value.source), ("encoderVisible", Json.Encode.bool value.encoderVisible), ("decoderVisible", Json.Encode.bool value.decoderVisible), ("loadStorageVisible", Json.Encode.bool value.loadStorageVisible)])
+
+decodeModel : Json.Decode.Decoder Model
+decodeModel  =
+    Json.Decode.map4 Model (Json.Decode.string) (Json.Decode.bool) (Json.Decode.bool) (Json.Decode.bool)
+
 randomModel : Random.Generator Model
 randomModel  =
-    Random.map4 (\source encoderVisible decoderVisible loadStorageVisible -> {source = source, encoderVisible = encoderVisible, decoderVisible = decoderVisible, loadStorageVisible = loadStorageVisible}) randomString randomBool randomBool randomBool
+    (Random.map4 (\source encoderVisible decoderVisible loadStorageVisible -> {source = source, encoderVisible = encoderVisible, decoderVisible = decoderVisible, loadStorageVisible = loadStorageVisible}) randomString randomBool randomBool randomBool)
