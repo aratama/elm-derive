@@ -35,14 +35,6 @@ randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen =
     Random.map Dict.fromList (randomList (Random.map2 (\k v -> (k, v)) randomString gen))
 
-encodeModel : Model -> Json.Encode.Value
-encodeModel  =
-    (\value -> Json.Encode.object [("source", Json.Encode.string value.source), ("encoderVisible", Json.Encode.bool value.encoderVisible), ("decoderVisible", Json.Encode.bool value.decoderVisible), ("loadStorageVisible", Json.Encode.bool value.loadStorageVisible)])
-
-decodeModel : Json.Decode.Decoder Model
-decodeModel  =
-    Json.Decode.map4 Model (Json.Decode.string) (Json.Decode.bool) (Json.Decode.bool) (Json.Decode.bool)
-
 randomModel : Random.Generator Model
 randomModel  =
     Random.map4 (\source encoderVisible decoderVisible loadStorageVisible -> {source = source, encoderVisible = encoderVisible, decoderVisible = decoderVisible, loadStorageVisible = loadStorageVisible}) randomString randomBool randomBool randomBool
