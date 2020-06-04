@@ -45,6 +45,7 @@ writeFile : File -> Writer
 writeFile file =
     breaked
         [ writeModule <| Node.value file.moduleDefinition
+        , breaked (List.map (Node.value >> string) file.comments)
         , breaked (List.map (Node.value >> writeImport) file.imports)
         , breaked (List.map writeDeclaration file.declarations)
         ]
