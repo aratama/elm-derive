@@ -6,7 +6,7 @@ import Elm.Syntax.File
 import Elm.Syntax.Infix exposing (InfixDirection(..))
 import Elm.Syntax.Module exposing (Module(..), moduleName)
 import Elm.Syntax.ModuleName exposing (ModuleName)
-import Elm.Syntax.Node exposing (..)
+import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Range
 import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, TypeAnnotation(..))

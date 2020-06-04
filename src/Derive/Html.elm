@@ -1,4 +1,4 @@
-module Derive.Html exposing (..)
+module Derive.Html exposing (generateView)
 
 import Derive.Util exposing (Error, application, concatResults, functionOrValue, node, nodeValue)
 import Elm.Syntax.Declaration exposing (Declaration(..))
@@ -135,7 +135,7 @@ generateViewFromDeclaration file declaration =
 
 
 element : String -> List ( String, String ) -> List Expression -> Expression
-element name attributes children =
+element name _ children =
     Application
         [ node <| FunctionOrValue [ "Html" ] name
         , node <| ListExpr []

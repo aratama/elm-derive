@@ -1,21 +1,15 @@
 module Derive.Decoder exposing (generateDecoder)
 
-import Derive.Util exposing (Error, alphabet, concatResults, indent, node, nodeValue, objectConstructor, unlines)
+import Derive.Util exposing (Error, alphabet, concatResults, node, nodeValue, objectConstructor)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
 import Elm.Syntax.File exposing (File)
 import Elm.Syntax.Infix exposing (InfixDirection(..))
-import Elm.Syntax.ModuleName exposing (ModuleName)
-import Elm.Syntax.Node exposing (..)
+import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
 import Elm.Writer
-
-
-functionAnnotation : ( ModuleName, String ) -> ( ModuleName, String ) -> TypeAnnotation
-functionAnnotation from to =
-    FunctionTypeAnnotation (node <| Typed (node from) []) (node <| Typed (node to) [])
 
 
 generateDecoderFromTypeAnnotation : File -> TypeAnnotation -> Result Error Expression
@@ -373,19 +367,6 @@ generateDecoder : File -> Result Error (List Declaration)
 generateDecoder file =
     concatResults (\node -> generateDecoderFromDeclaration file (nodeValue node)) file.declarations
         |> Result.map List.concat
-
-
-mapFunction : String -> List String -> String
-mapFunction constructor decoders =
-    case decoders of
-        g :: gs ->
-            unlines
-                [ "Json.Decode.map " ++ constructor ++ " (" ++ g ++ ")"
-                , indent <| unlines (List.map (\gen -> "|> andMap (" ++ gen ++ ")") gs)
-                ]
-
-        [] ->
-            "<<<INTERNAL ERROR>>>"
 
 
 mapFunctionExtra : String

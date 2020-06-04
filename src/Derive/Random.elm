@@ -1,11 +1,11 @@
-module Derive.Random exposing (..)
+module Derive.Random exposing (generateRandom)
 
 import Derive.Util exposing (Error, application, concatResults, functionOrValue, node, nodeValue, objectConstructor)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Expression(..), Function, FunctionImplementation, LetBlock, LetDeclaration(..))
 import Elm.Syntax.File exposing (File)
 import Elm.Syntax.Infix exposing (InfixDirection(..))
-import Elm.Syntax.Node exposing (..)
+import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (ValueConstructor)
