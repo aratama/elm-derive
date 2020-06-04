@@ -56,7 +56,7 @@ generateViewFromDeclaration file declaration =
                     , declaration = node <| functionImplementation typeName expr
                     }
             in
-            generateViewFromTypeAnnotation file (nodeValue aliasDecl.typeAnnotation)
+            generateViewFromTypeAnnotation 0 file (nodeValue aliasDecl.typeAnnotation)
                 |> Result.map (\expr -> [ FunctionDeclaration <| function (nodeValue aliasDecl.name) expr ])
 
         CustomTypeDeclaration customTypeDecl ->
@@ -97,7 +97,7 @@ generateViewFromDeclaration file declaration =
                 |> concatResults
                     (\(Node _ constructor) ->
                         constructor.arguments
-                            |> concatResults (\(Node _ argument) -> generateViewFromTypeAnnotation file argument)
+                            |> concatResults (\(Node _ argument) -> generateViewFromTypeAnnotation 0 file argument)
                             |> Result.map (\view -> { constructor = constructor, view = view })
                     )
                 |> Result.map
@@ -175,14 +175,14 @@ text str =
         ]
 
 
-generateViewFromTypeAnnotation : File -> TypeAnnotation -> Result Error Expression
-generateViewFromTypeAnnotation file typeAnnotation =
+generateViewFromTypeAnnotation : Int -> File -> TypeAnnotation -> Result Error Expression
+generateViewFromTypeAnnotation depth file typeAnnotation =
     case typeAnnotation of
         Record fields ->
             fields
                 |> concatResults
                     (\(Node _ ( Node _ name, Node _ anno )) ->
-                        generateViewFromTypeAnnotation file anno
+                        generateViewFromTypeAnnotation (depth + 1) file anno
                             |> Result.map (\annotation -> { name = name, annotation = annotation })
                     )
                 |> Result.map
@@ -190,7 +190,7 @@ generateViewFromTypeAnnotation file typeAnnotation =
                         ParenthesizedExpression <|
                             node <|
                                 LambdaExpression
-                                    { args = [ node <| VarPattern "value" ]
+                                    { args = [ node <| VarPattern <| "value" ++ String.fromInt depth ]
                                     , expression =
                                         node <|
                                             element "table"
@@ -206,7 +206,7 @@ generateViewFromTypeAnnotation file typeAnnotation =
                                                                     []
                                                                     [ Application
                                                                         [ node pair.annotation
-                                                                        , node <| RecordAccess (node <| FunctionOrValue [] "value") (node pair.name)
+                                                                        , node <| RecordAccess (node <| FunctionOrValue [] <| "value" ++ String.fromInt depth) (node pair.name)
                                                                         ]
                                                                     ]
                                                                 ]
@@ -230,7 +230,7 @@ generateViewFromTypeAnnotation file typeAnnotation =
             Ok (FunctionOrValue [] "viewString")
 
         Typed (Node _ ( [], "List" )) [ Node _ content ] ->
-            generateViewFromTypeAnnotation file content
+            generateViewFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\decoder ->
                         ParenthesizedExpression <|
@@ -241,7 +241,7 @@ generateViewFromTypeAnnotation file typeAnnotation =
                     )
 
         Typed (Node _ ( [], "Maybe" )) [ Node _ content ] ->
-            generateViewFromTypeAnnotation file content
+            generateViewFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\decoder ->
                         ParenthesizedExpression <|
@@ -252,7 +252,7 @@ generateViewFromTypeAnnotation file typeAnnotation =
                     )
 
         Typed (Node _ ( [], "Dict" )) [ Node _ (Typed (Node _ ( [], "String" )) _), Node _ content ] ->
-            generateViewFromTypeAnnotation file content
+            generateViewFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\decoder ->
                         ParenthesizedExpression <|
@@ -273,8 +273,8 @@ generateViewFromTypeAnnotation file typeAnnotation =
                                 , node <| sndView
                                 ]
                 )
-                (generateViewFromTypeAnnotation file fst)
-                (generateViewFromTypeAnnotation file snd)
+                (generateViewFromTypeAnnotation (depth + 1) file fst)
+                (generateViewFromTypeAnnotation (depth + 1) file snd)
 
         Unit ->
             Ok <|

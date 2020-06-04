@@ -32,7 +32,8 @@ And you can use the following types as a field type:
 * List a
 * Maybe a
 * Dict String a
-* 2-Tuple
+* 2-elements Tuple
+* Unit
 
 elm-derive has a CLI. Try the following command in your terminal:
 

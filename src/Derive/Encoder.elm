@@ -22,7 +22,7 @@ generateEncoderFromDeclaration : File -> Declaration -> Result Error (List Decla
 generateEncoderFromDeclaration file declaration =
     case declaration of
         AliasDeclaration aliasDecl ->
-            generateEncoderFromTypeAnnotation file (nodeValue aliasDecl.typeAnnotation)
+            generateEncoderFromTypeAnnotation 0 file (nodeValue aliasDecl.typeAnnotation)
                 |> Result.map
                     (\encoder ->
                         let
@@ -102,7 +102,7 @@ generateEncoderFromDeclaration file declaration =
                                                     field =
                                                         nodeValue fieldNode
                                                 in
-                                                generateEncoderFromTypeAnnotation file field
+                                                generateEncoderFromTypeAnnotation 0 file field
                                                     |> Result.map
                                                         (\encoder ->
                                                             let
@@ -173,8 +173,8 @@ generateEncoderFromDeclaration file declaration =
             Ok []
 
 
-generateEncoderFromTypeAnnotation : File -> TypeAnnotation -> Result Error Expression
-generateEncoderFromTypeAnnotation file typeAnnotation =
+generateEncoderFromTypeAnnotation : Int -> File -> TypeAnnotation -> Result Error Expression
+generateEncoderFromTypeAnnotation depth file typeAnnotation =
     case typeAnnotation of
         Typed (Node _ ( [], "Bool" )) [] ->
             Ok (FunctionOrValue [ "Json", "Encode" ] "bool")
@@ -192,17 +192,17 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
             Ok (FunctionOrValue [] "encodeChar")
 
         Typed (Node _ ( [], "List" )) [ Node _ content ] ->
-            generateEncoderFromTypeAnnotation file content
+            generateEncoderFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "list", node encoder ])
 
         Typed (Node _ ( [], "Dict" )) [ Node _ (Typed (Node _ ( [], "String" )) _), Node _ content ] ->
-            generateEncoderFromTypeAnnotation file content
+            generateEncoderFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "dict", node <| FunctionOrValue [] "identity", node encoder ])
 
         Typed (Node _ ( [], "Maybe" )) [ Node _ content ] ->
-            generateEncoderFromTypeAnnotation file content
+            generateEncoderFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [] "encodeMaybe", node encoder ])
 
@@ -252,8 +252,8 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
                                             ]
                                 }
                 )
-                (generateEncoderFromTypeAnnotation file fst)
-                (generateEncoderFromTypeAnnotation file snd)
+                (generateEncoderFromTypeAnnotation (depth + 1) file fst)
+                (generateEncoderFromTypeAnnotation (depth + 1) file snd)
 
         Typed (Node _ ( [], moduleMemberTypeName )) [] ->
             let
@@ -292,7 +292,7 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
                         ( Node _ name, Node _ fieldTypeAnnotation ) =
                             nodeValue recordFieldNode
                     in
-                    generateEncoderFromTypeAnnotation file fieldTypeAnnotation
+                    generateEncoderFromTypeAnnotation (depth + 1) file fieldTypeAnnotation
                         |> Result.map
                             (\k ->
                                 TupledExpression
@@ -300,7 +300,7 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
                                     , node <|
                                         Application
                                             [ node k
-                                            , node <| RecordAccess (node <| FunctionOrValue [] "value") (node name)
+                                            , node <| RecordAccess (node <| FunctionOrValue [] <| "value" ++ String.fromInt depth) (node name)
                                             ]
                                     ]
                             )
@@ -311,7 +311,7 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
                         ParenthesizedExpression <|
                             node <|
                                 LambdaExpression
-                                    { args = [ node <| VarPattern "value" ]
+                                    { args = [ node <| VarPattern <| "value" ++ String.fromInt depth ]
                                     , expression =
                                         node <|
                                             Application

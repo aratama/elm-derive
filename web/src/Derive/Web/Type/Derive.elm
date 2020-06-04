@@ -10,11 +10,11 @@ import Derive.Web.Type  exposing (..)
 
 viewModel : Model -> Html.Html msg
 viewModel  =
-    (\value -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "source"], Html.td [] [viewString value.source]], Html.tr [] [Html.td [] [Html.text "encoderVisible"], Html.td [] [viewBool value.encoderVisible]], Html.tr [] [Html.td [] [Html.text "decoderVisible"], Html.td [] [viewBool value.decoderVisible]], Html.tr [] [Html.td [] [Html.text "loadStorageVisible"], Html.td [] [viewBool value.loadStorageVisible]]]])
+    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "source"], Html.td [] [viewString value0.source]], Html.tr [] [Html.td [] [Html.text "encoderVisible"], Html.td [] [viewBool value0.encoderVisible]], Html.tr [] [Html.td [] [Html.text "decoderVisible"], Html.td [] [viewBool value0.decoderVisible]], Html.tr [] [Html.td [] [Html.text "loadStorageVisible"], Html.td [] [viewBool value0.loadStorageVisible]]]])
 
 encodeModel : Model -> Json.Encode.Value
 encodeModel  =
-    (\value -> Json.Encode.object [("source", Json.Encode.string value.source), ("encoderVisible", Json.Encode.bool value.encoderVisible), ("decoderVisible", Json.Encode.bool value.decoderVisible), ("loadStorageVisible", Json.Encode.bool value.loadStorageVisible)])
+    (\value0 -> Json.Encode.object [("source", Json.Encode.string value0.source), ("encoderVisible", Json.Encode.bool value0.encoderVisible), ("decoderVisible", Json.Encode.bool value0.decoderVisible), ("loadStorageVisible", Json.Encode.bool value0.loadStorageVisible)])
 
 decodeModel : Json.Decode.Decoder Model
 decodeModel  =
@@ -24,6 +24,15 @@ randomModel : Random.Generator Model
 randomModel  =
     (Random.map4 (\source encoderVisible decoderVisible loadStorageVisible -> {source = source, encoderVisible = encoderVisible, decoderVisible = decoderVisible, loadStorageVisible = loadStorageVisible}) randomString randomBool randomBool randomBool)
 
+decodeChar : Json.Decode.Decoder Char
+decodeChar  =
+    Json.Decode.andThen (\str -> case String.toList str of
+      [c] ->
+        Json.Decode.succeed c
+      _ ->
+        Json.Decode.fail "decodeChar: too many charactors for Char type")
+     Json.Decode.string
+
 encodeMaybe : (a -> Json.Encode.Value) -> (Maybe a -> Json.Encode.Value)
 encodeMaybe f encodeMaybeValue =
     case encodeMaybeValue of
@@ -31,6 +40,10 @@ encodeMaybe f encodeMaybeValue =
         Json.Encode.null
       Just justValue ->
         f justValue
+
+encodeChar : Char -> Json.Encode.Value
+encodeChar value =
+    Json.Encode.string (String.fromChar value)
 
 randomBool : Random.Generator Bool
 randomBool  =
@@ -43,6 +56,10 @@ randomInt  =
 randomString : Random.Generator String
 randomString  =
     Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
+
+randomChar : Random.Generator Char
+randomChar  =
+    Random.uniform 'a' (String.toList "bcdefghijklmnopqlstuvwxyz")
 
 randomFloat : Random.Generator Float
 randomFloat  =
@@ -89,6 +106,10 @@ viewString : String -> Html.Html msg
 viewString value =
     Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text value]
 
+viewChar : Char -> Html.Html msg
+viewChar value =
+    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromChar value]
+
 viewFloat : Float -> Html.Html msg
 viewFloat value =
     Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromFloat value]
@@ -98,3 +119,15 @@ viewDict f dict =
     Html.table []
      [Html.caption [] [Html.text "Dict"]
     , Html.tbody [] (List.map (\(k, v) -> Html.tr [] [Html.td [] [Html.text k], Html.td [] [f v]]) (Dict.toList dict))]
+
+viewTuple : (a -> Html.Html msg) -> ((b -> Html.Html msg) -> ((a, b) -> Html.Html msg))
+viewTuple fa fb (a, b) =
+    Html.table []
+     [Html.caption [] [Html.text "Dict"]
+    , Html.tbody []
+     [Html.tr []
+     [Html.td [] [Html.text "fst"]
+    , Html.td [] [fa a]]
+    , Html.tr []
+     [Html.td [] [Html.text "snd"]
+    , Html.td [] [fb b]]]]

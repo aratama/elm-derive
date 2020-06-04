@@ -46,4 +46,7 @@ suite =
         , testDerived "Dictionary" Type.Derive.randomDictionary Type.Derive.encodeDictionary Type.Derive.decodeDictionary
         , testDerived "EmptyRecord" Type.Derive.randomEmptyRecord Type.Derive.encodeEmptyRecord Type.Derive.decodeEmptyRecord
         , testDerived "Pair" Type.Derive.randomPair Type.Derive.encodePair Type.Derive.decodePair
+        , testDerived "Char" Type.Derive.randomCharType Type.Derive.encodeCharType Type.Derive.decodeCharType
+        , testDerived "Unit" Type.Derive.randomUnitType Type.Derive.encodeUnitType Type.Derive.decodeUnitType
+        , testDerived "NestedRecord" Type.Derive.randomNestedRecord Type.Derive.encodeNestedRecord Type.Derive.decodeNestedRecord
         ]

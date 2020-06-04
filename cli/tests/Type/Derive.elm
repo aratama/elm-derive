@@ -10,11 +10,11 @@ import Type  exposing (..)
 
 viewTodoList : TodoList -> Html.Html msg
 viewTodoList  =
-    (\value -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "tasks"], Html.td [] [(viewList viewTask) value.tasks]], Html.tr [] [Html.td [] [Html.text "field"], Html.td [] [viewString value.field]], Html.tr [] [Html.td [] [Html.text "uid"], Html.td [] [viewInt value.uid]], Html.tr [] [Html.td [] [Html.text "visibility"], Html.td [] [viewString value.visibility]]]])
+    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "tasks"], Html.td [] [(viewList viewTask) value0.tasks]], Html.tr [] [Html.td [] [Html.text "field"], Html.td [] [viewString value0.field]], Html.tr [] [Html.td [] [Html.text "uid"], Html.td [] [viewInt value0.uid]], Html.tr [] [Html.td [] [Html.text "visibility"], Html.td [] [viewString value0.visibility]]]])
 
 viewTask : Task -> Html.Html msg
 viewTask  =
-    (\value -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "description"], Html.td [] [viewString value.description]], Html.tr [] [Html.td [] [Html.text "completed"], Html.td [] [viewBool value.completed]], Html.tr [] [Html.td [] [Html.text "edits"], Html.td [] [(viewMaybe viewString) value.edits]], Html.tr [] [Html.td [] [Html.text "id"], Html.td [] [viewInt value.id]]]])
+    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "description"], Html.td [] [viewString value0.description]], Html.tr [] [Html.td [] [Html.text "completed"], Html.td [] [viewBool value0.completed]], Html.tr [] [Html.td [] [Html.text "edits"], Html.td [] [(viewMaybe viewString) value0.edits]], Html.tr [] [Html.td [] [Html.text "id"], Html.td [] [viewInt value0.id]]]])
 
 viewTree : Tree -> Html.Html msg
 viewTree  =
@@ -38,7 +38,7 @@ viewVector : Vector -> Html.Html msg
 viewVector  =
     (\customTypeValue -> case customTypeValue of
       Vector a ->
-        Html.table [] [Html.tr [] [(\value -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "x"], Html.td [] [viewFloat value.x]], Html.tr [] [Html.td [] [Html.text "y"], Html.td [] [viewFloat value.y]]]]) a]])
+        Html.table [] [Html.tr [] [(\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "x"], Html.td [] [viewFloat value0.x]], Html.tr [] [Html.td [] [Html.text "y"], Html.td [] [viewFloat value0.y]]]]) a]])
 
 viewGrid : Grid -> Html.Html msg
 viewGrid  =
@@ -50,7 +50,7 @@ viewDictionary  =
 
 viewEmptyRecord : EmptyRecord -> Html.Html msg
 viewEmptyRecord  =
-    (\value -> Html.table [] [Html.tbody [] []])
+    (\value0 -> Html.table [] [Html.tbody [] []])
 
 viewPair : Pair -> Html.Html msg
 viewPair  =
@@ -64,13 +64,17 @@ viewUnitType : UnitType -> Html.Html msg
 viewUnitType  =
     (\() -> Html.div [] [Html.text ""])
 
+viewNestedRecord : NestedRecord -> Html.Html msg
+viewNestedRecord  =
+    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "a"], Html.td [] [(\value1 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "b"], Html.td [] [(\value2 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "c"], Html.td [] [(\value3 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "d"], Html.td [] [(\value4 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "e"], Html.td [] [viewString value4.e]]]]) value3.d]]]]) value2.c]]]]) value1.b]]]]) value0.a]]]])
+
 encodeTodoList : TodoList -> Json.Encode.Value
 encodeTodoList  =
-    (\value -> Json.Encode.object [("tasks", (Json.Encode.list encodeTask) value.tasks), ("field", Json.Encode.string value.field), ("uid", Json.Encode.int value.uid), ("visibility", Json.Encode.string value.visibility)])
+    (\value0 -> Json.Encode.object [("tasks", (Json.Encode.list encodeTask) value0.tasks), ("field", Json.Encode.string value0.field), ("uid", Json.Encode.int value0.uid), ("visibility", Json.Encode.string value0.visibility)])
 
 encodeTask : Task -> Json.Encode.Value
 encodeTask  =
-    (\value -> Json.Encode.object [("description", Json.Encode.string value.description), ("completed", Json.Encode.bool value.completed), ("edits", (encodeMaybe Json.Encode.string) value.edits), ("id", Json.Encode.int value.id)])
+    (\value0 -> Json.Encode.object [("description", Json.Encode.string value0.description), ("completed", Json.Encode.bool value0.completed), ("edits", (encodeMaybe Json.Encode.string) value0.edits), ("id", Json.Encode.int value0.id)])
 
 encodeTree : Tree -> Json.Encode.Value
 encodeTree val =
@@ -94,7 +98,7 @@ encodeVector : Vector -> Json.Encode.Value
 encodeVector val =
     case val of
       Vector a ->
-        Json.Encode.object [("tag", Json.Encode.string "Vector"), ("a", (\value -> Json.Encode.object [("x", Json.Encode.float value.x), ("y", Json.Encode.float value.y)]) a)]
+        Json.Encode.object [("tag", Json.Encode.string "Vector"), ("a", (\value0 -> Json.Encode.object [("x", Json.Encode.float value0.x), ("y", Json.Encode.float value0.y)]) a)]
 
 encodeGrid : Grid -> Json.Encode.Value
 encodeGrid  =
@@ -106,7 +110,7 @@ encodeDictionary  =
 
 encodeEmptyRecord : EmptyRecord -> Json.Encode.Value
 encodeEmptyRecord  =
-    (\value -> Json.Encode.object [])
+    (\value0 -> Json.Encode.object [])
 
 encodePair : Pair -> Json.Encode.Value
 encodePair  =
@@ -119,6 +123,10 @@ encodeCharType  =
 encodeUnitType : UnitType -> Json.Encode.Value
 encodeUnitType  =
     (\() -> Json.Encode.object [])
+
+encodeNestedRecord : NestedRecord -> Json.Encode.Value
+encodeNestedRecord  =
+    (\value0 -> Json.Encode.object [("a", (\value1 -> Json.Encode.object [("b", (\value2 -> Json.Encode.object [("c", (\value3 -> Json.Encode.object [("d", (\value4 -> Json.Encode.object [("e", Json.Encode.string value4.e)]) value3.d)]) value2.c)]) value1.b)]) value0.a)])
 
 decodeTodoList : Json.Decode.Decoder TodoList
 decodeTodoList  =
@@ -181,6 +189,10 @@ decodeCharType  =
 decodeUnitType : Json.Decode.Decoder UnitType
 decodeUnitType  =
     (Json.Decode.succeed ())
+
+decodeNestedRecord : Json.Decode.Decoder NestedRecord
+decodeNestedRecord  =
+    Json.Decode.map NestedRecord (Json.Decode.field "a" ((Json.Decode.map (\b -> {b = b}) (Json.Decode.field "b" (Json.Decode.map (\c -> {c = c}) (Json.Decode.field "c" (Json.Decode.map (\d -> {d = d}) (Json.Decode.field "d" (Json.Decode.map (\e -> {e = e}) (Json.Decode.field "e" Json.Decode.string))))))))))
 
 randomTodoList : Random.Generator TodoList
 randomTodoList  =
@@ -255,6 +267,10 @@ randomCharType  =
 randomUnitType : Random.Generator UnitType
 randomUnitType  =
     (Random.constant ())
+
+randomNestedRecord : Random.Generator NestedRecord
+randomNestedRecord  =
+    (Random.map (\a -> {a = a}) (Random.map (\b -> {b = b}) (Random.map (\c -> {c = c}) (Random.map (\d -> {d = d}) (Random.map (\e -> {e = e}) randomString)))))
 
 decodeChar : Json.Decode.Decoder Char
 decodeChar  =
