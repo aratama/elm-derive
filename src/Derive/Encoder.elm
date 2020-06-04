@@ -9,6 +9,7 @@ import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (ValueConstructor)
 import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
+import Elm.Writer
 import Result
 
 
@@ -322,4 +323,4 @@ generateEncoderFromTypeAnnotation depth file typeAnnotation =
                     )
 
         _ ->
-            Err <| [ "Unsupported Data Type at generateEncoderFromType" ]
+            Err [ "Encoder: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation (node typeAnnotation)) ]

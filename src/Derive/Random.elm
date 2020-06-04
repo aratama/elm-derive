@@ -10,6 +10,7 @@ import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (ValueConstructor)
 import Elm.Syntax.TypeAnnotation exposing (TypeAnnotation(..))
+import Elm.Writer
 
 
 generateRandom : File -> Result Error (List Declaration)
@@ -302,4 +303,4 @@ generateRandomFromType file typeAnnotation =
             Ok <| FunctionOrValue [] ("random" ++ name)
 
         _ ->
-            Err [ "Random" ]
+            Err [ "Html: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation (node typeAnnotation)) ]

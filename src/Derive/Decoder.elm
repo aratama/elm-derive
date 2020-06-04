@@ -10,6 +10,7 @@ import Elm.Syntax.Node exposing (..)
 import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
+import Elm.Writer
 
 
 functionAnnotation : ( ModuleName, String ) -> ( ModuleName, String ) -> TypeAnnotation
@@ -159,7 +160,7 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                     )
 
         _ ->
-            Err [ "Decoder: Not implemented: " ]
+            Err [ "Decoder: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation (node typeAnnotation)) ]
 
 
 generateDecoderFromDeclaration : File -> Declaration -> Result Error (List Declaration)

@@ -11,6 +11,7 @@ import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (ValueConstructor)
 import Elm.Syntax.TypeAnnotation exposing (TypeAnnotation(..))
+import Elm.Writer
 
 
 generateView : File -> Result Error (List Declaration)
@@ -21,76 +22,65 @@ generateView file =
 
 generateViewFromDeclaration : File -> Declaration -> Result Error (List Declaration)
 generateViewFromDeclaration file declaration =
+    let
+        typeName : String
+        typeName =
+            nodeValue <|
+                case declaration of
+                    AliasDeclaration aliasDecl ->
+                        aliasDecl.name
+
+                    CustomTypeDeclaration customTypeDecl ->
+                        customTypeDecl.name
+
+                    _ ->
+                        node "<<<Html: INTERNAL ERROR>>>"
+
+        decoderName : String
+        decoderName =
+            "view" ++ typeName
+
+        functionImplementation : Expression -> FunctionImplementation
+        functionImplementation expr =
+            { name = node <| decoderName
+            , arguments = []
+            , expression = node expr
+            }
+
+        signature : Signature
+        signature =
+            { name = node <| decoderName
+            , typeAnnotation =
+                node <|
+                    FunctionTypeAnnotation
+                        (node <| Typed (node ( [], typeName )) [])
+                        (node <|
+                            Typed (node ( [ "Html" ], "Html" ))
+                                [ node <| GenericType "msg"
+                                ]
+                        )
+            }
+    in
     case declaration of
         AliasDeclaration aliasDecl ->
             let
-                decoderName : String -> String
-                decoderName typeName =
-                    "view" ++ typeName
-
-                functionImplementation : String -> Expression -> FunctionImplementation
-                functionImplementation typeName expr =
-                    { name = node <| decoderName typeName
-                    , arguments = []
-                    , expression = node expr
-                    }
-
-                signature : String -> Signature
-                signature typeName =
-                    { name = node <| decoderName typeName
-                    , typeAnnotation =
-                        node <|
-                            FunctionTypeAnnotation
-                                (node <| Typed (node ( [], typeName )) [])
-                                (node <|
-                                    Typed (node ( [ "Html" ], "Html" ))
-                                        [ node <| GenericType "msg"
-                                        ]
-                                )
-                    }
-
-                function : String -> Expression -> Function
-                function typeName expr =
+                function : Expression -> Function
+                function expr =
                     { documentation = Nothing
-                    , signature = Just <| node <| signature typeName
-                    , declaration = node <| functionImplementation typeName expr
+                    , signature = Just <| node <| signature
+                    , declaration = node <| functionImplementation expr
                     }
             in
             generateViewFromTypeAnnotation 0 file (nodeValue aliasDecl.typeAnnotation)
-                |> Result.map (\expr -> [ FunctionDeclaration <| function (nodeValue aliasDecl.name) expr ])
+                |> Result.map (\expr -> [ FunctionDeclaration <| function expr ])
 
         CustomTypeDeclaration customTypeDecl ->
             let
-                decoderName : String -> String
-                decoderName typeName =
-                    "view" ++ typeName
-
-                functionImplementation : String -> Expression -> FunctionImplementation
-                functionImplementation typeName expr =
-                    { name = node <| decoderName typeName
-                    , arguments = []
-                    , expression = node expr
-                    }
-
-                signature : String -> Signature
-                signature typeName =
-                    { name = node <| decoderName typeName
-                    , typeAnnotation =
-                        node <|
-                            FunctionTypeAnnotation
-                                (node <| Typed (node ( [], typeName )) [])
-                                (node <|
-                                    Typed (node ( [ "Html" ], "Html" ))
-                                        [ node <| GenericType "msg"
-                                        ]
-                                )
-                    }
-
-                function : String -> Expression -> Function
-                function typeName expr =
+                function : Expression -> Function
+                function expr =
                     { documentation = Nothing
-                    , signature = Just <| node <| signature typeName
-                    , declaration = node <| functionImplementation typeName expr
+                    , signature = Just <| node <| signature
+                    , declaration = node <| functionImplementation expr
                     }
             in
             customTypeDecl.constructors
@@ -103,9 +93,31 @@ generateViewFromDeclaration file declaration =
                 |> Result.map
                     (\pairs ->
                         let
-                            r : List { constructor : ValueConstructor, view : List Expression }
-                            r =
-                                pairs
+                            caseExpression : { constructor : ValueConstructor, view : List Expression } -> Case
+                            caseExpression pair =
+                                ( node <|
+                                    NamedPattern
+                                        { moduleName = []
+                                        , name = nodeValue pair.constructor.name
+                                        }
+                                        (List.map (node << VarPattern << String.fromChar) (Derive.Util.alphabets (List.length pair.view)))
+                                , node <|
+                                    Application
+                                        [ node <|
+                                            element "table" [] <|
+                                                List.indexedMap
+                                                    (\i field ->
+                                                        element "tr"
+                                                            []
+                                                            [ Application
+                                                                [ node field
+                                                                , node <| FunctionOrValue [] <| String.fromChar <| Derive.Util.alphabet i
+                                                                ]
+                                                            ]
+                                                    )
+                                                    pair.view
+                                        ]
+                                )
 
                             expr : Expression
                             expr =
@@ -115,43 +127,11 @@ generateViewFromDeclaration file declaration =
                                         node <|
                                             CaseExpression
                                                 { expression = node <| FunctionOrValue [] "customTypeValue"
-                                                , cases =
-                                                    List.map
-                                                        (\pair ->
-                                                            let
-                                                                c : Case
-                                                                c =
-                                                                    ( node <|
-                                                                        NamedPattern
-                                                                            { moduleName = []
-                                                                            , name = nodeValue pair.constructor.name
-                                                                            }
-                                                                            (List.map (node << VarPattern << String.fromChar) (Derive.Util.alphabets (List.length pair.view)))
-                                                                    , node <|
-                                                                        Application
-                                                                            [ node <|
-                                                                                element "table" [] <|
-                                                                                    List.indexedMap
-                                                                                        (\i field ->
-                                                                                            element "tr"
-                                                                                                []
-                                                                                                [ Application
-                                                                                                    [ node field
-                                                                                                    , node <| FunctionOrValue [] <| String.fromChar <| Derive.Util.alphabet i
-                                                                                                    ]
-                                                                                                ]
-                                                                                        )
-                                                                                        pair.view
-                                                                            ]
-                                                                    )
-                                                            in
-                                                            c
-                                                        )
-                                                        pairs
+                                                , cases = List.map caseExpression pairs
                                                 }
                                     }
                         in
-                        [ FunctionDeclaration <| function (nodeValue customTypeDecl.name) (ParenthesizedExpression <| node <| expr) ]
+                        [ FunctionDeclaration <| function (ParenthesizedExpression <| node <| expr) ]
                     )
 
         _ ->
@@ -289,4 +269,4 @@ generateViewFromTypeAnnotation depth file typeAnnotation =
             Ok <| FunctionOrValue [] ("view" ++ name)
 
         _ ->
-            Err [ "<<<HTML: TODO seg>>>" ]
+            Err [ "Html: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation (node typeAnnotation)) ]
