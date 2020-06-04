@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run build && node ../bin/index.js ./tests/Type.elm && elm-test",
     "build": "elm make src/Main.elm  --optimize --output=./dist/elm-derive.js && esbuild ./src/index.mjs --minify --bundle --outfile=../bin/index.js --platform=node",
     "start": "node ../bin/index.js example/TodoList.elm",
     "example": "npm run build && node ../bin/index.js ../example/TodoList.elm"
