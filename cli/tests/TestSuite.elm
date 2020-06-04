@@ -44,4 +44,5 @@ suite =
         , testDerived "Vector" Type.Derive.randomVector Type.Derive.encodeVector Type.Derive.decodeVector
         , testDerived "Grid" Type.Derive.randomGrid Type.Derive.encodeGrid Type.Derive.decodeGrid
         , testDerived "Dictionary" Type.Derive.randomDictionary Type.Derive.encodeDictionary Type.Derive.decodeDictionary
+        , testDerived "EmptyRecord" Type.Derive.randomEmptyRecord Type.Derive.encodeEmptyRecord Type.Derive.decodeEmptyRecord
         ]

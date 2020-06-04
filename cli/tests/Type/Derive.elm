@@ -47,6 +47,10 @@ viewDictionary : Dictionary -> Html.Html msg
 viewDictionary  =
     (viewDict viewInt)
 
+viewEmptyRecord : EmptyRecord -> Html.Html msg
+viewEmptyRecord  =
+    (\value -> Html.table [] [Html.tbody [] []])
+
 encodeTodoList : TodoList -> Json.Encode.Value
 encodeTodoList  =
     (\value -> Json.Encode.object [("tasks", (Json.Encode.list encodeTask) value.tasks), ("field", Json.Encode.string value.field), ("uid", Json.Encode.int value.uid), ("visibility", Json.Encode.string value.visibility)])
@@ -86,6 +90,10 @@ encodeGrid  =
 encodeDictionary : Dictionary -> Json.Encode.Value
 encodeDictionary  =
     (Json.Encode.dict identity Json.Encode.int)
+
+encodeEmptyRecord : EmptyRecord -> Json.Encode.Value
+encodeEmptyRecord  =
+    (\value -> Json.Encode.object [])
 
 decodeTodoList : Json.Decode.Decoder TodoList
 decodeTodoList  =
@@ -132,6 +140,10 @@ decodeGrid  =
 decodeDictionary : Json.Decode.Decoder Dictionary
 decodeDictionary  =
     (Json.Decode.dict Json.Decode.int)
+
+decodeEmptyRecord : Json.Decode.Decoder EmptyRecord
+decodeEmptyRecord  =
+    Json.Decode.succeed {}
 
 randomTodoList : Random.Generator TodoList
 randomTodoList  =
@@ -190,6 +202,10 @@ randomGrid  =
 randomDictionary : Random.Generator Dictionary
 randomDictionary  =
     (randomDict randomInt)
+
+randomEmptyRecord : Random.Generator EmptyRecord
+randomEmptyRecord  =
+    (Random.constant {})
 
 encodeMaybe : (a -> Json.Encode.Value) -> (Maybe a -> Json.Encode.Value)
 encodeMaybe f encodeMaybeValue =

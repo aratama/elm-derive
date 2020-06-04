@@ -91,18 +91,30 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                 |> concatResults (\field -> fieldToDecoder field |> Result.map (\decoder -> { field = field, decoder = decoder }))
                 |> Result.map
                     (\fieldDecoders ->
-                        let
-                            map =
-                                "map" ++ String.fromInt (List.length fieldDecoders)
-                        in
                         ParenthesizedExpression <|
                             node <|
-                                Application
-                                    ([ node <| FunctionOrValue [ "Json", "Decode" ] map
-                                     , node <| objectConstructor fields
-                                     ]
-                                        ++ List.map (\{ decoder } -> node decoder) fieldDecoders
-                                    )
+                                case List.length fieldDecoders of
+                                    0 ->
+                                        Application
+                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "succeed"
+                                            , node <| RecordExpr []
+                                            ]
+
+                                    1 ->
+                                        Application
+                                            ([ node <| FunctionOrValue [ "Json", "Decode" ] "map"
+                                             , node <| objectConstructor fields
+                                             ]
+                                                ++ List.map (\{ decoder } -> node decoder) fieldDecoders
+                                            )
+
+                                    _ ->
+                                        Application
+                                            ([ node <| FunctionOrValue [ "Json", "Decode" ] ("map" ++ String.fromInt (List.length fieldDecoders))
+                                             , node <| objectConstructor fields
+                                             ]
+                                                ++ List.map (\{ decoder } -> node decoder) fieldDecoders
+                                            )
                     )
 
         _ ->
@@ -161,24 +173,31 @@ generateDecoderFromDeclaration file delaration =
                     concatResults fieldToDecoder recordFields
                         |> Result.map
                             (\fieldDecoders ->
-                                let
-                                    constructor : Expression
-                                    constructor =
-                                        FunctionOrValue [] name
+                                [ FunctionDeclaration <|
+                                    function name <|
+                                        case List.length fieldDecoders of
+                                            0 ->
+                                                Application
+                                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "succeed"
+                                                    , node <| RecordExpr []
+                                                    ]
 
-                                    map =
-                                        "map" ++ String.fromInt (List.length fieldDecoders)
+                                            1 ->
+                                                Application
+                                                    ([ node <| FunctionOrValue [ "Json", "Decode" ] "map"
+                                                     , node <| FunctionOrValue [] name
+                                                     ]
+                                                        ++ List.map node fieldDecoders
+                                                    )
 
-                                    decoder : Expression
-                                    decoder =
-                                        Application
-                                            ([ node <| FunctionOrValue [ "Json", "Decode" ] map
-                                             , node <| constructor
-                                             ]
-                                                ++ List.map node fieldDecoders
-                                            )
-                                in
-                                [ FunctionDeclaration <| function name decoder ]
+                                            _ ->
+                                                Application
+                                                    ([ node <| FunctionOrValue [ "Json", "Decode" ] ("map" ++ String.fromInt (List.length fieldDecoders))
+                                                     , node <| FunctionOrValue [] name
+                                                     ]
+                                                        ++ List.map node fieldDecoders
+                                                    )
+                                ]
                             )
 
                 _ ->

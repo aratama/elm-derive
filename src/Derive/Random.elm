@@ -202,12 +202,28 @@ generateRandomFromType file typeAnnotation =
                     (\randoms ->
                         ParenthesizedExpression <|
                             node <|
-                                Application
-                                    ([ node <| FunctionOrValue [ "Random" ] ("map" ++ String.fromInt (List.length fields))
-                                     , node <| objectConstructor fields
-                                     ]
-                                        ++ List.map node randoms
-                                    )
+                                case List.length fields of
+                                    0 ->
+                                        Application
+                                            [ node <| FunctionOrValue [ "Random" ] "constant"
+                                            , node <| RecordExpr []
+                                            ]
+
+                                    1 ->
+                                        Application
+                                            ([ node <| FunctionOrValue [ "Random" ] "map"
+                                             , node <| objectConstructor fields
+                                             ]
+                                                ++ List.map node randoms
+                                            )
+
+                                    _ ->
+                                        Application
+                                            ([ node <| FunctionOrValue [ "Random" ] ("map" ++ String.fromInt (List.length fields))
+                                             , node <| objectConstructor fields
+                                             ]
+                                                ++ List.map node randoms
+                                            )
                     )
 
         Typed (Node _ ( [], "Bool" )) [] ->

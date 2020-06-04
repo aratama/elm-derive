@@ -41,3 +41,7 @@ type alias Grid =
 
 type alias Dictionary =
     Dict String Int
+
+
+type alias EmptyRecord =
+    {}
