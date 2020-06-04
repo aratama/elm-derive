@@ -22,9 +22,7 @@ Hopefully this command will generates `src/Your/Type/Decralation/Module/Derive.e
 
 ## TODO
 
-- support Char type?
 - support Result type?
-- support Tuple type?
 - support Array type?
 - support Set type?
 - generate Fuzz instance?

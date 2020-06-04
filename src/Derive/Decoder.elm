@@ -32,6 +32,9 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
         Typed (Node _ ( [], "String" )) [] ->
             Ok (FunctionOrValue [ "Json", "Decode" ] "string")
 
+        Typed (Node _ ( [], "Char" )) [] ->
+            Ok (FunctionOrValue [] "decodeChar")
+
         Typed (Node _ ( [], "List" )) [ Node _ content ] ->
             generateDecoderFromTypeAnnotation file content
                 |> Result.map
@@ -67,6 +70,35 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                                     , node decoder
                                     ]
                     )
+
+        Tupled [ Node _ fst, Node _ snd ] ->
+            Result.map2
+                (\fstDecoder sndDecoder ->
+                    ParenthesizedExpression <|
+                        node <|
+                            Application
+                                [ node <| FunctionOrValue [ "Json", "Decode" ] "map2"
+                                , node <| FunctionOrValue [ "Tuple" ] "pair"
+                                , node <|
+                                    ParenthesizedExpression <|
+                                        node <|
+                                            Application
+                                                [ node <| FunctionOrValue [ "Json", "Decode" ] "index"
+                                                , node <| Integer 0
+                                                , node fstDecoder
+                                                ]
+                                , node <|
+                                    ParenthesizedExpression <|
+                                        node <|
+                                            Application
+                                                [ node <| FunctionOrValue [ "Json", "Decode" ] "index"
+                                                , node <| Integer 1
+                                                , node sndDecoder
+                                                ]
+                                ]
+                )
+                (generateDecoderFromTypeAnnotation file fst)
+                (generateDecoderFromTypeAnnotation file snd)
 
         Typed (Node _ ( [], name )) [] ->
             Ok <| FunctionOrValue [] ("decode" ++ name)

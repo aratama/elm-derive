@@ -262,8 +262,22 @@ generateViewFromTypeAnnotation file typeAnnotation =
                                 ]
                     )
 
+        Tupled [ Node _ fst, Node _ snd ] ->
+            Result.map2
+                (\fstView sndView ->
+                    ParenthesizedExpression <|
+                        node <|
+                            Application
+                                [ node <| FunctionOrValue [] "viewTuple"
+                                , node <| fstView
+                                , node <| sndView
+                                ]
+                )
+                (generateViewFromTypeAnnotation file fst)
+                (generateViewFromTypeAnnotation file snd)
+
         Typed (Node _ ( [], name )) [] ->
             Ok <| FunctionOrValue [] ("view" ++ name)
 
         _ ->
-            Err [ "<<<TODO seg>>>" ]
+            Err [ "<<<HTML: TODO seg>>>" ]

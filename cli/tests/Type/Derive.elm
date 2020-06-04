@@ -52,6 +52,14 @@ viewEmptyRecord : EmptyRecord -> Html.Html msg
 viewEmptyRecord  =
     (\value -> Html.table [] [Html.tbody [] []])
 
+viewPair : Pair -> Html.Html msg
+viewPair  =
+    (viewTuple viewInt viewString)
+
+viewCharType : CharType -> Html.Html msg
+viewCharType  =
+    viewChar
+
 encodeTodoList : TodoList -> Json.Encode.Value
 encodeTodoList  =
     (\value -> Json.Encode.object [("tasks", (Json.Encode.list encodeTask) value.tasks), ("field", Json.Encode.string value.field), ("uid", Json.Encode.int value.uid), ("visibility", Json.Encode.string value.visibility)])
@@ -95,6 +103,14 @@ encodeDictionary  =
 encodeEmptyRecord : EmptyRecord -> Json.Encode.Value
 encodeEmptyRecord  =
     (\value -> Json.Encode.object [])
+
+encodePair : Pair -> Json.Encode.Value
+encodePair  =
+    (\(fst, snd) -> Json.Encode.list identity [(Json.Encode.int fst), (Json.Encode.string snd)])
+
+encodeCharType : CharType -> Json.Encode.Value
+encodeCharType  =
+    encodeChar
 
 decodeTodoList : Json.Decode.Decoder TodoList
 decodeTodoList  =
@@ -145,6 +161,14 @@ decodeDictionary  =
 decodeEmptyRecord : Json.Decode.Decoder EmptyRecord
 decodeEmptyRecord  =
     Json.Decode.succeed {}
+
+decodePair : Json.Decode.Decoder Pair
+decodePair  =
+    (Json.Decode.map2 Tuple.pair (Json.Decode.index 0 Json.Decode.int) (Json.Decode.index 1 Json.Decode.string))
+
+decodeCharType : Json.Decode.Decoder CharType
+decodeCharType  =
+    decodeChar
 
 randomTodoList : Random.Generator TodoList
 randomTodoList  =
@@ -208,6 +232,23 @@ randomEmptyRecord : Random.Generator EmptyRecord
 randomEmptyRecord  =
     (Random.constant {})
 
+randomPair : Random.Generator Pair
+randomPair  =
+    (Random.pair randomInt randomString)
+
+randomCharType : Random.Generator CharType
+randomCharType  =
+    randomChar
+
+decodeChar : Json.Decode.Decoder Char
+decodeChar  =
+    Json.Decode.andThen (\str -> case String.toList str of
+      [c] ->
+        Json.Decode.succeed c
+      _ ->
+        Json.Decode.fail "decodeChar: too many charactors for Char type")
+     Json.Decode.string
+
 encodeMaybe : (a -> Json.Encode.Value) -> (Maybe a -> Json.Encode.Value)
 encodeMaybe f encodeMaybeValue =
     case encodeMaybeValue of
@@ -215,6 +256,10 @@ encodeMaybe f encodeMaybeValue =
         Json.Encode.null
       Just justValue ->
         f justValue
+
+encodeChar : Char -> Json.Encode.Value
+encodeChar value =
+    Json.Encode.string (String.fromChar value)
 
 randomBool : Random.Generator Bool
 randomBool  =
@@ -227,6 +272,10 @@ randomInt  =
 randomString : Random.Generator String
 randomString  =
     Random.uniform "Alpha" ["Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet ", "Kilo", "Lima", "Mike", "Novenber", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"]
+
+randomChar : Random.Generator Char
+randomChar  =
+    Random.uniform 'a' (String.toList "bcdefghijklmnopqlstuvwxyz")
 
 randomFloat : Random.Generator Float
 randomFloat  =
@@ -273,6 +322,10 @@ viewString : String -> Html.Html msg
 viewString value =
     Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text value]
 
+viewChar : Char -> Html.Html msg
+viewChar value =
+    Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromChar value]
+
 viewFloat : Float -> Html.Html msg
 viewFloat value =
     Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromFloat value]
@@ -282,3 +335,15 @@ viewDict f dict =
     Html.table []
      [Html.caption [] [Html.text "Dict"]
     , Html.tbody [] (List.map (\(k, v) -> Html.tr [] [Html.td [] [Html.text k], Html.td [] [f v]]) (Dict.toList dict))]
+
+viewTuple : (a -> Html.Html msg) -> ((b -> Html.Html msg) -> ((a, b) -> Html.Html msg))
+viewTuple fa fb (a, b) =
+    Html.table []
+     [Html.caption [] [Html.text "Dict"]
+    , Html.tbody []
+     [Html.tr []
+     [Html.td [] [Html.text "fst"]
+    , Html.td [] [fa a]]
+    , Html.tr []
+     [Html.td [] [Html.text "snd"]
+    , Html.td [] [fb b]]]]

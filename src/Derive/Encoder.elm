@@ -188,6 +188,9 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
         Typed (Node _ ( [], "String" )) [] ->
             Ok (FunctionOrValue [ "Json", "Encode" ] "string")
 
+        Typed (Node _ ( [], "Char" )) [] ->
+            Ok (FunctionOrValue [] "encodeChar")
+
         Typed (Node _ ( [], "List" )) [ Node _ content ] ->
             generateEncoderFromTypeAnnotation file content
                 |> Result.map
@@ -202,6 +205,41 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
             generateEncoderFromTypeAnnotation file content
                 |> Result.map
                     (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [] "encodeMaybe", node encoder ])
+
+        Tupled [ Node _ fst, Node _ snd ] ->
+            Result.map2
+                (\fstEncoder sndEncoder ->
+                    ParenthesizedExpression <|
+                        node <|
+                            LambdaExpression
+                                { args = [ node <| TuplePattern [ node <| VarPattern "fst", node <| VarPattern "snd" ] ]
+                                , expression =
+                                    node <|
+                                        Application
+                                            [ node <| FunctionOrValue [ "Json", "Encode" ] "list"
+                                            , node <| FunctionOrValue [] "identity"
+                                            , node <|
+                                                ListExpr
+                                                    [ node <|
+                                                        ParenthesizedExpression <|
+                                                            node <|
+                                                                Application
+                                                                    [ node <| fstEncoder
+                                                                    , node <| FunctionOrValue [] "fst"
+                                                                    ]
+                                                    , node <|
+                                                        ParenthesizedExpression <|
+                                                            node <|
+                                                                Application
+                                                                    [ node <| sndEncoder
+                                                                    , node <| FunctionOrValue [] "snd"
+                                                                    ]
+                                                    ]
+                                            ]
+                                }
+                )
+                (generateEncoderFromTypeAnnotation file fst)
+                (generateEncoderFromTypeAnnotation file snd)
 
         Typed (Node _ ( [], moduleMemberTypeName )) [] ->
             let
@@ -227,7 +265,7 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
             in
             case filtered of
                 [] ->
-                    Err <| [ "Unknown Data Type: `" ++ moduleMemberTypeName ++ "`" ]
+                    Err <| [ "Encoder: Unknown Data Type: `" ++ moduleMemberTypeName ++ "`" ]
 
                 _ ->
                     Ok <| FunctionOrValue [] ("encode" ++ moduleMemberTypeName)

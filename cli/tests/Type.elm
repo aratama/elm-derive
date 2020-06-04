@@ -45,3 +45,16 @@ type alias Dictionary =
 
 type alias EmptyRecord =
     {}
+
+
+type alias Pair =
+    ( Int, String )
+
+
+type alias CharType =
+    Char
+
+
+
+-- type alias NestedRecord =
+--     { a : { b : String } }

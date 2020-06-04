@@ -226,6 +226,22 @@ generateRandomFromType file typeAnnotation =
                                             )
                     )
 
+        Tupled [ Node _ fst, Node _ snd ] ->
+            Result.map2
+                (\fstRandom sndRandom ->
+                    ParenthesizedExpression <|
+                        node <|
+                            Application
+                                [ node <| FunctionOrValue [ "Random" ] "pair"
+                                , node <| fstRandom
+                                , node <| sndRandom
+                                ]
+                )
+                (generateRandomFromType file fst)
+                (generateRandomFromType file snd)
+
+        -- Tupled [ Node _ (Typed (Node _ fst) []), Node _ (Typed (Node _ snd) [], Node _ (Typed (Node _ trd) []) ] ->
+        --     Ok (FunctionOrValue [] "randomTuple")
         Typed (Node _ ( [], "Bool" )) [] ->
             Ok (FunctionOrValue [] "randomBool")
 
@@ -237,6 +253,9 @@ generateRandomFromType file typeAnnotation =
 
         Typed (Node _ ( [], "String" )) [] ->
             Ok (FunctionOrValue [] "randomString")
+
+        Typed (Node _ ( [], "Char" )) [] ->
+            Ok (FunctionOrValue [] "randomChar")
 
         Typed (Node _ ( [], "List" )) [ Node _ content ] ->
             generateRandomFromType file content

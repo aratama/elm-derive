@@ -11,7 +11,7 @@ import Type.Derive exposing (..)
 
 testDerived : String -> Random.Generator a -> (a -> Json.Encode.Value) -> Json.Decode.Decoder a -> Test.Test
 testDerived name random encode decoder =
-    Test.fuzzWith { runs = 10 } Fuzz.int name <|
+    Test.fuzzWith { runs = 1 } Fuzz.int name <|
         \seedInt ->
             let
                 seed : Random.Seed
@@ -26,7 +26,7 @@ testDerived name random encode decoder =
                     encode input
 
                 -- _ =
-                --     Debug.log "encoded" <| Json.Encode.encode 2 encoded
+                --     Debug.log name <| Json.Encode.encode 2 encoded
                 result : Result Json.Decode.Error a
                 result =
                     Json.Decode.decodeValue decoder encoded
@@ -45,4 +45,5 @@ suite =
         , testDerived "Grid" Type.Derive.randomGrid Type.Derive.encodeGrid Type.Derive.decodeGrid
         , testDerived "Dictionary" Type.Derive.randomDictionary Type.Derive.encodeDictionary Type.Derive.decodeDictionary
         , testDerived "EmptyRecord" Type.Derive.randomEmptyRecord Type.Derive.encodeEmptyRecord Type.Derive.decodeEmptyRecord
+        , testDerived "Pair" Type.Derive.randomPair Type.Derive.encodePair Type.Derive.decodePair
         ]

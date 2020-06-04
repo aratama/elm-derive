@@ -22,6 +22,9 @@ if (file) {
       fs.writeFileSync(outputPath, result.value);
     } else {
       console.error(result.tag + ": " + result.value);
+      process.on("exit", function () {
+        process.exit(1);
+      });
     }
   });
 } else {
