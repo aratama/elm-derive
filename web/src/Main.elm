@@ -26,11 +26,13 @@ This generator supports a subset of Elm syntax.
 
 And you can use the following types as a field type:
 
-* Primitive Types (Int/Float/String/Bool)
+* Primitive Types (Int/Float/String/Bool/Char)
+* Custom Types
 * Records
 * List a
 * Maybe a
 * Dict String a
+* 2-Tuple
 
 elm-derive has a CLI. Try the following command in your terminal:
 

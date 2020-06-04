@@ -71,6 +71,15 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                                     ]
                     )
 
+        Unit ->
+            Ok <|
+                ParenthesizedExpression <|
+                    node <|
+                        Application
+                            [ node <| FunctionOrValue [ "Json", "Decode" ] "succeed"
+                            , node UnitExpr
+                            ]
+
         Tupled [ Node _ fst, Node _ snd ] ->
             Result.map2
                 (\fstDecoder sndDecoder ->

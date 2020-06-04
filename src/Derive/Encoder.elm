@@ -206,6 +206,20 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
                 |> Result.map
                     (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [] "encodeMaybe", node encoder ])
 
+        Unit ->
+            Ok <|
+                ParenthesizedExpression <|
+                    node <|
+                        LambdaExpression
+                            { args = [ node UnitPattern ]
+                            , expression =
+                                node <|
+                                    Application
+                                        [ node <| FunctionOrValue [ "Json", "Encode" ] "object"
+                                        , node <| ListExpr []
+                                        ]
+                            }
+
         Tupled [ Node _ fst, Node _ snd ] ->
             Result.map2
                 (\fstEncoder sndEncoder ->

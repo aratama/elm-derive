@@ -55,6 +55,10 @@ type alias CharType =
     Char
 
 
+type alias UnitType =
+    ()
+
+
 
 -- type alias NestedRecord =
 --     { a : { b : String } }

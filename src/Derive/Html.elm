@@ -276,6 +276,15 @@ generateViewFromTypeAnnotation file typeAnnotation =
                 (generateViewFromTypeAnnotation file fst)
                 (generateViewFromTypeAnnotation file snd)
 
+        Unit ->
+            Ok <|
+                ParenthesizedExpression <|
+                    node <|
+                        LambdaExpression
+                            { args = [ node <| UnitPattern ]
+                            , expression = node <| element "div" [] [ text "" ]
+                            }
+
         Typed (Node _ ( [], name )) [] ->
             Ok <| FunctionOrValue [] ("view" ++ name)
 

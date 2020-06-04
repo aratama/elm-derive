@@ -290,6 +290,14 @@ generateRandomFromType file typeAnnotation =
                                 ]
                     )
 
+        Unit ->
+            Ok <|
+                ParenthesizedExpression <|
+                    application
+                        [ functionOrValue [ "Random" ] "constant"
+                        , node UnitExpr
+                        ]
+
         Typed (Node _ ( [], name )) [] ->
             Ok <| FunctionOrValue [] ("random" ++ name)
 

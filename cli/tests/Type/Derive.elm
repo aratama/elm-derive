@@ -60,6 +60,10 @@ viewCharType : CharType -> Html.Html msg
 viewCharType  =
     viewChar
 
+viewUnitType : UnitType -> Html.Html msg
+viewUnitType  =
+    (\() -> Html.div [] [Html.text ""])
+
 encodeTodoList : TodoList -> Json.Encode.Value
 encodeTodoList  =
     (\value -> Json.Encode.object [("tasks", (Json.Encode.list encodeTask) value.tasks), ("field", Json.Encode.string value.field), ("uid", Json.Encode.int value.uid), ("visibility", Json.Encode.string value.visibility)])
@@ -111,6 +115,10 @@ encodePair  =
 encodeCharType : CharType -> Json.Encode.Value
 encodeCharType  =
     encodeChar
+
+encodeUnitType : UnitType -> Json.Encode.Value
+encodeUnitType  =
+    (\() -> Json.Encode.object [])
 
 decodeTodoList : Json.Decode.Decoder TodoList
 decodeTodoList  =
@@ -169,6 +177,10 @@ decodePair  =
 decodeCharType : Json.Decode.Decoder CharType
 decodeCharType  =
     decodeChar
+
+decodeUnitType : Json.Decode.Decoder UnitType
+decodeUnitType  =
+    (Json.Decode.succeed ())
 
 randomTodoList : Random.Generator TodoList
 randomTodoList  =
@@ -239,6 +251,10 @@ randomPair  =
 randomCharType : Random.Generator CharType
 randomCharType  =
     randomChar
+
+randomUnitType : Random.Generator UnitType
+randomUnitType  =
+    (Random.constant ())
 
 decodeChar : Json.Decode.Decoder Char
 decodeChar  =
