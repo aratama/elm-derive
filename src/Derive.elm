@@ -22,6 +22,11 @@ template =
     """
 module Template exposing (..)
 
+encodeMaybe : (a -> Json.Encode.Value) -> Maybe a -> Json.Encode.Value
+encodeMaybe f encodeMaybeValue = case encodeMaybeValue of 
+    Nothing -> Json.Encode.null
+    Just justValue -> f justValue
+
 randomBool : Random.Generator Bool
 randomBool = Random.uniform True [False]
 

@@ -3,10 +3,10 @@
 Experimental code generator for Elm.
 elm-derive generates following codes from type decralations written in Elm:
 
-* JSON Encoder
-* JSON Decoder
-* Random Data Generator  
-* View Function for HTML
+- JSON Encoder
+- JSON Decoder
+- Random Data Generator
+- View Function for HTML
 
 ## Demo
 
@@ -22,9 +22,12 @@ Hopefully this command will generates `src/Your/Type/Decralation/Module/Derive.e
 
 ## TODO
 
-* support Char?
-* support Result?
-* support Tuple?
-* support Array?
-* support Set?
-* use https://github.com/Bogdanp/elm-ast ?
+- support Char type?
+- support Result type?
+- support Tuple type?
+- support Array type?
+- support Set type?
+- generate Fuzz instance?
+- generate Show instance?
+- generate Eq instance?
+- generate Ord instance?

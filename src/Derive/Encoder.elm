@@ -201,7 +201,7 @@ generateEncoderFromTypeAnnotation file typeAnnotation =
         Typed (Node _ ( [], "Maybe" )) [ Node _ content ] ->
             generateEncoderFromTypeAnnotation file content
                 |> Result.map
-                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "maybe", node encoder ])
+                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [] "encodeMaybe", node encoder ])
 
         Typed (Node _ ( [], moduleMemberTypeName )) [] ->
             let

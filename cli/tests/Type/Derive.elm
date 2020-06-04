@@ -53,7 +53,7 @@ encodeTodoList  =
 
 encodeTask : Task -> Json.Encode.Value
 encodeTask  =
-    (\value -> Json.Encode.object [("description", Json.Encode.string value.description), ("completed", Json.Encode.bool value.completed), ("edits", (Json.Encode.maybe Json.Encode.string) value.edits), ("id", Json.Encode.int value.id)])
+    (\value -> Json.Encode.object [("description", Json.Encode.string value.description), ("completed", Json.Encode.bool value.completed), ("edits", (encodeMaybe Json.Encode.string) value.edits), ("id", Json.Encode.int value.id)])
 
 encodeTree : Tree -> Json.Encode.Value
 encodeTree val =
@@ -99,9 +99,9 @@ decodeTree : Json.Decode.Decoder Tree
 decodeTree  =
     Json.Decode.andThen (\tag -> case tag of
       "Leaf" ->
-        Json.Decode.field "value" (Json.Decode.map Leaf (Json.Decode.string))
+        ((Json.Decode.map Leaf (Json.Decode.field "a" Json.Decode.string)))
       "Branch" ->
-        Json.Decode.field "value" (Json.Decode.map2 Branch (decodeTree) (decodeTree))
+        ((Json.Decode.map2 Branch (Json.Decode.field "a" decodeTree) (Json.Decode.field "b" decodeTree)))
       _ ->
         Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
 
@@ -109,11 +109,11 @@ decodeColor : Json.Decode.Decoder Color
 decodeColor  =
     Json.Decode.andThen (\tag -> case tag of
       "Red" ->
-        Json.Decode.field "value" (Json.Decode.succeed Red)
+        ((Json.Decode.succeed Red))
       "Green" ->
-        Json.Decode.field "value" (Json.Decode.succeed Green)
+        ((Json.Decode.succeed Green))
       "Blue" ->
-        Json.Decode.field "value" (Json.Decode.succeed Blue)
+        ((Json.Decode.succeed Blue))
       _ ->
         Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
 
@@ -121,7 +121,7 @@ decodeVector : Json.Decode.Decoder Vector
 decodeVector  =
     Json.Decode.andThen (\tag -> case tag of
       "Vector" ->
-        Json.Decode.field "value" (Json.Decode.map Vector (Json.Decode.map2 (\x y -> {x = x, y = y}) (Json.Decode.field "x" Json.Decode.float) (Json.Decode.field "y" Json.Decode.float)))
+        ((Json.Decode.map Vector (Json.Decode.field "a" (Json.Decode.map2 (\x y -> {x = x, y = y}) (Json.Decode.field "x" Json.Decode.float) (Json.Decode.field "y" Json.Decode.float)))))
       _ ->
         Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
 
@@ -190,6 +190,14 @@ randomGrid  =
 randomDictionary : Random.Generator Dictionary
 randomDictionary  =
     (randomDict randomInt)
+
+encodeMaybe : (a -> Json.Encode.Value) -> (Maybe a -> Json.Encode.Value)
+encodeMaybe f encodeMaybeValue =
+    case encodeMaybeValue of
+      Nothing  ->
+        Json.Encode.null
+      Just justValue ->
+        f justValue
 
 randomBool : Random.Generator Bool
 randomBool  =
