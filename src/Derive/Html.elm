@@ -54,11 +54,7 @@ generateViewFromDeclaration file declaration =
                 node <|
                     FunctionTypeAnnotation
                         (node <| Typed (node ( [], typeName )) [])
-                        (node <|
-                            Typed (node ( [ "Html" ], "Html" ))
-                                [ node <| GenericType "msg"
-                                ]
-                        )
+                        (node <| Typed (node ( [ "Html" ], "Html" )) [ node <| GenericType "msg" ])
             }
     in
     case declaration of
