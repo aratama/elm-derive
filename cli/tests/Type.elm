@@ -1,7 +1,9 @@
 module Type exposing (..)
 
-import Dict exposing (..)
-import Maybe exposing (..)
+import Array exposing (Array)
+import Dict exposing (Dict)
+import Maybe exposing (Maybe)
+import Set exposing (Set)
 
 
 type alias TodoList =
@@ -61,3 +63,15 @@ type alias UnitType =
 
 type alias NestedRecord =
     { a : { b : { c : { d : { e : String } } } } }
+
+
+type alias ArrayType =
+    Array String
+
+
+type alias SetType =
+    Set String
+
+
+type alias ResultType =
+    Result String Int

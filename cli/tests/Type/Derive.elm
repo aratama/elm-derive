@@ -6,6 +6,8 @@ import Html.Attributes
 import Json.Encode  
 import Json.Decode  
 import Random  
+import Array  
+import Set  
 import Type  exposing (..)
 
 viewTodoList : TodoList -> Html.Html msg
@@ -68,6 +70,18 @@ viewNestedRecord : NestedRecord -> Html.Html msg
 viewNestedRecord  =
     (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "a"], Html.td [] [(\value1 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "b"], Html.td [] [(\value2 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "c"], Html.td [] [(\value3 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "d"], Html.td [] [(\value4 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "e"], Html.td [] [viewString value4.e]]]]) value3.d]]]]) value2.c]]]]) value1.b]]]]) value0.a]]]])
 
+viewArrayType : ArrayType -> Html.Html msg
+viewArrayType  =
+    (viewArray viewString)
+
+viewSetType : SetType -> Html.Html msg
+viewSetType  =
+    (viewSet viewString)
+
+viewResultType : ResultType -> Html.Html msg
+viewResultType  =
+    (viewResult viewString viewInt)
+
 encodeTodoList : TodoList -> Json.Encode.Value
 encodeTodoList  =
     (\value0 -> Json.Encode.object [("tasks", (Json.Encode.list encodeTask) value0.tasks), ("field", Json.Encode.string value0.field), ("uid", Json.Encode.int value0.uid), ("visibility", Json.Encode.string value0.visibility)])
@@ -106,7 +120,7 @@ encodeGrid  =
 
 encodeDictionary : Dictionary -> Json.Encode.Value
 encodeDictionary  =
-    (Json.Encode.dict identity Json.Encode.int)
+    (Json.Encode.dict Basics.identity Json.Encode.int)
 
 encodeEmptyRecord : EmptyRecord -> Json.Encode.Value
 encodeEmptyRecord  =
@@ -114,7 +128,7 @@ encodeEmptyRecord  =
 
 encodePair : Pair -> Json.Encode.Value
 encodePair  =
-    (\(fst, snd) -> Json.Encode.list identity [(Json.Encode.int fst), (Json.Encode.string snd)])
+    (\(fst, snd) -> Json.Encode.list Basics.identity [(Json.Encode.int fst), (Json.Encode.string snd)])
 
 encodeCharType : CharType -> Json.Encode.Value
 encodeCharType  =
@@ -122,11 +136,23 @@ encodeCharType  =
 
 encodeUnitType : UnitType -> Json.Encode.Value
 encodeUnitType  =
-    (\() -> Json.Encode.object [])
+    (\() -> Json.Encode.list Basics.identity [])
 
 encodeNestedRecord : NestedRecord -> Json.Encode.Value
 encodeNestedRecord  =
     (\value0 -> Json.Encode.object [("a", (\value1 -> Json.Encode.object [("b", (\value2 -> Json.Encode.object [("c", (\value3 -> Json.Encode.object [("d", (\value4 -> Json.Encode.object [("e", Json.Encode.string value4.e)]) value3.d)]) value2.c)]) value1.b)]) value0.a)])
+
+encodeArrayType : ArrayType -> Json.Encode.Value
+encodeArrayType  =
+    (Json.Encode.array Json.Encode.string)
+
+encodeSetType : SetType -> Json.Encode.Value
+encodeSetType  =
+    (Json.Encode.set Json.Encode.string)
+
+encodeResultType : ResultType -> Json.Encode.Value
+encodeResultType  =
+    (encodeResult Json.Encode.string Json.Encode.int)
 
 decodeTodoList : Json.Decode.Decoder TodoList
 decodeTodoList  =
@@ -193,6 +219,18 @@ decodeUnitType  =
 decodeNestedRecord : Json.Decode.Decoder NestedRecord
 decodeNestedRecord  =
     Json.Decode.map NestedRecord (Json.Decode.field "a" ((Json.Decode.map (\b -> {b = b}) (Json.Decode.field "b" (Json.Decode.map (\c -> {c = c}) (Json.Decode.field "c" (Json.Decode.map (\d -> {d = d}) (Json.Decode.field "d" (Json.Decode.map (\e -> {e = e}) (Json.Decode.field "e" Json.Decode.string))))))))))
+
+decodeArrayType : Json.Decode.Decoder ArrayType
+decodeArrayType  =
+    (Json.Decode.array Json.Decode.string)
+
+decodeSetType : Json.Decode.Decoder SetType
+decodeSetType  =
+    (Json.Decode.map Set.fromList (Json.Decode.list Json.Decode.string))
+
+decodeResultType : Json.Decode.Decoder ResultType
+decodeResultType  =
+    (decodeResult Json.Decode.string Json.Decode.int)
 
 randomTodoList : Random.Generator TodoList
 randomTodoList  =
@@ -272,6 +310,18 @@ randomNestedRecord : Random.Generator NestedRecord
 randomNestedRecord  =
     (Random.map (\a -> {a = a}) (Random.map (\b -> {b = b}) (Random.map (\c -> {c = c}) (Random.map (\d -> {d = d}) (Random.map (\e -> {e = e}) randomString)))))
 
+randomArrayType : Random.Generator ArrayType
+randomArrayType  =
+    (randomArray randomString)
+
+randomSetType : Random.Generator SetType
+randomSetType  =
+    (randomSet randomString)
+
+randomResultType : Random.Generator ResultType
+randomResultType  =
+    (randomResult randomString randomInt)
+
 decodeChar : Json.Decode.Decoder Char
 decodeChar  =
     Json.Decode.andThen (\str -> case String.toList str of
@@ -280,6 +330,21 @@ decodeChar  =
       _ ->
         Json.Decode.fail "decodeChar: too many charactors for Char type")
      Json.Decode.string
+
+decodeAndMap : Json.Decode.Decoder a -> (Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b)
+decodeAndMap  =
+    Json.Decode.map2 (|>)
+
+decodeResult : Json.Decode.Decoder err -> (Json.Decode.Decoder ok -> Json.Decode.Decoder (Result err ok))
+decodeResult errDecoder okDecoder =
+    Json.Decode.andThen (\tag -> case tag of
+      "Err" ->
+        Json.Decode.map Err (Json.Decode.field "a" errDecoder)
+      "Ok" ->
+        Json.Decode.map Ok (Json.Decode.field "a" okDecoder)
+      _ ->
+        Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag))
+     (Json.Decode.field "tag" Json.Decode.string)
 
 encodeMaybe : (a -> Json.Encode.Value) -> (Maybe a -> Json.Encode.Value)
 encodeMaybe f encodeMaybeValue =
@@ -292,6 +357,14 @@ encodeMaybe f encodeMaybeValue =
 encodeChar : Char -> Json.Encode.Value
 encodeChar value =
     Json.Encode.string (String.fromChar value)
+
+encodeResult : (err -> Json.Encode.Value) -> ((ok -> Json.Encode.Value) -> (Result err ok -> Json.Encode.Value))
+encodeResult errEncoder okEncoder value =
+    case value of
+      Err err ->
+        Json.Encode.object [("tag", Json.Encode.string "Err"), ("a", errEncoder err)]
+      Ok ok ->
+        Json.Encode.object [("tag", Json.Encode.string "Ok"), ("a", okEncoder ok)]
 
 randomBool : Random.Generator Bool
 randomBool  =
@@ -317,9 +390,21 @@ randomList : Random.Generator a -> Random.Generator (List a)
 randomList gen =
     Random.andThen (\n -> Random.list (3 + n) gen) (Random.int 0 7)
 
+randomArray : Random.Generator a -> Random.Generator (Array.Array a)
+randomArray gen =
+    Random.map Array.fromList (randomList gen)
+
+randomSet : Random.Generator comparable -> Random.Generator (Set.Set comparable)
+randomSet gen =
+    Random.map Set.fromList (randomList gen)
+
 randomMaybe : Random.Generator a -> Random.Generator (Maybe a)
 randomMaybe gen =
     Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
+
+randomResult : Random.Generator err -> (Random.Generator ok -> Random.Generator (Result err ok))
+randomResult errGen okGen =
+    Random.andThen identity (Random.uniform (Random.map Err errGen) [Random.map Ok okGen])
 
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen =
@@ -331,6 +416,14 @@ viewList f xs =
      [Html.caption [] [Html.text "List"]
     , Html.tbody [] (List.indexedMap (\i x -> Html.tr [] [Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]]) xs)]
 
+viewArray : (a -> Html.Html msg) -> (Array.Array a -> Html.Html msg)
+viewArray f xs =
+    viewList f (Array.toList xs)
+
+viewSet : (a -> Html.Html msg) -> (Set.Set a -> Html.Html msg)
+viewSet f xs =
+    viewList f (Set.toList xs)
+
 viewMaybe : (a -> Html.Html msg) -> (Maybe a -> Html.Html msg)
 viewMaybe f m =
     case m of
@@ -338,6 +431,14 @@ viewMaybe f m =
         Html.div [Html.Attributes.class "elm-derive-maybe"] [Html.text "null"]
       Just a ->
         Html.div [Html.Attributes.class "elm-derive-maybe"] [f a]
+
+viewResult : (err -> Html.Html msg) -> ((ok -> Html.Html msg) -> (Result err ok -> Html.Html msg))
+viewResult errView okView value =
+    case value of
+      Err err ->
+        Html.div [Html.Attributes.class "elm-derive-result"] [errView err]
+      Ok ok ->
+        Html.div [Html.Attributes.class "elm-derive-result"] [okView ok]
 
 viewBool : Bool -> Html.Html msg
 viewBool value =

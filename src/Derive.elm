@@ -27,6 +27,17 @@ decodeChar = Json.Decode.andThen (\\str -> case String.toList str of
     [c] -> Json.Decode.succeed c
     _ -> Json.Decode.fail "decodeChar: too many charactors for Char type") Json.Decode.string 
 
+decodeAndMap : Json.Decode.Decoder a -> Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b
+decodeAndMap =
+    Json.Decode.map2 (|>)
+
+decodeResult : Json.Decode.Decoder err -> Json.Decode.Decoder ok -> Json.Decode.Decoder (Result err ok)
+decodeResult errDecoder okDecoder =
+    Json.Decode.andThen (\\tag -> case tag of 
+        "Err" -> Json.Decode.map Err (Json.Decode.field "a" errDecoder)
+        "Ok" -> Json.Decode.map Ok (Json.Decode.field "a" okDecoder)
+        _ -> Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
+
 encodeMaybe : (a -> Json.Encode.Value) -> Maybe a -> Json.Encode.Value
 encodeMaybe f encodeMaybeValue = case encodeMaybeValue of 
     Nothing -> Json.Encode.null
@@ -34,6 +45,11 @@ encodeMaybe f encodeMaybeValue = case encodeMaybeValue of
 
 encodeChar : Char -> Json.Encode.Value
 encodeChar value = Json.Encode.string (String.fromChar value)
+
+encodeResult : (err -> Json.Encode.Value) -> (ok -> Json.Encode.Value) -> Result err ok -> Json.Encode.Value
+encodeResult errEncoder okEncoder value = case value of 
+    Err err -> Json.Encode.object [("tag", Json.Encode.string "Err"), ("a", errEncoder err)]
+    Ok ok -> Json.Encode.object [("tag", Json.Encode.string "Ok"), ("a", okEncoder ok)]
 
 randomBool : Random.Generator Bool
 randomBool = Random.uniform True [False]
@@ -53,8 +69,20 @@ randomFloat = Random.float 0 1
 randomList : Random.Generator a -> Random.Generator (List a)
 randomList gen = Random.andThen (\\n -> Random.list (3 + n) gen) (Random.int 0 7)
 
+randomArray : Random.Generator a -> Random.Generator (Array.Array a)
+randomArray gen = Random.map Array.fromList (randomList gen)
+
+randomSet : Random.Generator comparable -> Random.Generator (Set.Set comparable)
+randomSet gen = Random.map Set.fromList (randomList gen)
+
 randomMaybe : Random.Generator a -> Random.Generator (Maybe a)
 randomMaybe gen = Random.andThen (\\n -> Random.uniform Nothing [Just n]) gen
+
+randomResult : Random.Generator err -> Random.Generator ok -> Random.Generator (Result err ok)
+randomResult errGen okGen = 
+    Random.andThen identity (Random.uniform (Random.map Err errGen) [Random.map Ok okGen])
+    
+
 
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen = Random.map Dict.fromList (randomList (Random.map2 (\\k v -> (k, v)) randomString gen))
@@ -65,10 +93,21 @@ viewList f xs = Html.table []
     , Html.tbody [] (List.indexedMap (\\i x -> Html.tr [] [ Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]   ]) xs)
     ]
 
+viewArray : (a -> Html.Html msg) -> Array.Array a -> Html.Html msg
+viewArray f xs = viewList f (Array.toList xs)
+
+viewSet : (a -> Html.Html msg) -> Set.Set a -> Html.Html msg
+viewSet f xs = viewList f (Set.toList xs)
+
 viewMaybe : (a -> Html.Html msg) -> Maybe a -> Html.Html msg
 viewMaybe f m = case m of
     Nothing -> Html.div [Html.Attributes.class "elm-derive-maybe"] [Html.text "null"]
     Just a -> Html.div [Html.Attributes.class "elm-derive-maybe"] [f a]
+
+viewResult : (err -> Html.Html msg) -> (ok -> Html.Html msg) -> Result err ok -> Html.Html msg 
+viewResult errView okView value = case value of 
+    Err err -> Html.div [Html.Attributes.class "elm-derive-result"] [errView err] 
+    Ok ok -> Html.div [Html.Attributes.class "elm-derive-result"] [okView ok]
 
 viewBool : Bool -> Html.Html msg
 viewBool value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| if value then "True" else "False"]
@@ -106,6 +145,7 @@ viewTuple fa fb (a, b) = Html.table []
         ]
     ]
 
+
 """
 
 
@@ -113,7 +153,7 @@ generate : Elm.Syntax.File.File -> Result Error Elm.Syntax.File.File
 generate file =
     case Elm.Parser.parse template of
         Err _ ->
-            Err [ "" ]
+            Err [ "template parse error" ]
 
         Ok templateRawFile ->
             let
@@ -163,6 +203,16 @@ generate file =
                                 }
                             , node
                                 { moduleName = node [ "Random" ]
+                                , moduleAlias = Nothing
+                                , exposingList = Nothing
+                                }
+                            , node
+                                { moduleName = node [ "Array" ]
+                                , moduleAlias = Nothing
+                                , exposingList = Nothing
+                                }
+                            , node
+                                { moduleName = node [ "Set" ]
                                 , moduleAlias = Nothing
                                 , exposingList = Nothing
                                 }

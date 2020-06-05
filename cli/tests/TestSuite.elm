@@ -49,4 +49,7 @@ suite =
         , testDerived "Char" Type.Derive.randomCharType Type.Derive.encodeCharType Type.Derive.decodeCharType
         , testDerived "Unit" Type.Derive.randomUnitType Type.Derive.encodeUnitType Type.Derive.decodeUnitType
         , testDerived "NestedRecord" Type.Derive.randomNestedRecord Type.Derive.encodeNestedRecord Type.Derive.decodeNestedRecord
+        , testDerived "ArrayType" Type.Derive.randomArrayType Type.Derive.encodeArrayType Type.Derive.decodeArrayType
+        , testDerived "SetType" Type.Derive.randomSetType Type.Derive.encodeSetType Type.Derive.decodeSetType
+        , testDerived "ResultType" Type.Derive.randomResultType Type.Derive.encodeResultType Type.Derive.decodeResultType
         ]

@@ -197,15 +197,31 @@ generateEncoderFromTypeAnnotation depth file typeAnnotation =
                 |> Result.map
                     (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "list", node encoder ])
 
+        Typed (Node _ ( [], "Array" )) [ Node _ content ] ->
+            generateEncoderFromTypeAnnotation (depth + 1) file content
+                |> Result.map
+                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "array", node encoder ])
+
+        Typed (Node _ ( [], "Set" )) [ Node _ content ] ->
+            generateEncoderFromTypeAnnotation (depth + 1) file content
+                |> Result.map
+                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "set", node encoder ])
+
         Typed (Node _ ( [], "Dict" )) [ Node _ (Typed (Node _ ( [], "String" )) _), Node _ content ] ->
             generateEncoderFromTypeAnnotation (depth + 1) file content
                 |> Result.map
-                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "dict", node <| FunctionOrValue [] "identity", node encoder ])
+                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "dict", node <| FunctionOrValue [ "Basics" ] "identity", node encoder ])
 
         Typed (Node _ ( [], "Maybe" )) [ Node _ content ] ->
             generateEncoderFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [] "encodeMaybe", node encoder ])
+
+        Typed (Node _ ( [], "Result" )) [ Node _ err, Node _ ok ] ->
+            Result.map2
+                (\errEncoder okEncoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [] "encodeResult", node errEncoder, node okEncoder ])
+                (generateEncoderFromTypeAnnotation (depth + 1) file err)
+                (generateEncoderFromTypeAnnotation (depth + 1) file ok)
 
         Unit ->
             Ok <|
@@ -216,7 +232,8 @@ generateEncoderFromTypeAnnotation depth file typeAnnotation =
                             , expression =
                                 node <|
                                     Application
-                                        [ node <| FunctionOrValue [ "Json", "Encode" ] "object"
+                                        [ node <| FunctionOrValue [ "Json", "Encode" ] "list"
+                                        , node <| FunctionOrValue [ "Basics" ] "identity"
                                         , node <| ListExpr []
                                         ]
                             }
@@ -232,7 +249,7 @@ generateEncoderFromTypeAnnotation depth file typeAnnotation =
                                     node <|
                                         Application
                                             [ node <| FunctionOrValue [ "Json", "Encode" ] "list"
-                                            , node <| FunctionOrValue [] "identity"
+                                            , node <| FunctionOrValue [ "Basics" ] "identity"
                                             , node <|
                                                 ListExpr
                                                     [ node <|

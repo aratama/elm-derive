@@ -269,6 +269,28 @@ generateRandomFromType file typeAnnotation =
                                 ]
                     )
 
+        Typed (Node _ ( [], "Array" )) [ Node _ content ] ->
+            generateRandomFromType file content
+                |> Result.map
+                    (\decoder ->
+                        ParenthesizedExpression <|
+                            application
+                                [ functionOrValue [] "randomArray"
+                                , node decoder
+                                ]
+                    )
+
+        Typed (Node _ ( [], "Set" )) [ Node _ content ] ->
+            generateRandomFromType file content
+                |> Result.map
+                    (\decoder ->
+                        ParenthesizedExpression <|
+                            application
+                                [ functionOrValue [] "randomSet"
+                                , node decoder
+                                ]
+                    )
+
         Typed (Node _ ( [], "Dict" )) [ Node _ (Typed (Node _ ( [], "String" )) _), Node _ content ] ->
             generateRandomFromType file content
                 |> Result.map
@@ -290,6 +312,19 @@ generateRandomFromType file typeAnnotation =
                                 , node decoder
                                 ]
                     )
+
+        Typed (Node _ ( [], "Result" )) [ Node _ err, Node _ ok ] ->
+            Result.map2
+                (\errRandom okRandom ->
+                    ParenthesizedExpression <|
+                        application
+                            [ functionOrValue [] "randomResult"
+                            , node errRandom
+                            , node okRandom
+                            ]
+                )
+                (generateRandomFromType file err)
+                (generateRandomFromType file ok)
 
         Unit ->
             Ok <|

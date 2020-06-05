@@ -31,6 +31,8 @@ And you can use the following types as a field type:
 * Records
 * List a
 * Maybe a
+* Result err ok
+* Set comparable
 * Dict String a
 * 2-elements Tuple
 * Unit

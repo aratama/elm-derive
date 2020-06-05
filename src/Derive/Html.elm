@@ -216,6 +216,28 @@ generateViewFromTypeAnnotation depth file typeAnnotation =
                                 ]
                     )
 
+        Typed (Node _ ( [], "Array" )) [ Node _ content ] ->
+            generateViewFromTypeAnnotation (depth + 1) file content
+                |> Result.map
+                    (\decoder ->
+                        ParenthesizedExpression <|
+                            application
+                                [ functionOrValue [] "viewArray"
+                                , node decoder
+                                ]
+                    )
+
+        Typed (Node _ ( [], "Set" )) [ Node _ content ] ->
+            generateViewFromTypeAnnotation (depth + 1) file content
+                |> Result.map
+                    (\decoder ->
+                        ParenthesizedExpression <|
+                            application
+                                [ functionOrValue [] "viewSet"
+                                , node decoder
+                                ]
+                    )
+
         Typed (Node _ ( [], "Maybe" )) [ Node _ content ] ->
             generateViewFromTypeAnnotation (depth + 1) file content
                 |> Result.map
@@ -226,6 +248,19 @@ generateViewFromTypeAnnotation depth file typeAnnotation =
                                 , node decoder
                                 ]
                     )
+
+        Typed (Node _ ( [], "Result" )) [ Node _ err, Node _ ok ] ->
+            Result.map2
+                (\errView okView ->
+                    ParenthesizedExpression <|
+                        application
+                            [ functionOrValue [] "viewResult"
+                            , node errView
+                            , node okView
+                            ]
+                )
+                (generateViewFromTypeAnnotation (depth + 1) file err)
+                (generateViewFromTypeAnnotation (depth + 1) file ok)
 
         Typed (Node _ ( [], "Dict" )) [ Node _ (Typed (Node _ ( [], "String" )) _), Node _ content ] ->
             generateViewFromTypeAnnotation (depth + 1) file content

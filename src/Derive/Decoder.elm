@@ -42,6 +42,37 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                                     ]
                     )
 
+        Typed (Node _ ( [], "Array" )) [ Node _ content ] ->
+            generateDecoderFromTypeAnnotation file content
+                |> Result.map
+                    (\decoder ->
+                        ParenthesizedExpression <|
+                            node <|
+                                Application
+                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "array"
+                                    , node decoder
+                                    ]
+                    )
+
+        Typed (Node _ ( [], "Set" )) [ Node _ content ] ->
+            generateDecoderFromTypeAnnotation file content
+                |> Result.map
+                    (\decoder ->
+                        ParenthesizedExpression <|
+                            node <|
+                                Application
+                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "map"
+                                    , node <| FunctionOrValue [ "Set" ] "fromList"
+                                    , node <|
+                                        ParenthesizedExpression <|
+                                            node <|
+                                                Application
+                                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "list"
+                                                    , node decoder
+                                                    ]
+                                    ]
+                    )
+
         Typed (Node _ ( [], "Dict" )) [ Node _ (Typed (Node _ ( [], "String" )) _), Node _ content ] ->
             generateDecoderFromTypeAnnotation file content
                 |> Result.map
@@ -65,6 +96,20 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                                     , node decoder
                                     ]
                     )
+
+        Typed (Node _ ( [], "Result" )) [ Node _ err, Node _ ok ] ->
+            Result.map2
+                (\errDecoder okDecoder ->
+                    ParenthesizedExpression <|
+                        node <|
+                            Application
+                                [ node <| FunctionOrValue [] "decodeResult"
+                                , node errDecoder
+                                , node okDecoder
+                                ]
+                )
+                (generateDecoderFromTypeAnnotation file err)
+                (generateDecoderFromTypeAnnotation file ok)
 
         Unit ->
             Ok <|
@@ -367,12 +412,3 @@ generateDecoder : File -> Result Error (List Declaration)
 generateDecoder file =
     concatResults (\node -> generateDecoderFromDeclaration file (nodeValue node)) file.declarations
         |> Result.map List.concat
-
-
-mapFunctionExtra : String
-mapFunctionExtra =
-    """
-andMap : Json.Decode.Decoder a -> Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b
-andMap =
-    Json.Decode.map2 (|>)
-"""
