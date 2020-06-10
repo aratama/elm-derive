@@ -1,8 +1,9 @@
-module Derive.Util exposing (Error, alphabet, alphabets, application, asList, concatResults, derivedModuleName, errorToString, functionAnnotation, functionOrValue, indent, node, nodeValue, objectConstructor, toErrors, unlines)
+module Derive.Util exposing (Error, alphabet, alphabets, application, asList, concatResults, derivedModuleName, errorToString, functionAnnotation, functionOrValue, indent, node, nodeValue, objectConstructor, resolveTypeAnnotation, toErrors, unlines)
 
+import Dict
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Expression(..))
-import Elm.Syntax.File
+import Elm.Syntax.File exposing (File)
 import Elm.Syntax.Infix exposing (InfixDirection(..))
 import Elm.Syntax.Module exposing (Module(..), moduleName)
 import Elm.Syntax.ModuleName exposing (ModuleName)
@@ -138,3 +139,31 @@ alphabets n =
 alphabet : Int -> Char
 alphabet i =
     Char.fromCode (97 + i)
+
+
+builtinTypeDic : Dict.Dict String String
+builtinTypeDic =
+    Dict.fromList
+        [ ( "Int", "Basics.Int" )
+        , ( "String.String", "String.String" )
+        , ( "String", "String.String" )
+        ]
+
+
+resolveTypeAnnotation : File -> TypeAnnotation -> Dict.Dict String String
+resolveTypeAnnotation file typeAnnotation =
+    let
+        moduleNameAliases : List ( String, String )
+        moduleNameAliases =
+            List.filterMap
+                (\(Node _ modImport) ->
+                    case modImport.moduleAlias of
+                        Just (Node _ modAlias) ->
+                            Just ( String.join "." modAlias, String.join "." <| nodeValue modImport.moduleName )
+
+                        _ ->
+                            Nothing
+                )
+                file.imports
+    in
+    Dict.fromList moduleNameAliases

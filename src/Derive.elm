@@ -3,6 +3,7 @@ module Derive exposing (generate)
 import Derive.Decoder
 import Derive.Encoder
 import Derive.Html
+import Derive.Ord
 import Derive.Random
 import Derive.Util exposing (Error, concatResults, derivedModuleName, node, nodeValue)
 import Elm.Parser
@@ -145,7 +146,37 @@ viewTuple fa fb (a, b) = Html.table []
         ]
     ]
 
+compareList : (a -> a -> Order) -> List a -> List a -> Order
+compareList f lhs rhs 
+    = case (lhs, rhs) of 
+        ([], []) -> EQ
+        (x :: xs, []) -> GT    
+        ([], y :: ys) -> LT
+        (x :: xs, y :: ys) -> 
+            case f x y of 
+                EQ -> compareList f xs ys
+                ret -> ret
 
+compareMaybe : (a -> a -> Order) -> Maybe a -> Maybe a -> Order
+compareMaybe f lhs rhs 
+    = case (lhs, rhs) of 
+        (Nothing, Nothing) -> EQ
+        (Nothing, Just _) -> GT    
+        (Just _, Nothing) -> LT
+        (Just x, Just y) -> f x y
+
+
+compareBool _ _ = EQ
+
+compareSet _ _ _ = EQ
+
+compareArray _ _ _ = EQ
+
+compareDict _ _ _ = EQ
+
+compareTuple _ _ _ _ = EQ
+
+compareResult _ _ _ _ = EQ
 """
 
 
@@ -160,7 +191,8 @@ generate file =
                 templateFile =
                     Elm.Processing.process Elm.Processing.init templateRawFile
             in
-            [ Derive.Html.generateView
+            [ Derive.Ord.generate
+            , Derive.Html.generateView
             , Derive.Encoder.generateEncoder
             , Derive.Decoder.generateDecoder
             , Derive.Random.generateRandom
