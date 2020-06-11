@@ -214,11 +214,11 @@ generate file =
                 templateFile =
                     Elm.Processing.process Elm.Processing.init templateRawFile
             in
-            [ Derive.Ord.generate
-            , Derive.Html.generateView
-            , Derive.Encoder.generateEncoder
+            [ Derive.Encoder.generateEncoder
             , Derive.Decoder.generateDecoder
             , Derive.Random.generateRandom
+            , Derive.Ord.generate
+            , Derive.Html.generateView
             ]
                 |> concatResults (\gen -> gen file)
                 |> Result.map

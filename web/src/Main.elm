@@ -18,8 +18,6 @@ import SyntaxHighlight
 sampleSource : String
 sampleSource =
     """{- 
-# elm-derive 
-
 elm-derive is an experimental encoder/decoder generator for Elm. 
 Put your great type definitions below.
 This generator supports a subset of Elm syntax.
@@ -27,15 +25,10 @@ This generator supports a subset of Elm syntax.
 And you can use the following types as a field type:
 
 * Primitive Types (Int/Float/String/Bool/Char)
-* Custom Types
-* Records
-* List a
-* Maybe a
-* Result err ok
-* Set comparable
-* Dict String a
-* 2-elements Tuple
-* Unit
+* Custom Types / Records
+* List a / Array a / Set comparable / Dict String a
+* Maybe a / Result err ok
+* 2-elements Tuple / Unit
 
 elm-derive has a CLI. Try the following command in your terminal:
 
@@ -46,9 +39,6 @@ Have fun at Meta-programming in Elm!
 -}
 
 module Example exposing (..)
-
-import Maybe exposing (..)
-import Dict exposing (..)
 
 type alias TodoList =
     { tasks : List Task
