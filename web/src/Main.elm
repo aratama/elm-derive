@@ -18,17 +18,14 @@ import SyntaxHighlight
 sampleSource : String
 sampleSource =
     """{- 
-elm-derive is an experimental encoder/decoder generator for Elm. 
-Put your great type definitions below.
-This generator supports a subset of Elm syntax.
-
-And you can use the following types as a field type:
+**elm-derive** is an experimental code generator for Elm. 
+Put your great type definitions below and elm-derive will cook it.
+You can use the following types as a field type:
 
 * Primitive Types (Int/Float/String/Bool/Char)
-* Custom Types / Records
+* Custom Types / Records / Tuple / Unit
 * List a / Array a / Set comparable / Dict String a
 * Maybe a / Result err ok
-* 2-elements Tuple / Unit
 
 elm-derive has a CLI. Try the following command in your terminal:
 
