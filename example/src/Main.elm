@@ -27,10 +27,6 @@ main =
             \flag ->
                 case Json.Decode.decodeValue TodoList.Derive.decodeTodoList flag of
                     Err err ->
-                        let
-                            _ =
-                                Debug.log "err" err
-                        in
                         ( Nothing, Random.generate Generated TodoList.Derive.randomTodoList )
 
                     Ok todoList ->
