@@ -151,15 +151,11 @@ generateOrdFromDeclaration file declaration =
                                             constructorCase =
                                                 fields
                                                     |> Result.map
-                                                        (\fs ->
+                                                        (\field ->
                                                             let
-                                                                eq =
-                                                                    ( node <|
-                                                                        TuplePattern
-                                                                            [ node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } (List.map (\c -> node <| VarPattern c) (abc "l"))
-                                                                            , node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } (List.map (\c -> node <| VarPattern c) (abc "r"))
-                                                                            ]
-                                                                    , case fs of
+                                                                go : Int -> List Expression -> Node Expression
+                                                                go i fs =
+                                                                    case fs of
                                                                         [] ->
                                                                             node <| FunctionOrValue [] "EQ"
 
@@ -167,8 +163,8 @@ generateOrdFromDeclaration file declaration =
                                                                             node <|
                                                                                 Application
                                                                                     [ node <| compareT
-                                                                                    , node <| FunctionOrValue [] "la"
-                                                                                    , node <| FunctionOrValue [] "ra"
+                                                                                    , node <| FunctionOrValue [] ("l" ++ String.fromChar (alphabet i))
+                                                                                    , node <| FunctionOrValue [] ("r" ++ String.fromChar (alphabet i))
                                                                                     ]
 
                                                                         ord :: ords ->
@@ -178,14 +174,22 @@ generateOrdFromDeclaration file declaration =
                                                                                         node <|
                                                                                             Application
                                                                                                 [ node <| ord
-                                                                                                , node <| FunctionOrValue [] "la"
-                                                                                                , node <| FunctionOrValue [] "rb"
+                                                                                                , node <| FunctionOrValue [] ("l" ++ String.fromChar (alphabet i))
+                                                                                                , node <| FunctionOrValue [] ("r" ++ String.fromChar (alphabet i))
                                                                                                 ]
                                                                                     , cases =
-                                                                                        [ ( node <| NamedPattern { moduleName = [], name = "EQ" } [], node <| FunctionOrValue [] "EQ" )
+                                                                                        [ ( node <| NamedPattern { moduleName = [], name = "EQ" } [], go (i + 1) ords )
                                                                                         , ( node <| VarPattern "order", node <| FunctionOrValue [] "order" )
                                                                                         ]
                                                                                     }
+
+                                                                eq =
+                                                                    ( node <|
+                                                                        TuplePattern
+                                                                            [ node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } (List.map (\c -> node <| VarPattern c) (abc "l"))
+                                                                            , node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } (List.map (\c -> node <| VarPattern c) (abc "r"))
+                                                                            ]
+                                                                    , go 0 field
                                                                     )
 
                                                                 lt =

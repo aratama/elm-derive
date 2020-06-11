@@ -166,17 +166,40 @@ compareMaybe f lhs rhs
         (Just x, Just y) -> f x y
 
 
-compareBool _ _ = EQ
+compareBool : Bool -> Bool -> Order
+compareBool lhs rhs 
+    = case (lhs, rhs) of 
+        (False, False) -> EQ
+        (False, True) -> LT
+        (True, False) -> GT
+        (True, True) -> EQ
 
-compareSet _ _ _ = EQ
+compareSet : (comparable -> comparable -> Order) -> Set.Set comparable -> Set.Set comparable -> Order
+compareSet f lhs rhs 
+    = compareList f (Set.toList lhs) (Set.toList rhs)
 
-compareArray _ _ _ = EQ
+compareArray : (a -> a -> Order) -> Array.Array a -> Array.Array a -> Order
+compareArray f lhs rhs 
+    = compareList f (Array.toList lhs) (Array.toList rhs)
 
-compareDict _ _ _ = EQ
+compareDict : (a -> a -> Order) -> Dict.Dict comparable a -> Dict.Dict comparable a -> Order
+compareDict f lhs rhs 
+    = compareList (\\ls rs -> compareTuple compare f ls rs) (Dict.toList lhs) (Dict.toList rhs)
 
-compareTuple _ _ _ _ = EQ
+compareTuple : (a -> a -> Order) -> (b -> b -> Order) -> (a, b) -> (a, b) -> Order
+compareTuple f g  (la, lb) (ra, rb) 
+    = case f la ra of 
+        EQ -> g lb rb 
+        ord -> ord
 
-compareResult _ _ _ _ = EQ
+compareResult : (err -> err -> Order) -> (ok -> ok -> Order) -> Result err ok -> Result err ok -> Order 
+compareResult f g lhs rhs 
+    = case (lhs, rhs) of 
+        (Err l, Err r) -> f l r
+        (Err _, _) -> LT
+        (_, Err _) -> GT
+        (Ok l, Ok r) -> g l r
+
 """
 
 

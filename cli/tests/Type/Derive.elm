@@ -52,9 +52,9 @@ compareTree lhs rhs =
       (_, Leaf la) ->
         GT
       (Branch la lb, Branch ra rb) ->
-        case compareTree la rb of
+        case compareTree la ra of
           EQ  ->
-            EQ
+            compareTree lb rb
           order ->
             order
 
@@ -110,7 +110,7 @@ compareUnitType  =
 
 compareNestedRecord : NestedRecord -> (NestedRecord -> Order)
 compareNestedRecord  =
-    (\lhs0 rhs0 -> (\lhs1 rhs1 -> compare lhs1.b rhs1.b) lhs0.a rhs0.a)
+    (\lhs0 rhs0 -> (\lhs1 rhs1 -> (\lhs2 rhs2 -> (\lhs3 rhs3 -> (\lhs4 rhs4 -> compare lhs4.e rhs4.e) lhs3.d rhs3.d) lhs2.c rhs2.c) lhs1.b rhs1.b) lhs0.a rhs0.a)
 
 compareArrayType : ArrayType -> (ArrayType -> Order)
 compareArrayType  =
@@ -182,7 +182,7 @@ viewUnitType  =
 
 viewNestedRecord : NestedRecord -> Html.Html msg
 viewNestedRecord  =
-    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "a"], Html.td [] [(\value1 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "b"], Html.td [] [viewString value1.b]]]]) value0.a]]]])
+    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "a"], Html.td [] [(\value1 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "b"], Html.td [] [(\value2 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "c"], Html.td [] [(\value3 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "d"], Html.td [] [(\value4 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "e"], Html.td [] [viewString value4.e]]]]) value3.d]]]]) value2.c]]]]) value1.b]]]]) value0.a]]]])
 
 viewArrayType : ArrayType -> Html.Html msg
 viewArrayType  =
@@ -254,7 +254,7 @@ encodeUnitType  =
 
 encodeNestedRecord : NestedRecord -> Json.Encode.Value
 encodeNestedRecord  =
-    (\value0 -> Json.Encode.object [("a", (\value1 -> Json.Encode.object [("b", Json.Encode.string value1.b)]) value0.a)])
+    (\value0 -> Json.Encode.object [("a", (\value1 -> Json.Encode.object [("b", (\value2 -> Json.Encode.object [("c", (\value3 -> Json.Encode.object [("d", (\value4 -> Json.Encode.object [("e", Json.Encode.string value4.e)]) value3.d)]) value2.c)]) value1.b)]) value0.a)])
 
 encodeArrayType : ArrayType -> Json.Encode.Value
 encodeArrayType  =
@@ -332,7 +332,7 @@ decodeUnitType  =
 
 decodeNestedRecord : Json.Decode.Decoder NestedRecord
 decodeNestedRecord  =
-    Json.Decode.map NestedRecord (Json.Decode.field "a" ((Json.Decode.map (\b -> {b = b}) (Json.Decode.field "b" Json.Decode.string))))
+    Json.Decode.map NestedRecord (Json.Decode.field "a" ((Json.Decode.map (\b -> {b = b}) (Json.Decode.field "b" (Json.Decode.map (\c -> {c = c}) (Json.Decode.field "c" (Json.Decode.map (\d -> {d = d}) (Json.Decode.field "d" (Json.Decode.map (\e -> {e = e}) (Json.Decode.field "e" Json.Decode.string))))))))))
 
 decodeArrayType : Json.Decode.Decoder ArrayType
 decodeArrayType  =
@@ -422,7 +422,7 @@ randomUnitType  =
 
 randomNestedRecord : Random.Generator NestedRecord
 randomNestedRecord  =
-    (Random.map (\a -> {a = a}) (Random.map (\b -> {b = b}) randomString))
+    (Random.map (\a -> {a = a}) (Random.map (\b -> {b = b}) (Random.map (\c -> {c = c}) (Random.map (\d -> {d = d}) (Random.map (\e -> {e = e}) randomString)))))
 
 randomArrayType : Random.Generator ArrayType
 randomArrayType  =
@@ -623,26 +623,46 @@ compareMaybe f lhs rhs =
       (Just x, Just y) ->
         f x y
 
+compareBool : Bool -> (Bool -> Order)
+compareBool lhs rhs =
+    case (lhs, rhs) of
+      (False , False ) ->
+        EQ
+      (False , True ) ->
+        LT
+      (True , False ) ->
+        GT
+      (True , True ) ->
+        EQ
 
-compareBool _ _ =
-    EQ
+compareSet : (comparable -> (comparable -> Order)) -> (Set.Set comparable -> (Set.Set comparable -> Order))
+compareSet f lhs rhs =
+    compareList f (Set.toList lhs) (Set.toList rhs)
 
+compareArray : (a -> (a -> Order)) -> (Array.Array a -> (Array.Array a -> Order))
+compareArray f lhs rhs =
+    compareList f (Array.toList lhs) (Array.toList rhs)
 
-compareSet _ _ _ =
-    EQ
+compareDict : (a -> (a -> Order)) -> (Dict.Dict comparable a -> (Dict.Dict comparable a -> Order))
+compareDict f lhs rhs =
+    compareList (\ls rs -> compareTuple compare f ls rs) (Dict.toList lhs) (Dict.toList rhs)
 
+compareTuple : (a -> (a -> Order)) -> ((b -> (b -> Order)) -> ((a, b) -> ((a, b) -> Order)))
+compareTuple f g (la, lb) (ra, rb) =
+    case f la ra of
+      EQ  ->
+        g lb rb
+      ord ->
+        ord
 
-compareArray _ _ _ =
-    EQ
-
-
-compareDict _ _ _ =
-    EQ
-
-
-compareTuple _ _ _ _ =
-    EQ
-
-
-compareResult _ _ _ _ =
-    EQ
+compareResult : (err -> (err -> Order)) -> ((ok -> (ok -> Order)) -> (Result err ok -> (Result err ok -> Order)))
+compareResult f g lhs rhs =
+    case (lhs, rhs) of
+      (Err l, Err r) ->
+        f l r
+      (Err _, _) ->
+        LT
+      (_, Err _) ->
+        GT
+      (Ok l, Ok r) ->
+        g l r

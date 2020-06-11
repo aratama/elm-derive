@@ -61,13 +61,8 @@ type alias UnitType =
     ()
 
 
-
--- type alias NestedRecord =
---     { a : { b : { c : { d : { e : String } } } } }
-
-
 type alias NestedRecord =
-    { a : { b : String } }
+    { a : { b : { c : { d : { e : String } } } } }
 
 
 type alias ArrayType =

@@ -6,6 +6,7 @@ import Json.Decode
 import Json.Encode
 import Random
 import Test exposing (..)
+import Type exposing (..)
 import Type.Derive exposing (..)
 
 
@@ -52,4 +53,24 @@ suite =
         , testDerived "ArrayType" Type.Derive.randomArrayType Type.Derive.encodeArrayType Type.Derive.decodeArrayType
         , testDerived "SetType" Type.Derive.randomSetType Type.Derive.encodeSetType Type.Derive.decodeSetType
         , testDerived "ResultType" Type.Derive.randomResultType Type.Derive.encodeResultType Type.Derive.decodeResultType
+        , test "compareTree" <|
+            \_ ->
+                let
+                    input =
+                        [ Branch (Leaf "40") (Leaf "50"), Branch (Leaf "20") (Leaf "30"), Leaf "10" ]
+
+                    sorted =
+                        [ Leaf "10", Branch (Leaf "20") (Leaf "30"), Branch (Leaf "40") (Leaf "50") ]
+                in
+                Expect.equal (List.sortWith Type.Derive.compareTree input) sorted
+        , test "compareBool" <|
+            \_ ->
+                let
+                    input =
+                        [ True, False, False, False, True, False, True, True, False ]
+
+                    sorted =
+                        [ False, False, False, False, False, True, True, True, True ]
+                in
+                Expect.equal (List.sortWith Type.Derive.compareBool input) sorted
         ]
