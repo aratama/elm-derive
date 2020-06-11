@@ -71,90 +71,188 @@ generateOrdFromDeclaration file declaration =
                     )
 
         CustomTypeDeclaration customTypeDecl ->
-            let
-                variants : List (Result Error Case)
-                variants =
-                    List.indexedMap
-                        (\constructorIndex constructorNode ->
-                            let
-                                constructor : ValueConstructor
-                                constructor =
-                                    nodeValue constructorNode
-
-                                abc : String -> List String
-                                abc prefix =
-                                    alphabets (List.length constructor.arguments)
-                                        |> List.map (\c -> prefix ++ String.fromChar c)
-
-                                fields : Result Error (List Expression)
-                                fields =
-                                    constructor.arguments
-                                        |> List.indexedMap (\i a -> ( i, a ))
-                                        |> concatResults
-                                            (\( index, Node _ arg ) ->
-                                                generateOrdFromTypeAnnotation 0 file arg
-                                                    |> Result.map (\a -> Application [ node a, node <| FunctionOrValue [] (String.fromChar <| alphabet index) ])
-                                            )
-
-                                constructorCase : Result Error Case
-                                constructorCase =
-                                    fields
-                                        |> Result.map
-                                            (\fs ->
-                                                ( node <|
-                                                    TuplePattern
-                                                        [ node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } (List.map (\c -> node <| VarPattern c) (abc "l"))
-                                                        , node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } (List.map (\c -> node <| VarPattern c) (abc "r"))
-                                                        ]
-                                                , node <|
-                                                    OperatorApplication "::"
-                                                        Right
-                                                        (node <| Literal <| String.fromInt constructorIndex)
-                                                        (node <|
-                                                            Application
-                                                                [ node <| FunctionOrValue [ "List" ] "concat"
-                                                                , node <| ListExpr <| List.map node fs
-                                                                ]
-                                                        )
-                                                )
-                                            )
-                            in
-                            constructorCase
-                        )
-                        customTypeDecl.constructors
-            in
-            concatResults identity variants
-                |> Result.map
-                    (\cases ->
-                        let
-                            signature : Signature
-                            signature =
-                                { name = node name
-                                , typeAnnotation =
-                                    node <|
-                                        FunctionTypeAnnotation (node <| Typed (node ( [], typeName )) [])
-                                            (node <|
-                                                FunctionTypeAnnotation (node <| Typed (node ( [], typeName )) []) (node <| Typed (node ( [], "Order" )) [])
-                                            )
-                                }
-                        in
-                        [ FunctionDeclaration
-                            { documentation = Nothing
-                            , signature = Just <| node signature
-                            , declaration =
+            case customTypeDecl.constructors of
+                [ Node _ constructor ] ->
+                    -- generateOrdFromTypeAnnotation 0 file
+                    let
+                        signature : Signature
+                        signature =
+                            { name = node name
+                            , typeAnnotation =
                                 node <|
-                                    { name = node <| name
-                                    , arguments = [ node <| VarPattern "lhs", node <| VarPattern "rhs" ]
-                                    , expression =
-                                        node <|
-                                            CaseExpression
-                                                { expression = node <| TupledExpression [ node <| FunctionOrValue [] "lhs", node <| FunctionOrValue [] "rhs" ]
-                                                , cases = cases
-                                                }
-                                    }
+                                    FunctionTypeAnnotation (node <| Typed (node ( [], typeName )) [])
+                                        (node <|
+                                            FunctionTypeAnnotation (node <| Typed (node ( [], typeName )) []) (node <| Typed (node ( [], "Order" )) [])
+                                        )
                             }
-                        ]
-                    )
+
+                        go : List (Node TypeAnnotation) -> Result Error Expression
+                        go arguments =
+                            case arguments of
+                                [] ->
+                                    Ok <| FunctionOrValue [] "EQ"
+
+                                [ Node _ argument ] ->
+                                    generateOrdFromTypeAnnotation 0 file argument
+                                        |> Result.map
+                                            (\expr ->
+                                                Application
+                                                    [ node expr
+                                                    , node <| FunctionOrValue [] "lhs"
+                                                    , node <| FunctionOrValue [] "rhs"
+                                                    ]
+                                            )
+
+                                x :: xs ->
+                                    Ok <| Literal "<<TODO>>"
+                    in
+                    go constructor.arguments
+                        |> Result.map
+                            (\argumentExpression ->
+                                [ FunctionDeclaration
+                                    { documentation = Nothing
+                                    , signature = Just <| node signature
+                                    , declaration =
+                                        node <|
+                                            { name = node <| name
+                                            , arguments =
+                                                [ node <| ParenthesizedPattern <| node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } [ node <| VarPattern "lhs" ]
+                                                , node <| ParenthesizedPattern <| node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } [ node <| VarPattern "rhs" ]
+                                                ]
+                                            , expression = node argumentExpression
+                                            }
+                                    }
+                                ]
+                            )
+
+                _ ->
+                    let
+                        variants : List (Result Error (List Case))
+                        variants =
+                            customTypeDecl.constructors
+                                |> List.indexedMap
+                                    (\constructorIndex constructorNode ->
+                                        let
+                                            constructor : ValueConstructor
+                                            constructor =
+                                                nodeValue constructorNode
+
+                                            abc : String -> List String
+                                            abc prefix =
+                                                alphabets (List.length constructor.arguments)
+                                                    |> List.map (\c -> prefix ++ String.fromChar c)
+
+                                            fields : Result Error (List Expression)
+                                            fields =
+                                                constructor.arguments
+                                                    |> concatResults (\(Node _ arg) -> generateOrdFromTypeAnnotation 0 file arg)
+
+                                            constructorCase : Result Error (List Case)
+                                            constructorCase =
+                                                fields
+                                                    |> Result.map
+                                                        (\fs ->
+                                                            let
+                                                                eq =
+                                                                    ( node <|
+                                                                        TuplePattern
+                                                                            [ node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } (List.map (\c -> node <| VarPattern c) (abc "l"))
+                                                                            , node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } (List.map (\c -> node <| VarPattern c) (abc "r"))
+                                                                            ]
+                                                                    , case fs of
+                                                                        [] ->
+                                                                            node <| FunctionOrValue [] "EQ"
+
+                                                                        [ compareT ] ->
+                                                                            node <|
+                                                                                Application
+                                                                                    [ node <| compareT
+                                                                                    , node <| FunctionOrValue [] "la"
+                                                                                    , node <| FunctionOrValue [] "ra"
+                                                                                    ]
+
+                                                                        ord :: ords ->
+                                                                            node <|
+                                                                                CaseExpression
+                                                                                    { expression =
+                                                                                        node <|
+                                                                                            Application
+                                                                                                [ node <| ord
+                                                                                                , node <| FunctionOrValue [] "la"
+                                                                                                , node <| FunctionOrValue [] "rb"
+                                                                                                ]
+                                                                                    , cases =
+                                                                                        [ ( node <| NamedPattern { moduleName = [], name = "EQ" } [], node <| FunctionOrValue [] "EQ" )
+                                                                                        , ( node <| VarPattern "order", node <| FunctionOrValue [] "order" )
+                                                                                        ]
+                                                                                    }
+                                                                    )
+
+                                                                lt =
+                                                                    ( node <|
+                                                                        TuplePattern
+                                                                            [ node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } (List.map (\c -> node <| VarPattern c) (abc "l"))
+                                                                            , node <| AllPattern
+                                                                            ]
+                                                                    , node <| FunctionOrValue [] "LT"
+                                                                    )
+
+                                                                gt =
+                                                                    ( node <|
+                                                                        TuplePattern
+                                                                            [ node <| AllPattern
+                                                                            , node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } (List.map (\c -> node <| VarPattern c) (abc "l"))
+                                                                            ]
+                                                                    , node <| FunctionOrValue [] "GT"
+                                                                    )
+                                                            in
+                                                            if constructorIndex < List.length customTypeDecl.constructors - 1 then
+                                                                [ eq, lt, gt ]
+
+                                                            else
+                                                                [ eq ]
+                                                        )
+                                        in
+                                        case customTypeDecl.constructors of
+                                            [] ->
+                                                constructorCase
+
+                                            _ ->
+                                                constructorCase
+                                    )
+                    in
+                    concatResults identity variants
+                        |> Result.map
+                            (\casesList ->
+                                let
+                                    signature : Signature
+                                    signature =
+                                        { name = node name
+                                        , typeAnnotation =
+                                            node <|
+                                                FunctionTypeAnnotation (node <| Typed (node ( [], typeName )) [])
+                                                    (node <|
+                                                        FunctionTypeAnnotation (node <| Typed (node ( [], typeName )) []) (node <| Typed (node ( [], "Order" )) [])
+                                                    )
+                                        }
+                                in
+                                [ FunctionDeclaration
+                                    { documentation = Nothing
+                                    , signature = Just <| node signature
+                                    , declaration =
+                                        node <|
+                                            { name = node <| name
+                                            , arguments = [ node <| VarPattern "lhs", node <| VarPattern "rhs" ]
+                                            , expression =
+                                                node <|
+                                                    CaseExpression
+                                                        { expression = node <| TupledExpression [ node <| FunctionOrValue [] "lhs", node <| FunctionOrValue [] "rhs" ]
+                                                        , cases = List.concat casesList
+                                                        }
+                                            }
+                                    }
+                                ]
+                            )
 
         _ ->
             Ok []
@@ -210,7 +308,7 @@ generateOrdFromTypeAnnotation depth file typeAnnotation =
                 (generateOrdFromTypeAnnotation (depth + 1) file ok)
 
         Unit ->
-            Ok <| FunctionOrValue [] "EQ"
+            Ok <| ParenthesizedExpression <| node <| LambdaExpression { args = [ node AllPattern, node AllPattern ], expression = node <| FunctionOrValue [] "EQ" }
 
         Tupled [ Node _ fst, Node _ snd ] ->
             Result.map2
@@ -279,6 +377,17 @@ generateOrdFromTypeAnnotation depth file typeAnnotation =
                     case fields of
                         [] ->
                             Ok <| FunctionOrValue [] "EQ"
+
+                        [ ( Node _ fieldName, Node _ fieldType ) ] ->
+                            generateOrdFromTypeAnnotation (depth + 1) file fieldType
+                                |> Result.map
+                                    (\ordFunction ->
+                                        Application
+                                            [ node <| ordFunction
+                                            , node <| RecordAccess (node <| FunctionOrValue [] <| "lhs" ++ String.fromInt depth) (node fieldName)
+                                            , node <| RecordAccess (node <| FunctionOrValue [] <| "rhs" ++ String.fromInt depth) (node fieldName)
+                                            ]
+                                    )
 
                         ( Node _ fieldName, Node _ fieldType ) :: xs ->
                             generateOrdFromTypeAnnotation (depth + 1) file fieldType
