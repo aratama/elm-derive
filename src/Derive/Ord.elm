@@ -320,31 +320,6 @@ generateOrdFromTypeAnnotation depth file typeAnnotation =
                 (generateOrdFromTypeAnnotation (depth + 1) file fst)
                 (generateOrdFromTypeAnnotation (depth + 1) file snd)
 
-        -- Typed (Node _ ( [], moduleMemberTypeName )) [] ->
-        --     let
-        --         filtered =
-        --             List.filter
-        --                 (\declarationNode ->
-        --                     let
-        --                         declaration : Declaration
-        --                         declaration =
-        --                             nodeValue declarationNode
-        --                     in
-        --                     case declaration of
-        --                         AliasDeclaration ta ->
-        --                             nodeValue ta.name == moduleMemberTypeName
-        --                         CustomTypeDeclaration tm ->
-        --                             nodeValue tm.name == moduleMemberTypeName
-        --                         _ ->
-        --                             False
-        --                 )
-        --                 file.declarations
-        --     in
-        --     case filtered of
-        --         [] ->
-        --             Err <| [ "Encoder: Unknown Data Type: `" ++ moduleMemberTypeName ++ "`" ]
-        --         _ ->
-        --             Ok <| FunctionOrValue [] ("encode" ++ moduleMemberTypeName)
         Typed (Node _ ( [], moduleMemberTypeName )) [] ->
             let
                 filtered =
@@ -430,7 +405,5 @@ generateOrdFromTypeAnnotation depth file typeAnnotation =
                                     }
                     )
 
-        -- _ ->
-        --     Err [ "Encoder: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation (node typeAnnotation)) ]
         _ ->
             Ok <| FunctionOrValue [] "<<<TODO>>>"

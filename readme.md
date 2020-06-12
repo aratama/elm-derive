@@ -1,7 +1,7 @@
 # elm-derive
 
-Experimental code generator for Elm.
-elm-derive generates following codes from type decralations written in Elm:
+elm-derive is an experimental code generator for Elm.
+It generates following codes from type decralation `Foo` (custrom type or type alias) written in Elm:
 
 - JSON Encoder `encodeFoo : Foo -> Json.Encode.Value`
 - JSON Decoder `decodeFoo : Json.Decode.Decoder Foo`

@@ -73,4 +73,36 @@ suite =
                         [ False, False, False, False, False, True, True, True, True ]
                 in
                 Expect.equal (List.sortWith Type.Derive.compareBool input) sorted
+        , test "compareSomeRecord" <|
+            \_ ->
+                let
+                    input =
+                        [ { a = 100, b = "foo" }
+                        , { a = 200, b = "bar" }
+                        ]
+
+                    sorted =
+                        [ { a = 100, b = "foo" }
+                        , { a = 200, b = "bar" }
+                        ]
+                in
+                Expect.equal (List.sortWith Type.Derive.compareSomeRecord input) sorted
+        , test "compareNestedRecord" <|
+            \_ ->
+                let
+                    input =
+                        [ { a = { b = { c = { d = { e = "foo" }, f = 200 } } } }
+                        , { a = { b = { c = { d = { e = "bar" }, f = 200 } } } }
+                        , { a = { b = { c = { d = { e = "foo" }, f = 100 } } } }
+                        , { a = { b = { c = { d = { e = "bar" }, f = 100 } } } }
+                        ]
+
+                    sorted =
+                        [ { a = { b = { c = { d = { e = "bar" }, f = 100 } } } }
+                        , { a = { b = { c = { d = { e = "bar" }, f = 200 } } } }
+                        , { a = { b = { c = { d = { e = "foo" }, f = 100 } } } }
+                        , { a = { b = { c = { d = { e = "foo" }, f = 200 } } } }
+                        ]
+                in
+                Expect.equal (List.sortWith Type.Derive.compareNestedRecord input) sorted
         ]

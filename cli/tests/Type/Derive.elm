@@ -10,6 +10,258 @@ import Array
 import Set  
 import Type  exposing (..)
 
+encodeTodoList : TodoList -> Json.Encode.Value
+encodeTodoList  =
+    (\value0 -> Json.Encode.object [("tasks", (Json.Encode.list encodeTask) value0.tasks), ("field", Json.Encode.string value0.field), ("uid", Json.Encode.int value0.uid), ("visibility", Json.Encode.string value0.visibility)])
+
+encodeTask : Task -> Json.Encode.Value
+encodeTask  =
+    (\value0 -> Json.Encode.object [("description", Json.Encode.string value0.description), ("completed", Json.Encode.bool value0.completed), ("edits", (encodeMaybe Json.Encode.string) value0.edits), ("id", Json.Encode.int value0.id)])
+
+encodeTree : Tree -> Json.Encode.Value
+encodeTree val =
+    case val of
+      Leaf a ->
+        Json.Encode.object [("tag", Json.Encode.string "Leaf"), ("a", Json.Encode.string a)]
+      Branch a b ->
+        Json.Encode.object [("tag", Json.Encode.string "Branch"), ("a", encodeTree a), ("b", encodeTree b)]
+
+encodeColor : Color -> Json.Encode.Value
+encodeColor val =
+    case val of
+      Red  ->
+        Json.Encode.object [("tag", Json.Encode.string "Red")]
+      Green  ->
+        Json.Encode.object [("tag", Json.Encode.string "Green")]
+      Blue  ->
+        Json.Encode.object [("tag", Json.Encode.string "Blue")]
+
+encodeVector : Vector -> Json.Encode.Value
+encodeVector val =
+    case val of
+      Vector a ->
+        Json.Encode.object [("tag", Json.Encode.string "Vector"), ("a", (\value0 -> Json.Encode.object [("x", Json.Encode.float value0.x), ("y", Json.Encode.float value0.y)]) a)]
+
+encodeGrid : Grid -> Json.Encode.Value
+encodeGrid  =
+    (Json.Encode.list (Json.Encode.list Json.Encode.int))
+
+encodeDictionary : Dictionary -> Json.Encode.Value
+encodeDictionary  =
+    (Json.Encode.dict Basics.identity Json.Encode.int)
+
+encodeEmptyRecord : EmptyRecord -> Json.Encode.Value
+encodeEmptyRecord  =
+    (\value0 -> Json.Encode.object [])
+
+encodePair : Pair -> Json.Encode.Value
+encodePair  =
+    (\(fst, snd) -> Json.Encode.list Basics.identity [(Json.Encode.int fst), (Json.Encode.string snd)])
+
+encodeCharType : CharType -> Json.Encode.Value
+encodeCharType  =
+    encodeChar
+
+encodeUnitType : UnitType -> Json.Encode.Value
+encodeUnitType  =
+    (\() -> Json.Encode.list Basics.identity [])
+
+encodeSomeRecord : SomeRecord -> Json.Encode.Value
+encodeSomeRecord  =
+    (\value0 -> Json.Encode.object [("a", Json.Encode.int value0.a), ("b", Json.Encode.string value0.b)])
+
+encodeNestedRecord : NestedRecord -> Json.Encode.Value
+encodeNestedRecord  =
+    (\value0 -> Json.Encode.object [("a", (\value1 -> Json.Encode.object [("b", (\value2 -> Json.Encode.object [("c", (\value3 -> Json.Encode.object [("d", (\value4 -> Json.Encode.object [("e", Json.Encode.string value4.e)]) value3.d), ("f", Json.Encode.int value3.f)]) value2.c)]) value1.b)]) value0.a)])
+
+encodeArrayType : ArrayType -> Json.Encode.Value
+encodeArrayType  =
+    (Json.Encode.array Json.Encode.string)
+
+encodeSetType : SetType -> Json.Encode.Value
+encodeSetType  =
+    (Json.Encode.set Json.Encode.string)
+
+encodeResultType : ResultType -> Json.Encode.Value
+encodeResultType  =
+    (encodeResult Json.Encode.string Json.Encode.int)
+
+decodeTodoList : Json.Decode.Decoder TodoList
+decodeTodoList  =
+    Json.Decode.map4 TodoList (Json.Decode.field "tasks" ((Json.Decode.list decodeTask))) (Json.Decode.field "field" (Json.Decode.string)) (Json.Decode.field "uid" (Json.Decode.int)) (Json.Decode.field "visibility" (Json.Decode.string))
+
+decodeTask : Json.Decode.Decoder Task
+decodeTask  =
+    Json.Decode.map4 Task (Json.Decode.field "description" (Json.Decode.string)) (Json.Decode.field "completed" (Json.Decode.bool)) (Json.Decode.field "edits" ((Json.Decode.maybe Json.Decode.string))) (Json.Decode.field "id" (Json.Decode.int))
+
+decodeTree : Json.Decode.Decoder Tree
+decodeTree  =
+    Json.Decode.andThen (\tag -> case tag of
+      "Leaf" ->
+        ((Json.Decode.map Leaf (Json.Decode.field "a" Json.Decode.string)))
+      "Branch" ->
+        ((Json.Decode.map2 Branch (Json.Decode.field "a" decodeTree) (Json.Decode.field "b" decodeTree)))
+      _ ->
+        Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
+
+decodeColor : Json.Decode.Decoder Color
+decodeColor  =
+    Json.Decode.andThen (\tag -> case tag of
+      "Red" ->
+        ((Json.Decode.succeed Red))
+      "Green" ->
+        ((Json.Decode.succeed Green))
+      "Blue" ->
+        ((Json.Decode.succeed Blue))
+      _ ->
+        Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
+
+decodeVector : Json.Decode.Decoder Vector
+decodeVector  =
+    Json.Decode.andThen (\tag -> case tag of
+      "Vector" ->
+        ((Json.Decode.map Vector (Json.Decode.field "a" (Json.Decode.map2 (\x y -> {x = x, y = y}) (Json.Decode.field "x" Json.Decode.float) (Json.Decode.field "y" Json.Decode.float)))))
+      _ ->
+        Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
+
+decodeGrid : Json.Decode.Decoder Grid
+decodeGrid  =
+    (Json.Decode.list (Json.Decode.list Json.Decode.int))
+
+decodeDictionary : Json.Decode.Decoder Dictionary
+decodeDictionary  =
+    (Json.Decode.dict Json.Decode.int)
+
+decodeEmptyRecord : Json.Decode.Decoder EmptyRecord
+decodeEmptyRecord  =
+    Json.Decode.succeed {}
+
+decodePair : Json.Decode.Decoder Pair
+decodePair  =
+    (Json.Decode.map2 Tuple.pair (Json.Decode.index 0 Json.Decode.int) (Json.Decode.index 1 Json.Decode.string))
+
+decodeCharType : Json.Decode.Decoder CharType
+decodeCharType  =
+    decodeChar
+
+decodeUnitType : Json.Decode.Decoder UnitType
+decodeUnitType  =
+    (Json.Decode.succeed ())
+
+decodeSomeRecord : Json.Decode.Decoder SomeRecord
+decodeSomeRecord  =
+    Json.Decode.map2 SomeRecord (Json.Decode.field "a" (Json.Decode.int)) (Json.Decode.field "b" (Json.Decode.string))
+
+decodeNestedRecord : Json.Decode.Decoder NestedRecord
+decodeNestedRecord  =
+    Json.Decode.map NestedRecord (Json.Decode.field "a" ((Json.Decode.map (\b -> {b = b}) (Json.Decode.field "b" (Json.Decode.map (\c -> {c = c}) (Json.Decode.field "c" (Json.Decode.map2 (\d f -> {d = d, f = f}) (Json.Decode.field "d" (Json.Decode.map (\e -> {e = e}) (Json.Decode.field "e" Json.Decode.string))) (Json.Decode.field "f" Json.Decode.int))))))))
+
+decodeArrayType : Json.Decode.Decoder ArrayType
+decodeArrayType  =
+    (Json.Decode.array Json.Decode.string)
+
+decodeSetType : Json.Decode.Decoder SetType
+decodeSetType  =
+    (Json.Decode.map Set.fromList (Json.Decode.list Json.Decode.string))
+
+decodeResultType : Json.Decode.Decoder ResultType
+decodeResultType  =
+    (decodeResult Json.Decode.string Json.Decode.int)
+
+randomTodoList : Random.Generator TodoList
+randomTodoList  =
+    (Random.map4 (\tasks field uid visibility -> {tasks = tasks, field = field, uid = uid, visibility = visibility}) (randomList randomTask) randomString randomInt randomString)
+
+randomTask : Random.Generator Task
+randomTask  =
+    (Random.map4 (\description completed edits id -> {description = description, completed = completed, edits = edits, id = id}) randomString randomBool (randomMaybe randomString) randomInt)
+
+randomTree : Random.Generator Tree
+randomTree  =
+    let
+      
+      
+      leaf () =
+          Random.map Leaf randomString
+      
+      
+      branch () =
+          Random.map2 Branch randomTree randomTree
+    in
+      Random.andThen ((|>) ()) (Random.uniform leaf [branch])
+
+randomColor : Random.Generator Color
+randomColor  =
+    let
+      
+      
+      red () =
+          Random.constant Red
+      
+      
+      green () =
+          Random.constant Green
+      
+      
+      blue () =
+          Random.constant Blue
+    in
+      Random.andThen ((|>) ()) (Random.uniform red [green, blue])
+
+randomVector : Random.Generator Vector
+randomVector  =
+    let
+      
+      
+      vector () =
+          Random.map Vector (Random.map2 (\x y -> {x = x, y = y}) randomFloat randomFloat)
+    in
+      Random.andThen ((|>) ()) (Random.uniform vector [])
+
+randomGrid : Random.Generator Grid
+randomGrid  =
+    (randomList (randomList randomInt))
+
+randomDictionary : Random.Generator Dictionary
+randomDictionary  =
+    (randomDict randomInt)
+
+randomEmptyRecord : Random.Generator EmptyRecord
+randomEmptyRecord  =
+    (Random.constant {})
+
+randomPair : Random.Generator Pair
+randomPair  =
+    (Random.pair randomInt randomString)
+
+randomCharType : Random.Generator CharType
+randomCharType  =
+    randomChar
+
+randomUnitType : Random.Generator UnitType
+randomUnitType  =
+    (Random.constant ())
+
+randomSomeRecord : Random.Generator SomeRecord
+randomSomeRecord  =
+    (Random.map2 (\a b -> {a = a, b = b}) randomInt randomString)
+
+randomNestedRecord : Random.Generator NestedRecord
+randomNestedRecord  =
+    (Random.map (\a -> {a = a}) (Random.map (\b -> {b = b}) (Random.map (\c -> {c = c}) (Random.map2 (\d f -> {d = d, f = f}) (Random.map (\e -> {e = e}) randomString) randomInt))))
+
+randomArrayType : Random.Generator ArrayType
+randomArrayType  =
+    (randomArray randomString)
+
+randomSetType : Random.Generator SetType
+randomSetType  =
+    (randomSet randomString)
+
+randomResultType : Random.Generator ResultType
+randomResultType  =
+    (randomResult randomString randomInt)
+
 compareTodoList : TodoList -> (TodoList -> Order)
 compareTodoList  =
     (\lhs0 rhs0 -> case (compareList compareTask) lhs0.tasks rhs0.tasks of
@@ -108,9 +360,21 @@ compareUnitType : UnitType -> (UnitType -> Order)
 compareUnitType  =
     (\_ _ -> EQ)
 
+compareSomeRecord : SomeRecord -> (SomeRecord -> Order)
+compareSomeRecord  =
+    (\lhs0 rhs0 -> case compare lhs0.a rhs0.a of
+      EQ  ->
+        compare lhs0.b rhs0.b
+      o0 ->
+        o0)
+
 compareNestedRecord : NestedRecord -> (NestedRecord -> Order)
 compareNestedRecord  =
-    (\lhs0 rhs0 -> (\lhs1 rhs1 -> (\lhs2 rhs2 -> (\lhs3 rhs3 -> (\lhs4 rhs4 -> compare lhs4.e rhs4.e) lhs3.d rhs3.d) lhs2.c rhs2.c) lhs1.b rhs1.b) lhs0.a rhs0.a)
+    (\lhs0 rhs0 -> (\lhs1 rhs1 -> (\lhs2 rhs2 -> (\lhs3 rhs3 -> case (\lhs4 rhs4 -> compare lhs4.e rhs4.e) lhs3.d rhs3.d of
+      EQ  ->
+        compare lhs3.f rhs3.f
+      o0 ->
+        o0) lhs2.c rhs2.c) lhs1.b rhs1.b) lhs0.a rhs0.a)
 
 compareArrayType : ArrayType -> (ArrayType -> Order)
 compareArrayType  =
@@ -180,9 +444,13 @@ viewUnitType : UnitType -> Html.Html msg
 viewUnitType  =
     (\() -> Html.div [] [Html.text ""])
 
+viewSomeRecord : SomeRecord -> Html.Html msg
+viewSomeRecord  =
+    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "a"], Html.td [] [viewInt value0.a]], Html.tr [] [Html.td [] [Html.text "b"], Html.td [] [viewString value0.b]]]])
+
 viewNestedRecord : NestedRecord -> Html.Html msg
 viewNestedRecord  =
-    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "a"], Html.td [] [(\value1 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "b"], Html.td [] [(\value2 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "c"], Html.td [] [(\value3 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "d"], Html.td [] [(\value4 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "e"], Html.td [] [viewString value4.e]]]]) value3.d]]]]) value2.c]]]]) value1.b]]]]) value0.a]]]])
+    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "a"], Html.td [] [(\value1 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "b"], Html.td [] [(\value2 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "c"], Html.td [] [(\value3 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "d"], Html.td [] [(\value4 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "e"], Html.td [] [viewString value4.e]]]]) value3.d]], Html.tr [] [Html.td [] [Html.text "f"], Html.td [] [viewInt value3.f]]]]) value2.c]]]]) value1.b]]]]) value0.a]]]])
 
 viewArrayType : ArrayType -> Html.Html msg
 viewArrayType  =
@@ -195,246 +463,6 @@ viewSetType  =
 viewResultType : ResultType -> Html.Html msg
 viewResultType  =
     (viewResult viewString viewInt)
-
-encodeTodoList : TodoList -> Json.Encode.Value
-encodeTodoList  =
-    (\value0 -> Json.Encode.object [("tasks", (Json.Encode.list encodeTask) value0.tasks), ("field", Json.Encode.string value0.field), ("uid", Json.Encode.int value0.uid), ("visibility", Json.Encode.string value0.visibility)])
-
-encodeTask : Task -> Json.Encode.Value
-encodeTask  =
-    (\value0 -> Json.Encode.object [("description", Json.Encode.string value0.description), ("completed", Json.Encode.bool value0.completed), ("edits", (encodeMaybe Json.Encode.string) value0.edits), ("id", Json.Encode.int value0.id)])
-
-encodeTree : Tree -> Json.Encode.Value
-encodeTree val =
-    case val of
-      Leaf a ->
-        Json.Encode.object [("tag", Json.Encode.string "Leaf"), ("a", Json.Encode.string a)]
-      Branch a b ->
-        Json.Encode.object [("tag", Json.Encode.string "Branch"), ("a", encodeTree a), ("b", encodeTree b)]
-
-encodeColor : Color -> Json.Encode.Value
-encodeColor val =
-    case val of
-      Red  ->
-        Json.Encode.object [("tag", Json.Encode.string "Red")]
-      Green  ->
-        Json.Encode.object [("tag", Json.Encode.string "Green")]
-      Blue  ->
-        Json.Encode.object [("tag", Json.Encode.string "Blue")]
-
-encodeVector : Vector -> Json.Encode.Value
-encodeVector val =
-    case val of
-      Vector a ->
-        Json.Encode.object [("tag", Json.Encode.string "Vector"), ("a", (\value0 -> Json.Encode.object [("x", Json.Encode.float value0.x), ("y", Json.Encode.float value0.y)]) a)]
-
-encodeGrid : Grid -> Json.Encode.Value
-encodeGrid  =
-    (Json.Encode.list (Json.Encode.list Json.Encode.int))
-
-encodeDictionary : Dictionary -> Json.Encode.Value
-encodeDictionary  =
-    (Json.Encode.dict Basics.identity Json.Encode.int)
-
-encodeEmptyRecord : EmptyRecord -> Json.Encode.Value
-encodeEmptyRecord  =
-    (\value0 -> Json.Encode.object [])
-
-encodePair : Pair -> Json.Encode.Value
-encodePair  =
-    (\(fst, snd) -> Json.Encode.list Basics.identity [(Json.Encode.int fst), (Json.Encode.string snd)])
-
-encodeCharType : CharType -> Json.Encode.Value
-encodeCharType  =
-    encodeChar
-
-encodeUnitType : UnitType -> Json.Encode.Value
-encodeUnitType  =
-    (\() -> Json.Encode.list Basics.identity [])
-
-encodeNestedRecord : NestedRecord -> Json.Encode.Value
-encodeNestedRecord  =
-    (\value0 -> Json.Encode.object [("a", (\value1 -> Json.Encode.object [("b", (\value2 -> Json.Encode.object [("c", (\value3 -> Json.Encode.object [("d", (\value4 -> Json.Encode.object [("e", Json.Encode.string value4.e)]) value3.d)]) value2.c)]) value1.b)]) value0.a)])
-
-encodeArrayType : ArrayType -> Json.Encode.Value
-encodeArrayType  =
-    (Json.Encode.array Json.Encode.string)
-
-encodeSetType : SetType -> Json.Encode.Value
-encodeSetType  =
-    (Json.Encode.set Json.Encode.string)
-
-encodeResultType : ResultType -> Json.Encode.Value
-encodeResultType  =
-    (encodeResult Json.Encode.string Json.Encode.int)
-
-decodeTodoList : Json.Decode.Decoder TodoList
-decodeTodoList  =
-    Json.Decode.map4 TodoList (Json.Decode.field "tasks" ((Json.Decode.list decodeTask))) (Json.Decode.field "field" (Json.Decode.string)) (Json.Decode.field "uid" (Json.Decode.int)) (Json.Decode.field "visibility" (Json.Decode.string))
-
-decodeTask : Json.Decode.Decoder Task
-decodeTask  =
-    Json.Decode.map4 Task (Json.Decode.field "description" (Json.Decode.string)) (Json.Decode.field "completed" (Json.Decode.bool)) (Json.Decode.field "edits" ((Json.Decode.maybe Json.Decode.string))) (Json.Decode.field "id" (Json.Decode.int))
-
-decodeTree : Json.Decode.Decoder Tree
-decodeTree  =
-    Json.Decode.andThen (\tag -> case tag of
-      "Leaf" ->
-        ((Json.Decode.map Leaf (Json.Decode.field "a" Json.Decode.string)))
-      "Branch" ->
-        ((Json.Decode.map2 Branch (Json.Decode.field "a" decodeTree) (Json.Decode.field "b" decodeTree)))
-      _ ->
-        Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
-
-decodeColor : Json.Decode.Decoder Color
-decodeColor  =
-    Json.Decode.andThen (\tag -> case tag of
-      "Red" ->
-        ((Json.Decode.succeed Red))
-      "Green" ->
-        ((Json.Decode.succeed Green))
-      "Blue" ->
-        ((Json.Decode.succeed Blue))
-      _ ->
-        Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
-
-decodeVector : Json.Decode.Decoder Vector
-decodeVector  =
-    Json.Decode.andThen (\tag -> case tag of
-      "Vector" ->
-        ((Json.Decode.map Vector (Json.Decode.field "a" (Json.Decode.map2 (\x y -> {x = x, y = y}) (Json.Decode.field "x" Json.Decode.float) (Json.Decode.field "y" Json.Decode.float)))))
-      _ ->
-        Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
-
-decodeGrid : Json.Decode.Decoder Grid
-decodeGrid  =
-    (Json.Decode.list (Json.Decode.list Json.Decode.int))
-
-decodeDictionary : Json.Decode.Decoder Dictionary
-decodeDictionary  =
-    (Json.Decode.dict Json.Decode.int)
-
-decodeEmptyRecord : Json.Decode.Decoder EmptyRecord
-decodeEmptyRecord  =
-    Json.Decode.succeed {}
-
-decodePair : Json.Decode.Decoder Pair
-decodePair  =
-    (Json.Decode.map2 Tuple.pair (Json.Decode.index 0 Json.Decode.int) (Json.Decode.index 1 Json.Decode.string))
-
-decodeCharType : Json.Decode.Decoder CharType
-decodeCharType  =
-    decodeChar
-
-decodeUnitType : Json.Decode.Decoder UnitType
-decodeUnitType  =
-    (Json.Decode.succeed ())
-
-decodeNestedRecord : Json.Decode.Decoder NestedRecord
-decodeNestedRecord  =
-    Json.Decode.map NestedRecord (Json.Decode.field "a" ((Json.Decode.map (\b -> {b = b}) (Json.Decode.field "b" (Json.Decode.map (\c -> {c = c}) (Json.Decode.field "c" (Json.Decode.map (\d -> {d = d}) (Json.Decode.field "d" (Json.Decode.map (\e -> {e = e}) (Json.Decode.field "e" Json.Decode.string))))))))))
-
-decodeArrayType : Json.Decode.Decoder ArrayType
-decodeArrayType  =
-    (Json.Decode.array Json.Decode.string)
-
-decodeSetType : Json.Decode.Decoder SetType
-decodeSetType  =
-    (Json.Decode.map Set.fromList (Json.Decode.list Json.Decode.string))
-
-decodeResultType : Json.Decode.Decoder ResultType
-decodeResultType  =
-    (decodeResult Json.Decode.string Json.Decode.int)
-
-randomTodoList : Random.Generator TodoList
-randomTodoList  =
-    (Random.map4 (\tasks field uid visibility -> {tasks = tasks, field = field, uid = uid, visibility = visibility}) (randomList randomTask) randomString randomInt randomString)
-
-randomTask : Random.Generator Task
-randomTask  =
-    (Random.map4 (\description completed edits id -> {description = description, completed = completed, edits = edits, id = id}) randomString randomBool (randomMaybe randomString) randomInt)
-
-randomTree : Random.Generator Tree
-randomTree  =
-    let
-      
-      
-      leaf () =
-          Random.map Leaf randomString
-      
-      
-      branch () =
-          Random.map2 Branch randomTree randomTree
-    in
-      Random.andThen ((|>) ()) (Random.uniform leaf [branch])
-
-randomColor : Random.Generator Color
-randomColor  =
-    let
-      
-      
-      red () =
-          Random.constant Red
-      
-      
-      green () =
-          Random.constant Green
-      
-      
-      blue () =
-          Random.constant Blue
-    in
-      Random.andThen ((|>) ()) (Random.uniform red [green, blue])
-
-randomVector : Random.Generator Vector
-randomVector  =
-    let
-      
-      
-      vector () =
-          Random.map Vector (Random.map2 (\x y -> {x = x, y = y}) randomFloat randomFloat)
-    in
-      Random.andThen ((|>) ()) (Random.uniform vector [])
-
-randomGrid : Random.Generator Grid
-randomGrid  =
-    (randomList (randomList randomInt))
-
-randomDictionary : Random.Generator Dictionary
-randomDictionary  =
-    (randomDict randomInt)
-
-randomEmptyRecord : Random.Generator EmptyRecord
-randomEmptyRecord  =
-    (Random.constant {})
-
-randomPair : Random.Generator Pair
-randomPair  =
-    (Random.pair randomInt randomString)
-
-randomCharType : Random.Generator CharType
-randomCharType  =
-    randomChar
-
-randomUnitType : Random.Generator UnitType
-randomUnitType  =
-    (Random.constant ())
-
-randomNestedRecord : Random.Generator NestedRecord
-randomNestedRecord  =
-    (Random.map (\a -> {a = a}) (Random.map (\b -> {b = b}) (Random.map (\c -> {c = c}) (Random.map (\d -> {d = d}) (Random.map (\e -> {e = e}) randomString)))))
-
-randomArrayType : Random.Generator ArrayType
-randomArrayType  =
-    (randomArray randomString)
-
-randomSetType : Random.Generator SetType
-randomSetType  =
-    (randomSet randomString)
-
-randomResultType : Random.Generator ResultType
-randomResultType  =
-    (randomResult randomString randomInt)
 
 decodeChar : Json.Decode.Decoder Char
 decodeChar  =
