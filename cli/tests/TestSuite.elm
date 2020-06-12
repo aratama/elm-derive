@@ -57,10 +57,36 @@ suite =
             \_ ->
                 let
                     input =
-                        [ Branch (Leaf "40") (Leaf "50"), Branch (Leaf "20") (Leaf "30"), Leaf "10" ]
+                        [ Branch (Leaf "40") (Leaf "50")
+                        , Branch (Leaf "20") (Leaf "30")
+                        , Leaf "10"
+                        ]
 
                     sorted =
-                        [ Leaf "10", Branch (Leaf "20") (Leaf "30"), Branch (Leaf "40") (Leaf "50") ]
+                        [ Leaf "10"
+                        , Branch (Leaf "20") (Leaf "30")
+                        , Branch (Leaf "40") (Leaf "50")
+                        ]
+                in
+                Expect.equal (List.sortWith Type.Derive.compareTree input) sorted
+        , test "compareTree2" <|
+            \_ ->
+                let
+                    input =
+                        [ Branch (Leaf "bar") (Branch (Leaf "baz") (Leaf "baz"))
+                        , Branch (Leaf "foo") (Leaf "bar")
+                        , Leaf "far"
+                        , Branch (Leaf "bar") (Leaf "foo")
+                        , Leaf "bar"
+                        ]
+
+                    sorted =
+                        [ Leaf "bar"
+                        , Leaf "far"
+                        , Branch (Leaf "bar") (Leaf "foo")
+                        , Branch (Leaf "bar") (Branch (Leaf "baz") (Leaf "baz"))
+                        , Branch (Leaf "foo") (Leaf "bar")
+                        ]
                 in
                 Expect.equal (List.sortWith Type.Derive.compareTree input) sorted
         , test "compareBool" <|
@@ -105,4 +131,22 @@ suite =
                         ]
                 in
                 Expect.equal (List.sortWith Type.Derive.compareNestedRecord input) sorted
+        , test "compareVector" <|
+            \_ ->
+                let
+                    input =
+                        [ Vector { x = 200, y = 100 }
+                        , Vector { x = 100, y = 100 }
+                        , Vector { x = 200, y = 200 }
+                        , Vector { x = 100, y = 200 }
+                        ]
+
+                    sorted =
+                        [ Vector { x = 100, y = 100 }
+                        , Vector { x = 100, y = 200 }
+                        , Vector { x = 200, y = 100 }
+                        , Vector { x = 200, y = 200 }
+                        ]
+                in
+                Expect.equal (List.sortWith Type.Derive.compareVector input) sorted
         ]
