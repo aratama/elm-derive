@@ -229,7 +229,7 @@ generateRandomFromType file typeAnnotation =
 
                                                     [ r ] ->
                                                         Application
-                                                            [ node <| FunctionOrValue [] "randomAndMap"
+                                                            [ node <| FunctionOrValue [ "Random", "Extra" ] "andMap"
                                                             , node <| r
                                                             ]
 
@@ -238,7 +238,7 @@ generateRandomFromType file typeAnnotation =
                                                             Right
                                                             (node <|
                                                                 Application
-                                                                    [ node <| FunctionOrValue [] "randomAndMap"
+                                                                    [ node <| FunctionOrValue [ "Random", "Extra" ] "andMap"
                                                                     , node <| x
                                                                     ]
                                                             )
@@ -272,7 +272,7 @@ generateRandomFromType file typeAnnotation =
         -- Tupled [ Node _ (Typed (Node _ fst) []), Node _ (Typed (Node _ snd) [], Node _ (Typed (Node _ trd) []) ] ->
         --     Ok (FunctionOrValue [] "randomTuple")
         Typed (Node _ ( [], "Bool" )) [] ->
-            Ok (FunctionOrValue [] "randomBool")
+            Ok (FunctionOrValue [ "Random", "Extra" ] "bool")
 
         Typed (Node _ ( [], "Int" )) [] ->
             Ok (FunctionOrValue [] "randomInt")
@@ -336,7 +336,8 @@ generateRandomFromType file typeAnnotation =
                     (\decoder ->
                         ParenthesizedExpression <|
                             application
-                                [ functionOrValue [] "randomMaybe"
+                                [ functionOrValue [ "Random", "Extra" ] "maybe"
+                                , functionOrValue [ "Random", "Extra" ] "bool"
                                 , node decoder
                                 ]
                     )
@@ -346,7 +347,8 @@ generateRandomFromType file typeAnnotation =
                 (\errRandom okRandom ->
                     ParenthesizedExpression <|
                         application
-                            [ functionOrValue [] "randomResult"
+                            [ functionOrValue [ "Random", "Extra" ] "result"
+                            , functionOrValue [ "Random", "Extra" ] "bool"
                             , node errRandom
                             , node okRandom
                             ]

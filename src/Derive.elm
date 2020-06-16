@@ -28,10 +28,6 @@ decodeChar = Json.Decode.andThen (\\str -> case String.toList str of
     [c] -> Json.Decode.succeed c
     _ -> Json.Decode.fail "decodeChar: too many charactors for Char type") Json.Decode.string 
 
-decodeAndMap : Json.Decode.Decoder a -> Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b
-decodeAndMap =
-    Json.Decode.map2 (|>)
-
 decodeResult : Json.Decode.Decoder err -> Json.Decode.Decoder ok -> Json.Decode.Decoder (Result err ok)
 decodeResult errDecoder okDecoder =
     Json.Decode.andThen (\\tag -> case tag of 
@@ -51,9 +47,6 @@ encodeResult : (err -> Json.Encode.Value) -> (ok -> Json.Encode.Value) -> Result
 encodeResult errEncoder okEncoder value = case value of 
     Err err -> Json.Encode.object [("tag", Json.Encode.string "Err"), ("a", errEncoder err)]
     Ok ok -> Json.Encode.object [("tag", Json.Encode.string "Ok"), ("a", okEncoder ok)]
-
-randomBool : Random.Generator Bool
-randomBool = Random.uniform True [False]
 
 randomInt : Random.Generator Int
 randomInt = Random.int 0 100
@@ -75,18 +68,6 @@ randomArray gen = Random.map Array.fromList (randomList gen)
 
 randomSet : Random.Generator comparable -> Random.Generator (Set.Set comparable)
 randomSet gen = Random.map Set.fromList (randomList gen)
-
-randomMaybe : Random.Generator a -> Random.Generator (Maybe a)
-randomMaybe gen = Random.andThen (\\n -> Random.uniform Nothing [Just n]) gen
-
-randomResult : Random.Generator err -> Random.Generator ok -> Random.Generator (Result err ok)
-randomResult errGen okGen = 
-    Random.andThen identity (Random.uniform (Random.map Err errGen) [Random.map Ok okGen])
-    
-randomAndMap : Random.Generator a -> Random.Generator (a -> b) -> Random.Generator b
-randomAndMap =
-    Random.map2 (|>)
-
 
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen = Random.map Dict.fromList (randomList (Random.map2 (\\k v -> (k, v)) randomString gen))
@@ -260,7 +241,17 @@ generate file =
                                 , exposingList = Nothing
                                 }
                             , node
+                                { moduleName = node [ "Json", "Decode", "Extra" ]
+                                , moduleAlias = Nothing
+                                , exposingList = Nothing
+                                }
+                            , node
                                 { moduleName = node [ "Random" ]
+                                , moduleAlias = Nothing
+                                , exposingList = Nothing
+                                }
+                            , node
+                                { moduleName = node [ "Random", "Extra" ]
                                 , moduleAlias = Nothing
                                 , exposingList = Nothing
                                 }

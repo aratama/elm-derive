@@ -5,7 +5,9 @@ import Html
 import Html.Attributes  
 import Json.Encode  
 import Json.Decode  
+import Json.Decode.Extra  
 import Random  
+import Random.Extra  
 import Array  
 import Set  
 import Type  exposing (..)
@@ -96,11 +98,11 @@ encodeResultType  =
 
 decodeTodoList : Json.Decode.Decoder TodoList
 decodeTodoList  =
-    (Json.Decode.succeed (\tasks field uid visibility -> {tasks = tasks, field = field, uid = uid, visibility = visibility}) |> decodeAndMap (Json.Decode.field "tasks" (Json.Decode.list decodeTask)) |> decodeAndMap (Json.Decode.field "field" Json.Decode.string) |> decodeAndMap (Json.Decode.field "uid" Json.Decode.int) |> decodeAndMap (Json.Decode.field "visibility" Json.Decode.string))
+    (Json.Decode.succeed (\tasks field uid visibility -> {tasks = tasks, field = field, uid = uid, visibility = visibility}) |> Json.Decode.Extra.andMap (Json.Decode.field "tasks" (Json.Decode.list decodeTask)) |> Json.Decode.Extra.andMap (Json.Decode.field "field" Json.Decode.string) |> Json.Decode.Extra.andMap (Json.Decode.field "uid" Json.Decode.int) |> Json.Decode.Extra.andMap (Json.Decode.field "visibility" Json.Decode.string))
 
 decodeTask : Json.Decode.Decoder Task
 decodeTask  =
-    (Json.Decode.succeed (\description completed edits id -> {description = description, completed = completed, edits = edits, id = id}) |> decodeAndMap (Json.Decode.field "description" Json.Decode.string) |> decodeAndMap (Json.Decode.field "completed" Json.Decode.bool) |> decodeAndMap (Json.Decode.field "edits" (Json.Decode.maybe Json.Decode.string)) |> decodeAndMap (Json.Decode.field "id" Json.Decode.int))
+    (Json.Decode.succeed (\description completed edits id -> {description = description, completed = completed, edits = edits, id = id}) |> Json.Decode.Extra.andMap (Json.Decode.field "description" Json.Decode.string) |> Json.Decode.Extra.andMap (Json.Decode.field "completed" Json.Decode.bool) |> Json.Decode.Extra.andMap (Json.Decode.field "edits" (Json.Decode.maybe Json.Decode.string)) |> Json.Decode.Extra.andMap (Json.Decode.field "id" Json.Decode.int))
 
 decodeTree : Json.Decode.Decoder Tree
 decodeTree  =
@@ -128,7 +130,7 @@ decodeVector : Json.Decode.Decoder Vector
 decodeVector  =
     Json.Decode.andThen (\tag -> case tag of
       "Vector" ->
-        ((Json.Decode.map Vector (Json.Decode.field "a" (Json.Decode.succeed (\x y -> {x = x, y = y}) |> decodeAndMap (Json.Decode.field "x" Json.Decode.float) |> decodeAndMap (Json.Decode.field "y" Json.Decode.float)))))
+        ((Json.Decode.map Vector (Json.Decode.field "a" (Json.Decode.succeed (\x y -> {x = x, y = y}) |> Json.Decode.Extra.andMap (Json.Decode.field "x" Json.Decode.float) |> Json.Decode.Extra.andMap (Json.Decode.field "y" Json.Decode.float)))))
       _ ->
         Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
 
@@ -158,7 +160,7 @@ decodeUnitType  =
 
 decodeSomeRecord : Json.Decode.Decoder SomeRecord
 decodeSomeRecord  =
-    (Json.Decode.succeed (\a b -> {a = a, b = b}) |> decodeAndMap (Json.Decode.field "a" Json.Decode.int) |> decodeAndMap (Json.Decode.field "b" Json.Decode.string))
+    (Json.Decode.succeed (\a b -> {a = a, b = b}) |> Json.Decode.Extra.andMap (Json.Decode.field "a" Json.Decode.int) |> Json.Decode.Extra.andMap (Json.Decode.field "b" Json.Decode.string))
 
 decodeSmallNestedRecord : Json.Decode.Decoder SmallNestedRecord
 decodeSmallNestedRecord  =
@@ -166,11 +168,11 @@ decodeSmallNestedRecord  =
 
 decodeNestedRecord : Json.Decode.Decoder NestedRecord
 decodeNestedRecord  =
-    (Json.Decode.map (\a -> {a = a}) (Json.Decode.field "a" (Json.Decode.map (\b -> {b = b}) (Json.Decode.field "b" (Json.Decode.map (\c -> {c = c}) (Json.Decode.field "c" (Json.Decode.succeed (\d f -> {d = d, f = f}) |> decodeAndMap (Json.Decode.field "d" (Json.Decode.map (\e -> {e = e}) (Json.Decode.field "e" Json.Decode.string))) |> decodeAndMap (Json.Decode.field "f" Json.Decode.int))))))))
+    (Json.Decode.map (\a -> {a = a}) (Json.Decode.field "a" (Json.Decode.map (\b -> {b = b}) (Json.Decode.field "b" (Json.Decode.map (\c -> {c = c}) (Json.Decode.field "c" (Json.Decode.succeed (\d f -> {d = d, f = f}) |> Json.Decode.Extra.andMap (Json.Decode.field "d" (Json.Decode.map (\e -> {e = e}) (Json.Decode.field "e" Json.Decode.string))) |> Json.Decode.Extra.andMap (Json.Decode.field "f" Json.Decode.int))))))))
 
 decodeHugeRecord : Json.Decode.Decoder HugeRecord
 decodeHugeRecord  =
-    (Json.Decode.succeed (\a b c d e f g h i j k l m n -> {a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i, j = j, k = k, l = l, m = m, n = n}) |> decodeAndMap (Json.Decode.field "a" Json.Decode.int) |> decodeAndMap (Json.Decode.field "b" Json.Decode.string) |> decodeAndMap (Json.Decode.field "c" decodeChar) |> decodeAndMap (Json.Decode.field "d" Json.Decode.float) |> decodeAndMap (Json.Decode.field "e" (Json.Decode.list Json.Decode.string)) |> decodeAndMap (Json.Decode.field "f" Json.Decode.bool) |> decodeAndMap (Json.Decode.field "g" (Json.Decode.dict Json.Decode.int)) |> decodeAndMap (Json.Decode.field "h" (Json.Decode.array Json.Decode.int)) |> decodeAndMap (Json.Decode.field "i" (Json.Decode.succeed ())) |> decodeAndMap (Json.Decode.field "j" (Json.Decode.map2 Tuple.pair (Json.Decode.index 0 Json.Decode.int) (Json.Decode.index 1 Json.Decode.string))) |> decodeAndMap (Json.Decode.field "k" decodeColor) |> decodeAndMap (Json.Decode.field "l" decodeTree) |> decodeAndMap (Json.Decode.field "m" decodeTask) |> decodeAndMap (Json.Decode.field "n" decodeEmptyRecord))
+    (Json.Decode.succeed (\a b c d e f g h i j k l m n -> {a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i, j = j, k = k, l = l, m = m, n = n}) |> Json.Decode.Extra.andMap (Json.Decode.field "a" Json.Decode.int) |> Json.Decode.Extra.andMap (Json.Decode.field "b" Json.Decode.string) |> Json.Decode.Extra.andMap (Json.Decode.field "c" decodeChar) |> Json.Decode.Extra.andMap (Json.Decode.field "d" Json.Decode.float) |> Json.Decode.Extra.andMap (Json.Decode.field "e" (Json.Decode.list Json.Decode.string)) |> Json.Decode.Extra.andMap (Json.Decode.field "f" Json.Decode.bool) |> Json.Decode.Extra.andMap (Json.Decode.field "g" (Json.Decode.dict Json.Decode.int)) |> Json.Decode.Extra.andMap (Json.Decode.field "h" (Json.Decode.array Json.Decode.int)) |> Json.Decode.Extra.andMap (Json.Decode.field "i" (Json.Decode.succeed ())) |> Json.Decode.Extra.andMap (Json.Decode.field "j" (Json.Decode.map2 Tuple.pair (Json.Decode.index 0 Json.Decode.int) (Json.Decode.index 1 Json.Decode.string))) |> Json.Decode.Extra.andMap (Json.Decode.field "k" decodeColor) |> Json.Decode.Extra.andMap (Json.Decode.field "l" decodeTree) |> Json.Decode.Extra.andMap (Json.Decode.field "m" decodeTask) |> Json.Decode.Extra.andMap (Json.Decode.field "n" decodeEmptyRecord))
 
 decodeArrayType : Json.Decode.Decoder ArrayType
 decodeArrayType  =
@@ -186,11 +188,11 @@ decodeResultType  =
 
 randomTodoList : Random.Generator TodoList
 randomTodoList  =
-    (Random.constant (\tasks field uid visibility -> {tasks = tasks, field = field, uid = uid, visibility = visibility}) |> randomAndMap (randomList randomTask) |> randomAndMap randomString |> randomAndMap randomInt |> randomAndMap randomString)
+    (Random.constant (\tasks field uid visibility -> {tasks = tasks, field = field, uid = uid, visibility = visibility}) |> Random.Extra.andMap (randomList randomTask) |> Random.Extra.andMap randomString |> Random.Extra.andMap randomInt |> Random.Extra.andMap randomString)
 
 randomTask : Random.Generator Task
 randomTask  =
-    (Random.constant (\description completed edits id -> {description = description, completed = completed, edits = edits, id = id}) |> randomAndMap randomString |> randomAndMap randomBool |> randomAndMap (randomMaybe randomString) |> randomAndMap randomInt)
+    (Random.constant (\description completed edits id -> {description = description, completed = completed, edits = edits, id = id}) |> Random.Extra.andMap randomString |> Random.Extra.andMap Random.Extra.bool |> Random.Extra.andMap (Random.Extra.maybe Random.Extra.bool randomString) |> Random.Extra.andMap randomInt)
 
 randomTree : Random.Generator Tree
 randomTree  =
@@ -230,7 +232,7 @@ randomVector  =
       
       
       vector () =
-          Random.map Vector (Random.constant (\x y -> {x = x, y = y}) |> randomAndMap randomFloat |> randomAndMap randomFloat)
+          Random.map Vector (Random.constant (\x y -> {x = x, y = y}) |> Random.Extra.andMap randomFloat |> Random.Extra.andMap randomFloat)
     in
       Random.andThen ((|>) ()) (Random.uniform vector [])
 
@@ -260,7 +262,7 @@ randomUnitType  =
 
 randomSomeRecord : Random.Generator SomeRecord
 randomSomeRecord  =
-    (Random.constant (\a b -> {a = a, b = b}) |> randomAndMap randomInt |> randomAndMap randomString)
+    (Random.constant (\a b -> {a = a, b = b}) |> Random.Extra.andMap randomInt |> Random.Extra.andMap randomString)
 
 randomSmallNestedRecord : Random.Generator SmallNestedRecord
 randomSmallNestedRecord  =
@@ -268,11 +270,11 @@ randomSmallNestedRecord  =
 
 randomNestedRecord : Random.Generator NestedRecord
 randomNestedRecord  =
-    (Random.map (\a -> {a = a}) (Random.map (\b -> {b = b}) (Random.map (\c -> {c = c}) (Random.constant (\d f -> {d = d, f = f}) |> randomAndMap (Random.map (\e -> {e = e}) randomString) |> randomAndMap randomInt))))
+    (Random.map (\a -> {a = a}) (Random.map (\b -> {b = b}) (Random.map (\c -> {c = c}) (Random.constant (\d f -> {d = d, f = f}) |> Random.Extra.andMap (Random.map (\e -> {e = e}) randomString) |> Random.Extra.andMap randomInt))))
 
 randomHugeRecord : Random.Generator HugeRecord
 randomHugeRecord  =
-    (Random.constant (\a b c d e f g h i j k l m n -> {a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i, j = j, k = k, l = l, m = m, n = n}) |> randomAndMap randomInt |> randomAndMap randomString |> randomAndMap randomChar |> randomAndMap randomFloat |> randomAndMap (randomList randomString) |> randomAndMap randomBool |> randomAndMap (randomDict randomInt) |> randomAndMap (randomArray randomInt) |> randomAndMap (Random.constant ()) |> randomAndMap (Random.pair randomInt randomString) |> randomAndMap randomColor |> randomAndMap randomTree |> randomAndMap randomTask |> randomAndMap randomEmptyRecord)
+    (Random.constant (\a b c d e f g h i j k l m n -> {a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i, j = j, k = k, l = l, m = m, n = n}) |> Random.Extra.andMap randomInt |> Random.Extra.andMap randomString |> Random.Extra.andMap randomChar |> Random.Extra.andMap randomFloat |> Random.Extra.andMap (randomList randomString) |> Random.Extra.andMap Random.Extra.bool |> Random.Extra.andMap (randomDict randomInt) |> Random.Extra.andMap (randomArray randomInt) |> Random.Extra.andMap (Random.constant ()) |> Random.Extra.andMap (Random.pair randomInt randomString) |> Random.Extra.andMap randomColor |> Random.Extra.andMap randomTree |> Random.Extra.andMap randomTask |> Random.Extra.andMap randomEmptyRecord)
 
 randomArrayType : Random.Generator ArrayType
 randomArrayType  =
@@ -284,7 +286,7 @@ randomSetType  =
 
 randomResultType : Random.Generator ResultType
 randomResultType  =
-    (randomResult randomString randomInt)
+    (Random.Extra.result Random.Extra.bool randomString randomInt)
 
 compareTodoList : TodoList -> (TodoList -> Order)
 compareTodoList  =
@@ -565,10 +567,6 @@ decodeChar  =
         Json.Decode.fail "decodeChar: too many charactors for Char type")
      Json.Decode.string
 
-decodeAndMap : Json.Decode.Decoder a -> (Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b)
-decodeAndMap  =
-    Json.Decode.map2 (|>)
-
 decodeResult : Json.Decode.Decoder err -> (Json.Decode.Decoder ok -> Json.Decode.Decoder (Result err ok))
 decodeResult errDecoder okDecoder =
     Json.Decode.andThen (\tag -> case tag of
@@ -599,10 +597,6 @@ encodeResult errEncoder okEncoder value =
         Json.Encode.object [("tag", Json.Encode.string "Err"), ("a", errEncoder err)]
       Ok ok ->
         Json.Encode.object [("tag", Json.Encode.string "Ok"), ("a", okEncoder ok)]
-
-randomBool : Random.Generator Bool
-randomBool  =
-    Random.uniform True [False]
 
 randomInt : Random.Generator Int
 randomInt  =
@@ -635,14 +629,6 @@ randomSet gen =
 randomMaybe : Random.Generator a -> Random.Generator (Maybe a)
 randomMaybe gen =
     Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
-
-randomResult : Random.Generator err -> (Random.Generator ok -> Random.Generator (Result err ok))
-randomResult errGen okGen =
-    Random.andThen identity (Random.uniform (Random.map Err errGen) [Random.map Ok okGen])
-
-randomAndMap : Random.Generator a -> (Random.Generator (a -> b) -> Random.Generator b)
-randomAndMap  =
-    Random.map2 (|>)
 
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen =

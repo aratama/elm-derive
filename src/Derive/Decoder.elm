@@ -208,7 +208,7 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                                                                 entry.field
                                                         in
                                                         Application
-                                                            [ node <| FunctionOrValue [] "decodeAndMap"
+                                                            [ node <| FunctionOrValue [ "Json", "Decode", "Extra" ] "andMap"
                                                             , node <|
                                                                 ParenthesizedExpression <|
                                                                     node <|
@@ -228,7 +228,7 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                                                             Right
                                                             (node <|
                                                                 Application
-                                                                    [ node <| FunctionOrValue [] "decodeAndMap"
+                                                                    [ node <| FunctionOrValue [ "Json", "Decode", "Extra" ] "andMap"
                                                                     , node <|
                                                                         ParenthesizedExpression <|
                                                                             node <|
