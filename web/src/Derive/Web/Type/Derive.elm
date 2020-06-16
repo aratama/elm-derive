@@ -5,10 +5,24 @@ import Html
 import Html.Attributes  
 import Json.Encode  
 import Json.Decode  
+import Json.Decode.Extra  
 import Random  
+import Random.Extra  
 import Array  
 import Set  
 import Derive.Web.Type  exposing (..)
+
+encodeModel : Model -> Json.Encode.Value
+encodeModel  =
+    (\value0 -> Json.Encode.object [("source", Json.Encode.string value0.source), ("encoderVisible", Json.Encode.bool value0.encoderVisible), ("decoderVisible", Json.Encode.bool value0.decoderVisible), ("loadStorageVisible", Json.Encode.bool value0.loadStorageVisible)])
+
+decodeModel : Json.Decode.Decoder Model
+decodeModel  =
+    (Json.Decode.succeed (\source encoderVisible decoderVisible loadStorageVisible -> {source = source, encoderVisible = encoderVisible, decoderVisible = decoderVisible, loadStorageVisible = loadStorageVisible}) |> Json.Decode.Extra.andMap (Json.Decode.field "source" Json.Decode.string) |> Json.Decode.Extra.andMap (Json.Decode.field "encoderVisible" Json.Decode.bool) |> Json.Decode.Extra.andMap (Json.Decode.field "decoderVisible" Json.Decode.bool) |> Json.Decode.Extra.andMap (Json.Decode.field "loadStorageVisible" Json.Decode.bool))
+
+randomModel : Random.Generator Model
+randomModel  =
+    (Random.constant (\source encoderVisible decoderVisible loadStorageVisible -> {source = source, encoderVisible = encoderVisible, decoderVisible = decoderVisible, loadStorageVisible = loadStorageVisible}) |> Random.Extra.andMap randomString |> Random.Extra.andMap Random.Extra.bool |> Random.Extra.andMap Random.Extra.bool |> Random.Extra.andMap Random.Extra.bool)
 
 compareModel : Model -> (Model -> Order)
 compareModel  =
@@ -30,18 +44,6 @@ viewModel : Model -> Html.Html msg
 viewModel  =
     (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "source"], Html.td [] [viewString value0.source]], Html.tr [] [Html.td [] [Html.text "encoderVisible"], Html.td [] [viewBool value0.encoderVisible]], Html.tr [] [Html.td [] [Html.text "decoderVisible"], Html.td [] [viewBool value0.decoderVisible]], Html.tr [] [Html.td [] [Html.text "loadStorageVisible"], Html.td [] [viewBool value0.loadStorageVisible]]]])
 
-encodeModel : Model -> Json.Encode.Value
-encodeModel  =
-    (\value0 -> Json.Encode.object [("source", Json.Encode.string value0.source), ("encoderVisible", Json.Encode.bool value0.encoderVisible), ("decoderVisible", Json.Encode.bool value0.decoderVisible), ("loadStorageVisible", Json.Encode.bool value0.loadStorageVisible)])
-
-decodeModel : Json.Decode.Decoder Model
-decodeModel  =
-    Json.Decode.map4 Model (Json.Decode.field "source" (Json.Decode.string)) (Json.Decode.field "encoderVisible" (Json.Decode.bool)) (Json.Decode.field "decoderVisible" (Json.Decode.bool)) (Json.Decode.field "loadStorageVisible" (Json.Decode.bool))
-
-randomModel : Random.Generator Model
-randomModel  =
-    (Random.map4 (\source encoderVisible decoderVisible loadStorageVisible -> {source = source, encoderVisible = encoderVisible, decoderVisible = decoderVisible, loadStorageVisible = loadStorageVisible}) randomString randomBool randomBool randomBool)
-
 decodeChar : Json.Decode.Decoder Char
 decodeChar  =
     Json.Decode.andThen (\str -> case String.toList str of
@@ -50,10 +52,6 @@ decodeChar  =
       _ ->
         Json.Decode.fail "decodeChar: too many charactors for Char type")
      Json.Decode.string
-
-decodeAndMap : Json.Decode.Decoder a -> (Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b)
-decodeAndMap  =
-    Json.Decode.map2 (|>)
 
 decodeResult : Json.Decode.Decoder err -> (Json.Decode.Decoder ok -> Json.Decode.Decoder (Result err ok))
 decodeResult errDecoder okDecoder =
@@ -86,10 +84,6 @@ encodeResult errEncoder okEncoder value =
       Ok ok ->
         Json.Encode.object [("tag", Json.Encode.string "Ok"), ("a", okEncoder ok)]
 
-randomBool : Random.Generator Bool
-randomBool  =
-    Random.uniform True [False]
-
 randomInt : Random.Generator Int
 randomInt  =
     Random.int 0 100
@@ -117,14 +111,6 @@ randomArray gen =
 randomSet : Random.Generator comparable -> Random.Generator (Set.Set comparable)
 randomSet gen =
     Random.map Set.fromList (randomList gen)
-
-randomMaybe : Random.Generator a -> Random.Generator (Maybe a)
-randomMaybe gen =
-    Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
-
-randomResult : Random.Generator err -> (Random.Generator ok -> Random.Generator (Result err ok))
-randomResult errGen okGen =
-    Random.andThen identity (Random.uniform (Random.map Err errGen) [Random.map Ok okGen])
 
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen =
