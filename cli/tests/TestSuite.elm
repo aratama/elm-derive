@@ -22,12 +22,14 @@ testDerived name random encode decoder =
                 ( input, _ ) =
                     Random.step random seed
 
+                -- _ =
+                --     Debug.log ("input : " ++ name) input
                 encoded : Json.Encode.Value
                 encoded =
                     encode input
 
                 -- _ =
-                --     Debug.log name <| Json.Encode.encode 2 encoded
+                --     Debug.log name <| Json.Encode.encode 0 encoded
                 result : Result Json.Decode.Error a
                 result =
                     Json.Decode.decodeValue decoder encoded
@@ -49,6 +51,7 @@ suite =
         , testDerived "Pair" Type.Derive.randomPair Type.Derive.encodePair Type.Derive.decodePair
         , testDerived "Char" Type.Derive.randomCharType Type.Derive.encodeCharType Type.Derive.decodeCharType
         , testDerived "Unit" Type.Derive.randomUnitType Type.Derive.encodeUnitType Type.Derive.decodeUnitType
+        , testDerived "SmallNestedRecord" Type.Derive.randomSmallNestedRecord Type.Derive.encodeSmallNestedRecord Type.Derive.decodeSmallNestedRecord
         , testDerived "NestedRecord" Type.Derive.randomNestedRecord Type.Derive.encodeNestedRecord Type.Derive.decodeNestedRecord
         , testDerived "ArrayType" Type.Derive.randomArrayType Type.Derive.encodeArrayType Type.Derive.decodeArrayType
         , testDerived "SetType" Type.Derive.randomSetType Type.Derive.encodeSetType Type.Derive.decodeSetType

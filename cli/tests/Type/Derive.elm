@@ -70,9 +70,17 @@ encodeSomeRecord : SomeRecord -> Json.Encode.Value
 encodeSomeRecord  =
     (\value0 -> Json.Encode.object [("a", Json.Encode.int value0.a), ("b", Json.Encode.string value0.b)])
 
+encodeSmallNestedRecord : SmallNestedRecord -> Json.Encode.Value
+encodeSmallNestedRecord  =
+    (\value0 -> Json.Encode.object [("b", Json.Encode.int value0.b)])
+
 encodeNestedRecord : NestedRecord -> Json.Encode.Value
 encodeNestedRecord  =
     (\value0 -> Json.Encode.object [("a", (\value1 -> Json.Encode.object [("b", (\value2 -> Json.Encode.object [("c", (\value3 -> Json.Encode.object [("d", (\value4 -> Json.Encode.object [("e", Json.Encode.string value4.e)]) value3.d), ("f", Json.Encode.int value3.f)]) value2.c)]) value1.b)]) value0.a)])
+
+encodeHugeRecord : HugeRecord -> Json.Encode.Value
+encodeHugeRecord  =
+    (\value0 -> Json.Encode.object [("a", Json.Encode.int value0.a), ("b", Json.Encode.string value0.b), ("c", encodeChar value0.c), ("d", Json.Encode.float value0.d), ("e", (Json.Encode.list Json.Encode.string) value0.e), ("f", Json.Encode.bool value0.f), ("g", (Json.Encode.dict Basics.identity Json.Encode.int) value0.g), ("h", (Json.Encode.array Json.Encode.int) value0.h), ("i", (\() -> Json.Encode.list Basics.identity []) value0.i), ("j", (\(fst, snd) -> Json.Encode.list Basics.identity [(Json.Encode.int fst), (Json.Encode.string snd)]) value0.j), ("k", encodeColor value0.k), ("l", encodeTree value0.l), ("m", encodeTask value0.m), ("n", encodeEmptyRecord value0.n)])
 
 encodeArrayType : ArrayType -> Json.Encode.Value
 encodeArrayType  =
@@ -88,11 +96,11 @@ encodeResultType  =
 
 decodeTodoList : Json.Decode.Decoder TodoList
 decodeTodoList  =
-    Json.Decode.map4 TodoList (Json.Decode.field "tasks" ((Json.Decode.list decodeTask))) (Json.Decode.field "field" (Json.Decode.string)) (Json.Decode.field "uid" (Json.Decode.int)) (Json.Decode.field "visibility" (Json.Decode.string))
+    (Json.Decode.succeed (\tasks field uid visibility -> {tasks = tasks, field = field, uid = uid, visibility = visibility}) |> decodeAndMap (Json.Decode.field "tasks" (Json.Decode.list decodeTask)) |> decodeAndMap (Json.Decode.field "field" Json.Decode.string) |> decodeAndMap (Json.Decode.field "uid" Json.Decode.int) |> decodeAndMap (Json.Decode.field "visibility" Json.Decode.string))
 
 decodeTask : Json.Decode.Decoder Task
 decodeTask  =
-    Json.Decode.map4 Task (Json.Decode.field "description" (Json.Decode.string)) (Json.Decode.field "completed" (Json.Decode.bool)) (Json.Decode.field "edits" ((Json.Decode.maybe Json.Decode.string))) (Json.Decode.field "id" (Json.Decode.int))
+    (Json.Decode.succeed (\description completed edits id -> {description = description, completed = completed, edits = edits, id = id}) |> decodeAndMap (Json.Decode.field "description" Json.Decode.string) |> decodeAndMap (Json.Decode.field "completed" Json.Decode.bool) |> decodeAndMap (Json.Decode.field "edits" (Json.Decode.maybe Json.Decode.string)) |> decodeAndMap (Json.Decode.field "id" Json.Decode.int))
 
 decodeTree : Json.Decode.Decoder Tree
 decodeTree  =
@@ -120,7 +128,7 @@ decodeVector : Json.Decode.Decoder Vector
 decodeVector  =
     Json.Decode.andThen (\tag -> case tag of
       "Vector" ->
-        ((Json.Decode.map Vector (Json.Decode.field "a" (Json.Decode.map2 (\x y -> {x = x, y = y}) (Json.Decode.field "x" Json.Decode.float) (Json.Decode.field "y" Json.Decode.float)))))
+        ((Json.Decode.map Vector (Json.Decode.field "a" (Json.Decode.succeed (\x y -> {x = x, y = y}) |> decodeAndMap (Json.Decode.field "x" Json.Decode.float) |> decodeAndMap (Json.Decode.field "y" Json.Decode.float)))))
       _ ->
         Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
 
@@ -134,7 +142,7 @@ decodeDictionary  =
 
 decodeEmptyRecord : Json.Decode.Decoder EmptyRecord
 decodeEmptyRecord  =
-    Json.Decode.succeed {}
+    (Json.Decode.succeed {})
 
 decodePair : Json.Decode.Decoder Pair
 decodePair  =
@@ -150,11 +158,19 @@ decodeUnitType  =
 
 decodeSomeRecord : Json.Decode.Decoder SomeRecord
 decodeSomeRecord  =
-    Json.Decode.map2 SomeRecord (Json.Decode.field "a" (Json.Decode.int)) (Json.Decode.field "b" (Json.Decode.string))
+    (Json.Decode.succeed (\a b -> {a = a, b = b}) |> decodeAndMap (Json.Decode.field "a" Json.Decode.int) |> decodeAndMap (Json.Decode.field "b" Json.Decode.string))
+
+decodeSmallNestedRecord : Json.Decode.Decoder SmallNestedRecord
+decodeSmallNestedRecord  =
+    (Json.Decode.map (\b -> {b = b}) (Json.Decode.field "b" Json.Decode.int))
 
 decodeNestedRecord : Json.Decode.Decoder NestedRecord
 decodeNestedRecord  =
-    Json.Decode.map NestedRecord (Json.Decode.field "a" ((Json.Decode.map (\b -> {b = b}) (Json.Decode.field "b" (Json.Decode.map (\c -> {c = c}) (Json.Decode.field "c" (Json.Decode.map2 (\d f -> {d = d, f = f}) (Json.Decode.field "d" (Json.Decode.map (\e -> {e = e}) (Json.Decode.field "e" Json.Decode.string))) (Json.Decode.field "f" Json.Decode.int))))))))
+    (Json.Decode.map (\a -> {a = a}) (Json.Decode.field "a" (Json.Decode.map (\b -> {b = b}) (Json.Decode.field "b" (Json.Decode.map (\c -> {c = c}) (Json.Decode.field "c" (Json.Decode.succeed (\d f -> {d = d, f = f}) |> decodeAndMap (Json.Decode.field "d" (Json.Decode.map (\e -> {e = e}) (Json.Decode.field "e" Json.Decode.string))) |> decodeAndMap (Json.Decode.field "f" Json.Decode.int))))))))
+
+decodeHugeRecord : Json.Decode.Decoder HugeRecord
+decodeHugeRecord  =
+    (Json.Decode.succeed (\a b c d e f g h i j k l m n -> {a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i, j = j, k = k, l = l, m = m, n = n}) |> decodeAndMap (Json.Decode.field "a" Json.Decode.int) |> decodeAndMap (Json.Decode.field "b" Json.Decode.string) |> decodeAndMap (Json.Decode.field "c" decodeChar) |> decodeAndMap (Json.Decode.field "d" Json.Decode.float) |> decodeAndMap (Json.Decode.field "e" (Json.Decode.list Json.Decode.string)) |> decodeAndMap (Json.Decode.field "f" Json.Decode.bool) |> decodeAndMap (Json.Decode.field "g" (Json.Decode.dict Json.Decode.int)) |> decodeAndMap (Json.Decode.field "h" (Json.Decode.array Json.Decode.int)) |> decodeAndMap (Json.Decode.field "i" (Json.Decode.succeed ())) |> decodeAndMap (Json.Decode.field "j" (Json.Decode.map2 Tuple.pair (Json.Decode.index 0 Json.Decode.int) (Json.Decode.index 1 Json.Decode.string))) |> decodeAndMap (Json.Decode.field "k" decodeColor) |> decodeAndMap (Json.Decode.field "l" decodeTree) |> decodeAndMap (Json.Decode.field "m" decodeTask) |> decodeAndMap (Json.Decode.field "n" decodeEmptyRecord))
 
 decodeArrayType : Json.Decode.Decoder ArrayType
 decodeArrayType  =
@@ -170,11 +186,11 @@ decodeResultType  =
 
 randomTodoList : Random.Generator TodoList
 randomTodoList  =
-    (Random.map4 (\tasks field uid visibility -> {tasks = tasks, field = field, uid = uid, visibility = visibility}) (randomList randomTask) randomString randomInt randomString)
+    (Random.constant (\tasks field uid visibility -> {tasks = tasks, field = field, uid = uid, visibility = visibility}) |> randomAndMap (randomList randomTask) |> randomAndMap randomString |> randomAndMap randomInt |> randomAndMap randomString)
 
 randomTask : Random.Generator Task
 randomTask  =
-    (Random.map4 (\description completed edits id -> {description = description, completed = completed, edits = edits, id = id}) randomString randomBool (randomMaybe randomString) randomInt)
+    (Random.constant (\description completed edits id -> {description = description, completed = completed, edits = edits, id = id}) |> randomAndMap randomString |> randomAndMap randomBool |> randomAndMap (randomMaybe randomString) |> randomAndMap randomInt)
 
 randomTree : Random.Generator Tree
 randomTree  =
@@ -214,7 +230,7 @@ randomVector  =
       
       
       vector () =
-          Random.map Vector (Random.map2 (\x y -> {x = x, y = y}) randomFloat randomFloat)
+          Random.map Vector (Random.constant (\x y -> {x = x, y = y}) |> randomAndMap randomFloat |> randomAndMap randomFloat)
     in
       Random.andThen ((|>) ()) (Random.uniform vector [])
 
@@ -244,11 +260,19 @@ randomUnitType  =
 
 randomSomeRecord : Random.Generator SomeRecord
 randomSomeRecord  =
-    (Random.map2 (\a b -> {a = a, b = b}) randomInt randomString)
+    (Random.constant (\a b -> {a = a, b = b}) |> randomAndMap randomInt |> randomAndMap randomString)
+
+randomSmallNestedRecord : Random.Generator SmallNestedRecord
+randomSmallNestedRecord  =
+    (Random.map (\b -> {b = b}) randomInt)
 
 randomNestedRecord : Random.Generator NestedRecord
 randomNestedRecord  =
-    (Random.map (\a -> {a = a}) (Random.map (\b -> {b = b}) (Random.map (\c -> {c = c}) (Random.map2 (\d f -> {d = d, f = f}) (Random.map (\e -> {e = e}) randomString) randomInt))))
+    (Random.map (\a -> {a = a}) (Random.map (\b -> {b = b}) (Random.map (\c -> {c = c}) (Random.constant (\d f -> {d = d, f = f}) |> randomAndMap (Random.map (\e -> {e = e}) randomString) |> randomAndMap randomInt))))
+
+randomHugeRecord : Random.Generator HugeRecord
+randomHugeRecord  =
+    (Random.constant (\a b c d e f g h i j k l m n -> {a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i, j = j, k = k, l = l, m = m, n = n}) |> randomAndMap randomInt |> randomAndMap randomString |> randomAndMap randomChar |> randomAndMap randomFloat |> randomAndMap (randomList randomString) |> randomAndMap randomBool |> randomAndMap (randomDict randomInt) |> randomAndMap (randomArray randomInt) |> randomAndMap (Random.constant ()) |> randomAndMap (Random.pair randomInt randomString) |> randomAndMap randomColor |> randomAndMap randomTree |> randomAndMap randomTask |> randomAndMap randomEmptyRecord)
 
 randomArrayType : Random.Generator ArrayType
 randomArrayType  =
@@ -368,6 +392,10 @@ compareSomeRecord  =
       o0 ->
         o0)
 
+compareSmallNestedRecord : SmallNestedRecord -> (SmallNestedRecord -> Order)
+compareSmallNestedRecord  =
+    (\lhs0 rhs0 -> compare lhs0.b rhs0.b)
+
 compareNestedRecord : NestedRecord -> (NestedRecord -> Order)
 compareNestedRecord  =
     (\lhs0 rhs0 -> (\lhs1 rhs1 -> (\lhs2 rhs2 -> (\lhs3 rhs3 -> case (\lhs4 rhs4 -> compare lhs4.e rhs4.e) lhs3.d rhs3.d of
@@ -375,6 +403,62 @@ compareNestedRecord  =
         compare lhs3.f rhs3.f
       o0 ->
         o0) lhs2.c rhs2.c) lhs1.b rhs1.b) lhs0.a rhs0.a)
+
+compareHugeRecord : HugeRecord -> (HugeRecord -> Order)
+compareHugeRecord  =
+    (\lhs0 rhs0 -> case compare lhs0.a rhs0.a of
+      EQ  ->
+        case compare lhs0.b rhs0.b of
+          EQ  ->
+            case compare lhs0.c rhs0.c of
+              EQ  ->
+                case compare lhs0.d rhs0.d of
+                  EQ  ->
+                    case (compareList compare) lhs0.e rhs0.e of
+                      EQ  ->
+                        case compareBool lhs0.f rhs0.f of
+                          EQ  ->
+                            case (compareDict compare) lhs0.g rhs0.g of
+                              EQ  ->
+                                case (compareArray compare) lhs0.h rhs0.h of
+                                  EQ  ->
+                                    case (\_ _ -> EQ) lhs0.i rhs0.i of
+                                      EQ  ->
+                                        case (compareTuple compare compare) lhs0.j rhs0.j of
+                                          EQ  ->
+                                            case compareColor lhs0.k rhs0.k of
+                                              EQ  ->
+                                                case compareTree lhs0.l rhs0.l of
+                                                  EQ  ->
+                                                    case compareTask lhs0.m rhs0.m of
+                                                      EQ  ->
+                                                        compareEmptyRecord lhs0.n rhs0.n
+                                                      o12 ->
+                                                        o12
+                                                  o11 ->
+                                                    o11
+                                              o10 ->
+                                                o10
+                                          o9 ->
+                                            o9
+                                      o8 ->
+                                        o8
+                                  o7 ->
+                                    o7
+                              o6 ->
+                                o6
+                          o5 ->
+                            o5
+                      o4 ->
+                        o4
+                  o3 ->
+                    o3
+              o2 ->
+                o2
+          o1 ->
+            o1
+      o0 ->
+        o0)
 
 compareArrayType : ArrayType -> (ArrayType -> Order)
 compareArrayType  =
@@ -448,9 +532,17 @@ viewSomeRecord : SomeRecord -> Html.Html msg
 viewSomeRecord  =
     (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "a"], Html.td [] [viewInt value0.a]], Html.tr [] [Html.td [] [Html.text "b"], Html.td [] [viewString value0.b]]]])
 
+viewSmallNestedRecord : SmallNestedRecord -> Html.Html msg
+viewSmallNestedRecord  =
+    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "b"], Html.td [] [viewInt value0.b]]]])
+
 viewNestedRecord : NestedRecord -> Html.Html msg
 viewNestedRecord  =
     (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "a"], Html.td [] [(\value1 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "b"], Html.td [] [(\value2 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "c"], Html.td [] [(\value3 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "d"], Html.td [] [(\value4 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "e"], Html.td [] [viewString value4.e]]]]) value3.d]], Html.tr [] [Html.td [] [Html.text "f"], Html.td [] [viewInt value3.f]]]]) value2.c]]]]) value1.b]]]]) value0.a]]]])
+
+viewHugeRecord : HugeRecord -> Html.Html msg
+viewHugeRecord  =
+    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "a"], Html.td [] [viewInt value0.a]], Html.tr [] [Html.td [] [Html.text "b"], Html.td [] [viewString value0.b]], Html.tr [] [Html.td [] [Html.text "c"], Html.td [] [viewChar value0.c]], Html.tr [] [Html.td [] [Html.text "d"], Html.td [] [viewFloat value0.d]], Html.tr [] [Html.td [] [Html.text "e"], Html.td [] [(viewList viewString) value0.e]], Html.tr [] [Html.td [] [Html.text "f"], Html.td [] [viewBool value0.f]], Html.tr [] [Html.td [] [Html.text "g"], Html.td [] [(viewDict viewInt) value0.g]], Html.tr [] [Html.td [] [Html.text "h"], Html.td [] [(viewArray viewInt) value0.h]], Html.tr [] [Html.td [] [Html.text "i"], Html.td [] [(\() -> Html.div [] [Html.text ""]) value0.i]], Html.tr [] [Html.td [] [Html.text "j"], Html.td [] [(viewTuple viewInt viewString) value0.j]], Html.tr [] [Html.td [] [Html.text "k"], Html.td [] [viewColor value0.k]], Html.tr [] [Html.td [] [Html.text "l"], Html.td [] [viewTree value0.l]], Html.tr [] [Html.td [] [Html.text "m"], Html.td [] [viewTask value0.m]], Html.tr [] [Html.td [] [Html.text "n"], Html.td [] [viewEmptyRecord value0.n]]]])
 
 viewArrayType : ArrayType -> Html.Html msg
 viewArrayType  =
@@ -547,6 +639,10 @@ randomMaybe gen =
 randomResult : Random.Generator err -> (Random.Generator ok -> Random.Generator (Result err ok))
 randomResult errGen okGen =
     Random.andThen identity (Random.uniform (Random.map Err errGen) [Random.map Ok okGen])
+
+randomAndMap : Random.Generator a -> (Random.Generator (a -> b) -> Random.Generator b)
+randomAndMap  =
+    Random.map2 (|>)
 
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen =

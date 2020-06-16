@@ -83,6 +83,9 @@ randomResult : Random.Generator err -> Random.Generator ok -> Random.Generator (
 randomResult errGen okGen = 
     Random.andThen identity (Random.uniform (Random.map Err errGen) [Random.map Ok okGen])
     
+randomAndMap : Random.Generator a -> Random.Generator (a -> b) -> Random.Generator b
+randomAndMap =
+    Random.map2 (|>)
 
 
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)

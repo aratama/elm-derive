@@ -219,12 +219,40 @@ generateRandomFromType file typeAnnotation =
                                             )
 
                                     _ ->
-                                        Application
-                                            ([ node <| FunctionOrValue [ "Random" ] ("map" ++ String.fromInt (List.length fields))
-                                             , node <| objectConstructor fields
-                                             ]
-                                                ++ List.map node randoms
+                                        let
+                                            go : List Expression -> Expression
+                                            go rs =
+                                                case rs of
+                                                    [] ->
+                                                        -- dead code
+                                                        UnitExpr
+
+                                                    [ r ] ->
+                                                        Application
+                                                            [ node <| FunctionOrValue [] "randomAndMap"
+                                                            , node <| r
+                                                            ]
+
+                                                    x :: xs ->
+                                                        OperatorApplication "|>"
+                                                            Right
+                                                            (node <|
+                                                                Application
+                                                                    [ node <| FunctionOrValue [] "randomAndMap"
+                                                                    , node <| x
+                                                                    ]
+                                                            )
+                                                            (node <| go xs)
+                                        in
+                                        OperatorApplication "|>"
+                                            Right
+                                            (node <|
+                                                Application
+                                                    [ node <| FunctionOrValue [ "Random" ] "constant"
+                                                    , node <| objectConstructor fields
+                                                    ]
                                             )
+                                            (node <| go randoms)
                     )
 
         Tupled [ Node _ fst, Node _ snd ] ->

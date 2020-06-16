@@ -157,16 +157,6 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                 fieldToDecoder : Node RecordField -> Result Error Expression
                 fieldToDecoder (Node _ ( Node _ name, Node _ annotation )) =
                     generateDecoderFromTypeAnnotation file annotation
-                        |> Result.map
-                            (\decoder ->
-                                ParenthesizedExpression <|
-                                    node <|
-                                        Application
-                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "field"
-                                            , node <| Literal name
-                                            , node decoder
-                                            ]
-                            )
             in
             fields
                 |> concatResults (\field -> fieldToDecoder field |> Result.map (\decoder -> { field = field, decoder = decoder }))
@@ -174,28 +164,92 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                     (\fieldDecoders ->
                         ParenthesizedExpression <|
                             node <|
-                                case List.length fieldDecoders of
-                                    0 ->
+                                case fieldDecoders of
+                                    [] ->
                                         Application
                                             [ node <| FunctionOrValue [ "Json", "Decode" ] "succeed"
                                             , node <| RecordExpr []
                                             ]
 
-                                    1 ->
+                                    [ fieldDecoder ] ->
+                                        let
+                                            recordField : RecordField
+                                            recordField =
+                                                nodeValue fieldDecoder.field
+
+                                            ( Node _ name, _ ) =
+                                                recordField
+                                        in
                                         Application
-                                            ([ node <| FunctionOrValue [ "Json", "Decode" ] "map"
-                                             , node <| objectConstructor fields
-                                             ]
-                                                ++ List.map (\{ decoder } -> node decoder) fieldDecoders
-                                            )
+                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "map"
+                                            , node <| objectConstructor fields
+                                            , node <|
+                                                ParenthesizedExpression <|
+                                                    node <|
+                                                        Application
+                                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "field"
+                                                            , node <| Literal name
+                                                            , node <| fieldDecoder.decoder
+                                                            ]
+                                            ]
 
                                     _ ->
-                                        Application
-                                            ([ node <| FunctionOrValue [ "Json", "Decode" ] ("map" ++ String.fromInt (List.length fieldDecoders))
-                                             , node <| objectConstructor fields
-                                             ]
-                                                ++ List.map (\{ decoder } -> node decoder) fieldDecoders
+                                        let
+                                            go : List { field : Node RecordField, decoder : Expression } -> Expression
+                                            go entries =
+                                                case entries of
+                                                    [] ->
+                                                        -- dead code
+                                                        UnitExpr
+
+                                                    [ entry ] ->
+                                                        let
+                                                            (Node _ ( Node _ name, _ )) =
+                                                                entry.field
+                                                        in
+                                                        Application
+                                                            [ node <| FunctionOrValue [] "decodeAndMap"
+                                                            , node <|
+                                                                ParenthesizedExpression <|
+                                                                    node <|
+                                                                        Application
+                                                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "field"
+                                                                            , node <| Literal name
+                                                                            , node <| entry.decoder
+                                                                            ]
+                                                            ]
+
+                                                    d :: ds ->
+                                                        let
+                                                            (Node _ ( Node _ name, _ )) =
+                                                                d.field
+                                                        in
+                                                        OperatorApplication "|>"
+                                                            Right
+                                                            (node <|
+                                                                Application
+                                                                    [ node <| FunctionOrValue [] "decodeAndMap"
+                                                                    , node <|
+                                                                        ParenthesizedExpression <|
+                                                                            node <|
+                                                                                Application
+                                                                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "field"
+                                                                                    , node <| Literal name
+                                                                                    , node d.decoder
+                                                                                    ]
+                                                                    ]
+                                                            )
+                                                            (node <| go ds)
+                                        in
+                                        OperatorApplication "|>"
+                                            Right
+                                            (node <|
+                                                Application
+                                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "succeed"
+                                                    , node <| objectConstructor fields
+                                                    ]
                                             )
+                                            (node <| go fieldDecoders)
                     )
 
         _ ->
@@ -234,56 +288,9 @@ generateDecoderFromDeclaration file delaration =
             let
                 name =
                     nodeValue aliasDecl.name
-
-                fieldToDecoder : Node RecordField -> Result Error Expression
-                fieldToDecoder (Node _ ( Node _ fieldName, Node _ annotation )) =
-                    generateDecoderFromTypeAnnotation file annotation
-                        |> Result.map
-                            (\decoder ->
-                                ParenthesizedExpression <|
-                                    node <|
-                                        Application
-                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "field"
-                                            , node <| Literal fieldName
-                                            , node <| ParenthesizedExpression <| node <| decoder
-                                            ]
-                            )
             in
-            case aliasDecl.typeAnnotation of
-                Node _ (Record recordFields) ->
-                    concatResults fieldToDecoder recordFields
-                        |> Result.map
-                            (\fieldDecoders ->
-                                [ FunctionDeclaration <|
-                                    function name <|
-                                        case List.length fieldDecoders of
-                                            0 ->
-                                                Application
-                                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "succeed"
-                                                    , node <| RecordExpr []
-                                                    ]
-
-                                            1 ->
-                                                Application
-                                                    ([ node <| FunctionOrValue [ "Json", "Decode" ] "map"
-                                                     , node <| FunctionOrValue [] name
-                                                     ]
-                                                        ++ List.map node fieldDecoders
-                                                    )
-
-                                            _ ->
-                                                Application
-                                                    ([ node <| FunctionOrValue [ "Json", "Decode" ] ("map" ++ String.fromInt (List.length fieldDecoders))
-                                                     , node <| FunctionOrValue [] name
-                                                     ]
-                                                        ++ List.map node fieldDecoders
-                                                    )
-                                ]
-                            )
-
-                _ ->
-                    generateDecoderFromTypeAnnotation file (nodeValue aliasDecl.typeAnnotation)
-                        |> Result.map (\decoder -> [ FunctionDeclaration <| function name decoder ])
+            generateDecoderFromTypeAnnotation file (nodeValue aliasDecl.typeAnnotation)
+                |> Result.map (\decoder -> [ FunctionDeclaration <| function name decoder ])
 
         CustomTypeDeclaration customTypeDecl ->
             let

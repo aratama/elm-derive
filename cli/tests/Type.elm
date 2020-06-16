@@ -67,8 +67,30 @@ type alias SomeRecord =
     }
 
 
+type alias SmallNestedRecord =
+    { b : Int }
+
+
 type alias NestedRecord =
     { a : { b : { c : { d : { e : String }, f : Int } } } }
+
+
+type alias HugeRecord =
+    { a : Int
+    , b : String
+    , c : Char
+    , d : Float
+    , e : List String
+    , f : Bool
+    , g : Dict String Int
+    , h : Array Int
+    , i : ()
+    , j : ( Int, String )
+    , k : Color
+    , l : Tree
+    , m : Task
+    , n : EmptyRecord
+    }
 
 
 type alias ArrayType =
