@@ -12,7 +12,10 @@ import Html.Events
 import List.Extra as List
 import Parser exposing (Problem(..))
 import Parser.Extra
+import Process
 import SyntaxHighlight
+import Task
+import Time
 
 
 sampleSource : String
@@ -55,26 +58,88 @@ type alias Task =
 
 type alias Model =
     { source : String
+    , lastInputTIme : Time.Posix
+    , rendered : List (Html.Html Msg)
     }
 
 
 type Msg
     = Input String
+    | Now Time.Posix
+    | Derive Time.Posix
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Input s ->
-            { model | source = s }
+            ( { model | source = s }, Task.perform Now Time.now )
+
+        Now now ->
+            ( { model | lastInputTIme = now }, Task.perform Derive (Task.andThen (always Time.now) (Process.sleep 1000)) )
+
+        Derive now ->
+            if 500 <= Time.posixToMillis now - Time.posixToMillis model.lastInputTIme then
+                ( { model | rendered = render model.source }, Cmd.none )
+
+            else
+                ( model, Cmd.none )
+
+
+render : String -> List (Html.Html Msg)
+render source =
+    case Elm.Parser.parse source of
+        Err err ->
+            [ Html.pre [ class "syntactic-error" ]
+                [ Html.text <|
+                    unlines
+                        [ "Syntactic Error: "
+                        , ""
+                        , unlines <| List.map (Parser.Extra.deadEndToString source) err
+                        ]
+                ]
+            ]
+
+        Ok rawFile ->
+            let
+                file =
+                    Elm.Processing.process Elm.Processing.init rawFile
+
+                result =
+                    Derive.generate file
+            in
+            [ case result of
+                Err err ->
+                    Html.pre [ class "generation-error" ] [ Html.text <| errorToString err ]
+
+                Ok generated ->
+                    let
+                        str =
+                            Elm.Writer.write (Elm.Writer.writeFile generated)
+                    in
+                    Html.div [ class "generated" ]
+                        [ SyntaxHighlight.elm str
+                            |> Result.map (SyntaxHighlight.toBlockHtml (Just 1))
+                            |> Result.withDefault
+                                (Html.pre [] [ Html.code [] [ Html.text str ] ])
+                        ]
+            ]
 
 
 main : Program () Model Msg
 main =
-    Browser.sandbox
-        { init = { source = sampleSource }
+    Browser.element
+        { init =
+            always
+                ( { source = sampleSource
+                  , lastInputTIme = Time.millisToPosix 0
+                  , rendered = render sampleSource
+                  }
+                , Cmd.none
+                )
         , view = view
         , update = update
+        , subscriptions = always Sub.none
         }
 
 
@@ -85,41 +150,5 @@ view model =
         , Html.div [ class "left" ]
             [ Html.textarea [ Html.Events.onInput Input ] [ Html.text <| model.source ]
             ]
-        , Html.div [ class "right" ] <|
-            case Elm.Parser.parse model.source of
-                Err err ->
-                    [ Html.pre [ class "syntactic-error" ]
-                        [ Html.text <|
-                            unlines
-                                [ "Syntactic Error: "
-                                , ""
-                                , unlines <| List.map (Parser.Extra.deadEndToString model.source) err
-                                ]
-                        ]
-                    ]
-
-                Ok rawFile ->
-                    let
-                        file =
-                            Elm.Processing.process Elm.Processing.init rawFile
-
-                        result =
-                            Derive.generate file
-                    in
-                    [ case result of
-                        Err err ->
-                            Html.pre [ class "generation-error" ] [ Html.text <| errorToString err ]
-
-                        Ok generated ->
-                            let
-                                str =
-                                    Elm.Writer.write (Elm.Writer.writeFile generated)
-                            in
-                            Html.div [ class "generated" ]
-                                [ SyntaxHighlight.elm str
-                                    |> Result.map (SyntaxHighlight.toBlockHtml (Just 1))
-                                    |> Result.withDefault
-                                        (Html.pre [] [ Html.code [] [ Html.text str ] ])
-                                ]
-                    ]
+        , Html.div [ class "right" ] model.rendered
         ]
