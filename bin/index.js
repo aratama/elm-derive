@@ -2269,13 +2269,10 @@ __commonjs = {
         var lineNumberWidth = 4;
         return "(" + ($elm$core$String$fromInt(deadEnd.row) + ("," + ($elm$core$String$fromInt(deadEnd.col) + (") " + ($author$project$Parser$Extra$problemToString(deadEnd.problem) + ("\n\n" + (A3($elm$core$String$padLeft, lineNumberWidth, _Utils_chr(" "), $elm$core$String$fromInt(row + 1)) + ("| " + (A2($elm$core$Maybe$withDefault, "", A2($elm_community$list_extra$List$Extra$getAt, row, $elm$core$String$lines(src))) + ("\n" + (A2($elm$core$String$repeat, lineNumberWidth + 2 + deadEnd.col - 1, " ") + "^")))))))))));
       });
-      var $elm$core$String$slice = _String_slice;
-      var $elm$core$String$dropLeft = F2(function(n, string) {
-        return n < 1 ? string : A3($elm$core$String$slice, n, $elm$core$String$length(string), string);
-      });
       var $elm$core$Basics$negate = function(n) {
         return -n;
       };
+      var $elm$core$String$slice = _String_slice;
       var $elm$core$String$dropRight = F2(function(n, string) {
         return n < 1 ? string : A3($elm$core$String$slice, 0, -n, string);
       });
@@ -6157,6 +6154,9 @@ __commonjs = {
       var $elm$parser$Parser$NotNestable = {
         $: "NotNestable"
       };
+      var $elm$core$String$dropLeft = F2(function(n, string) {
+        return n < 1 ? string : A3($elm$core$String$slice, n, $elm$core$String$length(string), string);
+      });
       var $author$project$Elm$Parser$Declarations$glslExpression = function() {
         var start = "[glsl|";
         var end = "|]";
@@ -7929,7 +7929,6 @@ compareResult f g lhs rhs
           }, _List_fromArray([$author$project$Derive$Encoder$generateEncoder, $author$project$Derive$Decoder$generateDecoder, $author$project$Derive$Random$generateRandom, $author$project$Derive$Ord$generate, $author$project$Derive$Html$generateView])));
         }
       };
-      var $elm$core$Debug$log = _Debug_log;
       var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
       var $elm$core$Dict$getMin = function(dict) {
         getMin:
@@ -8696,25 +8695,24 @@ compareResult f g lhs rhs
       var $author$project$Main$update = F2(function(msg, model) {
         var path = msg.a.path;
         var source = msg.a.source;
-        var _v1 = A2($elm$core$Debug$log, "ReceiveFile", path);
-        var _v2 = $author$project$Elm$Parser$parse(source);
-        if (_v2.$ === "Err") {
-          var err = _v2.a;
+        var _v1 = $author$project$Elm$Parser$parse(source);
+        if (_v1.$ === "Err") {
+          var err = _v1.a;
           return _Utils_Tuple2(model, $author$project$Port$exitWithError("Parse Error: " + $author$project$Derive$Util$unlines(A2($elm$core$List$map, $author$project$Parser$Extra$deadEndToString(source), err))));
         } else {
-          var rawFile = _v2.a;
-          var moduleName = A2($elm$core$Debug$log, "moduleName", A3($elm$core$String$replace, "/", ".", A2($elm$core$String$dropRight, $elm$core$String$length(".elm"), A2($elm$core$String$dropLeft, $elm$core$String$length(model.flags.dir), path))));
+          var rawFile = _v1.a;
+          var moduleName = A3($elm$core$String$replace, "/", ".", A2($elm$core$String$dropRight, $elm$core$String$length(".elm"), path));
           var model_ = _Utils_update(model, {
             files: A3($elm$core$Dict$insert, moduleName, rawFile, model.files),
             requestingFiles: A2($elm$core$Dict$remove, path, model.requestingFiles)
           });
-          if (A2($elm$core$Debug$log, "", $elm$core$Dict$isEmpty(model_.requestingFiles))) {
-            var targetModuleName = A2($elm$core$Debug$log, "targetModuleName", A3($elm$core$String$replace, "/", ".", A2($elm$core$String$dropRight, $elm$core$String$length(".elm"), A2($elm$core$String$dropLeft, $elm$core$String$length(model.flags.dir), _Utils_ap(model.flags.dir, model.flags.target)))));
-            var _v3 = A2($elm$core$Dict$get, targetModuleName, model_.files);
-            if (_v3.$ === "Nothing") {
+          if ($elm$core$Dict$isEmpty(model_.requestingFiles)) {
+            var targetModuleName = A3($elm$core$String$replace, "/", ".", A2($elm$core$String$dropRight, $elm$core$String$length(".elm"), model.flags.target));
+            var _v2 = A2($elm$core$Dict$get, targetModuleName, model_.files);
+            if (_v2.$ === "Nothing") {
               return _Utils_Tuple2(model_, $author$project$Port$exitWithError("Internal Error"));
             } else {
-              var targetRawFile = _v3.a;
+              var targetRawFile = _v2.a;
               var file = A2($author$project$Elm$Processing$process, $author$project$Elm$Processing$init, targetRawFile);
               var result = $author$project$Derive$generate(file);
               if (result.$ === "Err") {
@@ -8723,7 +8721,7 @@ compareResult f g lhs rhs
               } else {
                 var generated = result.a;
                 return _Utils_Tuple2(model_, $elm$core$Platform$Cmd$batch(_List_fromArray([$author$project$Port$writeFile({
-                  path: model.flags.dir + (targetModuleName + "/Derive.elm"),
+                  path: A3($elm$core$String$replace, ".", "/", targetModuleName) + "/Derive.elm",
                   source: $author$project$Elm$Writer$write($author$project$Elm$Writer$writeFile(generated))
                 }), $author$project$Port$exit(_Utils_Tuple0)])));
               }
@@ -8739,8 +8737,8 @@ compareResult f g lhs rhs
           return _Utils_Tuple2({
             files: $elm$core$Dict$empty,
             flags,
-            requestingFiles: A2($elm$core$Dict$singleton, _Utils_ap(flags.dir, flags.target), _Utils_Tuple0)
-          }, $author$project$Port$requestFile(_Utils_ap(flags.dir, flags.target)));
+            requestingFiles: A2($elm$core$Dict$singleton, flags.target, _Utils_Tuple0)
+          }, $author$project$Port$requestFile(flags.target));
         },
         subscriptions: $elm$core$Basics$always($author$project$Port$receiveFile($author$project$Main$ReceiveFile)),
         update: $author$project$Main$update
@@ -8748,19 +8746,16 @@ compareResult f g lhs rhs
       _Platform_export({
         Main: {
           init: $author$project$Main$main(A2($elm$json$Json$Decode$andThen, function(target) {
-            return A2($elm$json$Json$Decode$andThen, function(dir) {
-              return $elm$json$Json$Decode$succeed({
-                dir,
-                target
-              });
-            }, A2($elm$json$Json$Decode$field, "dir", $elm$json$Json$Decode$string));
+            return $elm$json$Json$Decode$succeed({
+              target
+            });
           }, A2($elm$json$Json$Decode$field, "target", $elm$json$Json$Decode$string)))(0)
         }
       });
     })(exports);
   },
 
-  38(exports) {
+  39(exports) {
     // node_modules\universalify\index.js
     "use strict";
     exports.fromCallback = function(fn) {
@@ -9504,7 +9499,7 @@ compareResult f g lhs rhs
   14(exports) {
     // node_modules\fs-extra\lib\fs\index.js
     "use strict";
-    const u = __require(38 /* universalify */).fromCallback;
+    const u = __require(39 /* universalify */).fromCallback;
     const fs = __require(33 /* graceful-fs */);
     const api = ["access", "appendFile", "chmod", "chown", "close", "copyFile", "fchmod", "fchown", "fdatasync", "fstat", "fsync", "ftruncate", "futimes", "lchmod", "lchown", "link", "lstat", "mkdir", "mkdtemp", "open", "opendir", "readdir", "readFile", "readlink", "realpath", "rename", "rmdir", "stat", "symlink", "truncate", "unlink", "utimes", "writeFile"].filter((key) => {
       return typeof fs[key] === "function";
@@ -9707,7 +9702,7 @@ compareResult f g lhs rhs
   20(exports, module) {
     // node_modules\fs-extra\lib\mkdirs\index.js
     "use strict";
-    const u = __require(38 /* universalify */).fromPromise;
+    const u = __require(39 /* universalify */).fromPromise;
     const {makeDir: _makeDir, makeDirSync} = __require(21 /* ./make-dir */);
     const makeDir = u(_makeDir);
     module.exports = {
@@ -10042,7 +10037,7 @@ compareResult f g lhs rhs
   27(exports, module) {
     // node_modules\fs-extra\lib\path-exists\index.js
     "use strict";
-    const u = __require(38 /* universalify */).fromPromise;
+    const u = __require(39 /* universalify */).fromPromise;
     const fs = __require(14 /* ../fs */);
     function pathExists(path) {
       return fs.access(path).then(() => true).catch(() => false);
@@ -10281,7 +10276,7 @@ compareResult f g lhs rhs
   6(exports, module) {
     // node_modules\fs-extra\lib\copy\index.js
     "use strict";
-    const u = __require(38 /* universalify */).fromCallback;
+    const u = __require(39 /* universalify */).fromCallback;
     module.exports = {
       copy: u(__require(5 /* ./copy */))
     };
@@ -10532,7 +10527,7 @@ compareResult f g lhs rhs
   28(exports, module) {
     // node_modules\fs-extra\lib\remove\index.js
     "use strict";
-    const u = __require(38 /* universalify */).fromCallback;
+    const u = __require(39 /* universalify */).fromCallback;
     const rimraf = __require(29 /* ./rimraf */);
     module.exports = {
       remove: u(rimraf),
@@ -10543,7 +10538,7 @@ compareResult f g lhs rhs
   7(exports, module) {
     // node_modules\fs-extra\lib\empty\index.js
     "use strict";
-    const u = __require(38 /* universalify */).fromCallback;
+    const u = __require(39 /* universalify */).fromCallback;
     const fs = __require(33 /* graceful-fs */);
     const path = require("path");
     const mkdir = __require(20 /* ../mkdirs */);
@@ -10591,7 +10586,7 @@ compareResult f g lhs rhs
   8(exports, module) {
     // node_modules\fs-extra\lib\ensure\file.js
     "use strict";
-    const u = __require(38 /* universalify */).fromCallback;
+    const u = __require(39 /* universalify */).fromCallback;
     const path = require("path");
     const fs = __require(33 /* graceful-fs */);
     const mkdir = __require(20 /* ../mkdirs */);
@@ -10659,7 +10654,7 @@ compareResult f g lhs rhs
   10(exports, module) {
     // node_modules\fs-extra\lib\ensure\link.js
     "use strict";
-    const u = __require(38 /* universalify */).fromCallback;
+    const u = __require(39 /* universalify */).fromCallback;
     const path = require("path");
     const fs = __require(33 /* graceful-fs */);
     const mkdir = __require(20 /* ../mkdirs */);
@@ -10836,7 +10831,7 @@ compareResult f g lhs rhs
   13(exports, module) {
     // node_modules\fs-extra\lib\ensure\symlink.js
     "use strict";
-    const u = __require(38 /* universalify */).fromCallback;
+    const u = __require(39 /* universalify */).fromCallback;
     const path = require("path");
     const fs = __require(33 /* graceful-fs */);
     const _mkdirs = __require(20 /* ../mkdirs */);
@@ -10948,7 +10943,7 @@ compareResult f g lhs rhs
     } catch (_) {
       _fs = require("fs");
     }
-    const universalify = __require(38 /* universalify */);
+    const universalify = __require(39 /* universalify */);
     const {stringify, stripBom} = __require(37 /* ./utils */);
     async function _readFile(file, options = {}) {
       if (typeof options === "string") {
@@ -11030,7 +11025,7 @@ compareResult f g lhs rhs
   26(exports, module) {
     // node_modules\fs-extra\lib\output\index.js
     "use strict";
-    const u = __require(38 /* universalify */).fromCallback;
+    const u = __require(39 /* universalify */).fromCallback;
     const fs = __require(33 /* graceful-fs */);
     const path = require("path");
     const mkdir = __require(20 /* ../mkdirs */);
@@ -11094,7 +11089,7 @@ compareResult f g lhs rhs
   16(exports, module) {
     // node_modules\fs-extra\lib\json\index.js
     "use strict";
-    const u = __require(38 /* universalify */).fromPromise;
+    const u = __require(39 /* universalify */).fromPromise;
     const jsonFile = __require(17 /* ./jsonfile */);
     jsonFile.outputJson = u(__require(19 /* ./output-json */));
     jsonFile.outputJsonSync = __require(18 /* ./output-json-sync */);
@@ -11234,7 +11229,7 @@ compareResult f g lhs rhs
   24(exports, module) {
     // node_modules\fs-extra\lib\move\index.js
     "use strict";
-    const u = __require(38 /* universalify */).fromCallback;
+    const u = __require(39 /* universalify */).fromCallback;
     module.exports = {
       move: u(__require(25 /* ./move */))
     };
@@ -11267,26 +11262,235 @@ compareResult f g lhs rhs
     }
   },
 
-  39() {
+  38(exports, module) {
+    // node_modules\minimist\index.js
+    module.exports = function(args, opts) {
+      if (!opts)
+        opts = {};
+      var flags = {
+        bools: {},
+        strings: {},
+        unknownFn: null
+      };
+      if (typeof opts["unknown"] === "function") {
+        flags.unknownFn = opts["unknown"];
+      }
+      if (typeof opts["boolean"] === "boolean" && opts["boolean"]) {
+        flags.allBools = true;
+      } else {
+        [].concat(opts["boolean"]).filter(Boolean).forEach(function(key2) {
+          flags.bools[key2] = true;
+        });
+      }
+      var aliases = {};
+      Object.keys(opts.alias || {}).forEach(function(key2) {
+        aliases[key2] = [].concat(opts.alias[key2]);
+        aliases[key2].forEach(function(x) {
+          aliases[x] = [key2].concat(aliases[key2].filter(function(y) {
+            return x !== y;
+          }));
+        });
+      });
+      [].concat(opts.string).filter(Boolean).forEach(function(key2) {
+        flags.strings[key2] = true;
+        if (aliases[key2]) {
+          flags.strings[aliases[key2]] = true;
+        }
+      });
+      var defaults = opts["default"] || {};
+      var argv = {
+        _: []
+      };
+      Object.keys(flags.bools).forEach(function(key2) {
+        setArg(key2, defaults[key2] === void 0 ? false : defaults[key2]);
+      });
+      var notFlags = [];
+      if (args.indexOf("--") !== -1) {
+        notFlags = args.slice(args.indexOf("--") + 1);
+        args = args.slice(0, args.indexOf("--"));
+      }
+      function argDefined(key2, arg2) {
+        return flags.allBools && /^--[^=]+$/.test(arg2) || flags.strings[key2] || flags.bools[key2] || aliases[key2];
+      }
+      function setArg(key2, val, arg2) {
+        if (arg2 && flags.unknownFn && !argDefined(key2, arg2)) {
+          if (flags.unknownFn(arg2) === false)
+            return;
+        }
+        var value2 = !flags.strings[key2] && isNumber(val) ? Number(val) : val;
+        setKey(argv, key2.split("."), value2);
+        (aliases[key2] || []).forEach(function(x) {
+          setKey(argv, x.split("."), value2);
+        });
+      }
+      function setKey(obj, keys, value2) {
+        var o = obj;
+        for (var i2 = 0; i2 < keys.length - 1; i2++) {
+          var key2 = keys[i2];
+          if (key2 === "__proto__")
+            return;
+          if (o[key2] === void 0)
+            o[key2] = {};
+          if (o[key2] === Object.prototype || o[key2] === Number.prototype || o[key2] === String.prototype)
+            o[key2] = {};
+          if (o[key2] === Array.prototype)
+            o[key2] = [];
+          o = o[key2];
+        }
+        var key2 = keys[keys.length - 1];
+        if (key2 === "__proto__")
+          return;
+        if (o === Object.prototype || o === Number.prototype || o === String.prototype)
+          o = {};
+        if (o === Array.prototype)
+          o = [];
+        if (o[key2] === void 0 || flags.bools[key2] || typeof o[key2] === "boolean") {
+          o[key2] = value2;
+        } else if (Array.isArray(o[key2])) {
+          o[key2].push(value2);
+        } else {
+          o[key2] = [o[key2], value2];
+        }
+      }
+      function aliasIsBoolean(key2) {
+        return aliases[key2].some(function(x) {
+          return flags.bools[x];
+        });
+      }
+      for (var i = 0; i < args.length; i++) {
+        var arg = args[i];
+        if (/^--.+=/.test(arg)) {
+          var m = arg.match(/^--([^=]+)=([\s\S]*)$/);
+          var key = m[1];
+          var value = m[2];
+          if (flags.bools[key]) {
+            value = value !== "false";
+          }
+          setArg(key, value, arg);
+        } else if (/^--no-.+/.test(arg)) {
+          var key = arg.match(/^--no-(.+)/)[1];
+          setArg(key, false, arg);
+        } else if (/^--.+/.test(arg)) {
+          var key = arg.match(/^--(.+)/)[1];
+          var next = args[i + 1];
+          if (next !== void 0 && !/^-/.test(next) && !flags.bools[key] && !flags.allBools && (aliases[key] ? !aliasIsBoolean(key) : true)) {
+            setArg(key, next, arg);
+            i++;
+          } else if (/^(true|false)$/.test(next)) {
+            setArg(key, next === "true", arg);
+            i++;
+          } else {
+            setArg(key, flags.strings[key] ? "" : true, arg);
+          }
+        } else if (/^-[^-]+/.test(arg)) {
+          var letters = arg.slice(1, -1).split("");
+          var broken = false;
+          for (var j = 0; j < letters.length; j++) {
+            var next = arg.slice(j + 2);
+            if (next === "-") {
+              setArg(letters[j], next, arg);
+              continue;
+            }
+            if (/[A-Za-z]/.test(letters[j]) && /=/.test(next)) {
+              setArg(letters[j], next.split("=")[1], arg);
+              broken = true;
+              break;
+            }
+            if (/[A-Za-z]/.test(letters[j]) && /-?\d+(\.\d*)?(e-?\d+)?$/.test(next)) {
+              setArg(letters[j], next, arg);
+              broken = true;
+              break;
+            }
+            if (letters[j + 1] && letters[j + 1].match(/\W/)) {
+              setArg(letters[j], arg.slice(j + 2), arg);
+              broken = true;
+              break;
+            } else {
+              setArg(letters[j], flags.strings[letters[j]] ? "" : true, arg);
+            }
+          }
+          var key = arg.slice(-1)[0];
+          if (!broken && key !== "-") {
+            if (args[i + 1] && !/^(-|--)[^-]/.test(args[i + 1]) && !flags.bools[key] && (aliases[key] ? !aliasIsBoolean(key) : true)) {
+              setArg(key, args[i + 1], arg);
+              i++;
+            } else if (args[i + 1] && /^(true|false)$/.test(args[i + 1])) {
+              setArg(key, args[i + 1] === "true", arg);
+              i++;
+            } else {
+              setArg(key, flags.strings[key] ? "" : true, arg);
+            }
+          }
+        } else {
+          if (!flags.unknownFn || flags.unknownFn(arg) !== false) {
+            argv._.push(flags.strings["_"] || !isNumber(arg) ? arg : Number(arg));
+          }
+          if (opts.stopEarly) {
+            argv._.push.apply(argv._, args.slice(i + 1));
+            break;
+          }
+        }
+      }
+      Object.keys(defaults).forEach(function(key2) {
+        if (!hasKey(argv, key2.split("."))) {
+          setKey(argv, key2.split("."), defaults[key2]);
+          (aliases[key2] || []).forEach(function(x) {
+            setKey(argv, x.split("."), defaults[key2]);
+          });
+        }
+      });
+      if (opts["--"]) {
+        argv["--"] = new Array();
+        notFlags.forEach(function(key2) {
+          argv["--"].push(key2);
+        });
+      } else {
+        notFlags.forEach(function(key2) {
+          argv._.push(key2);
+        });
+      }
+      return argv;
+    };
+    function hasKey(obj, keys) {
+      var o = obj;
+      keys.slice(0, -1).forEach(function(key2) {
+        o = o[key2] || {};
+      });
+      var key = keys[keys.length - 1];
+      return key in o;
+    }
+    function isNumber(x) {
+      if (typeof x === "number")
+        return true;
+      if (/^0x[0-9a-f]+$/i.test(x))
+        return true;
+      return /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(e[-+]?\d+)?$/.test(x);
+    }
+  },
+
+  40() {
     // src\index.mjs
     const elm_derive = __import(1 /* ../dist/elm-derive.js */);
     const fs = __toModule(require("fs"));
     const fs_extra = __import(15 /* fs-extra */);
     const path = __toModule(require("path"));
-    const dir = process.argv[2];
-    const target = process.argv[3];
-    if (dir && target) {
-      const file = dir + target;
+    const minimist = __import(38 /* minimist */);
+    const argv = minimist.default(process.argv.slice(2));
+    const dir = argv.dir || ".";
+    const dest = argv.dest || dir;
+    const target = argv._[0];
+    console.log(argv);
+    if (target) {
       const app = elm_derive.default.Elm.Main.init({
         flags: {
           dir,
           target
         }
       });
-      app.ports.requestFile.subscribe((path3) => {
-        const buffer = fs.default.readFileSync(path3);
+      app.ports.requestFile.subscribe((filePath) => {
+        const buffer = fs.default.readFileSync(path.default.resolve(dir, filePath));
         app.ports.receiveFile.send({
-          path: path3,
+          path: filePath,
           source: buffer.toString()
         });
       });
@@ -11303,11 +11507,11 @@ compareResult f g lhs rhs
       });
       app.ports.writeFile.subscribe((args) => {
         fs_extra.default.ensureDir(path.default.dirname(args.path));
-        fs.default.writeFileSync(args.path, args.source);
+        fs.default.writeFileSync(path.default.resolve(dest, args.path), args.source);
       });
     } else {
       console.log("elm-derive v0.0.1");
     }
   }
 };
-module.exports = __require(39);
+module.exports = __require(40);

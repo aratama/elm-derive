@@ -21,8 +21,7 @@ headerComment =
 
 
 type alias Flags =
-    { dir : String
-    , target : String
+    { target : String
     }
 
 
@@ -43,10 +42,10 @@ main =
         { init =
             \flags ->
                 ( { flags = flags
-                  , requestingFiles = Dict.singleton (flags.dir ++ flags.target) ()
+                  , requestingFiles = Dict.singleton flags.target ()
                   , files = Dict.empty
                   }
-                , Port.requestFile <| flags.dir ++ flags.target
+                , Port.requestFile <| flags.target
                 )
         , update = update
         , subscriptions = always <| Port.receiveFile ReceiveFile
@@ -67,7 +66,6 @@ update msg model =
                     let
                         moduleName =
                             path
-                                |> String.dropLeft (String.length model.flags.dir)
                                 |> String.dropRight (String.length ".elm")
                                 |> String.replace "/" "."
 
@@ -80,8 +78,7 @@ update msg model =
                     if Dict.isEmpty model_.requestingFiles then
                         let
                             targetModuleName =
-                                (model.flags.dir ++ model.flags.target)
-                                    |> String.dropLeft (String.length model.flags.dir)
+                                model.flags.target
                                     |> String.dropRight (String.length ".elm")
                                     |> String.replace "/" "."
                         in
@@ -105,7 +102,7 @@ update msg model =
                                         ( model_
                                         , Cmd.batch
                                             [ Port.writeFile
-                                                { path = model.flags.dir ++ targetModuleName ++ "/Derive.elm"
+                                                { path = String.replace "." "/" targetModuleName ++ "/Derive.elm"
                                                 , source = Elm.Writer.write (Elm.Writer.writeFile generated)
                                                 }
                                             , Port.exit ()
