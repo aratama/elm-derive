@@ -626,10 +626,6 @@ randomSet : Random.Generator comparable -> Random.Generator (Set.Set comparable)
 randomSet gen =
     Random.map Set.fromList (randomList gen)
 
-randomMaybe : Random.Generator a -> Random.Generator (Maybe a)
-randomMaybe gen =
-    Random.andThen (\n -> Random.uniform Nothing [Just n]) gen
-
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen =
     Random.map Dict.fromList (randomList (Random.map2 (\k v -> (k, v)) randomString gen))

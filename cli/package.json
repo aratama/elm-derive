@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm run build && node ../bin/index.js ./tests/Type.elm && elm-test",
+    "test": "npm run build-dev && node ../bin/index.js \"./tests/\" Type.elm && elm-test",
+    "build-dev": "elm make src/Main.elm --output=./dist/elm-derive.js && esbuild ./src/index.mjs --bundle --outfile=../bin/index.js --platform=node",
     "build": "elm make src/Main.elm  --optimize --output=./dist/elm-derive.js && esbuild ./src/index.mjs --minify --bundle --outfile=../bin/index.js --platform=node",
     "start": "node ../bin/index.js example/TodoList.elm",
     "example": "npm run build && node ../bin/index.js ../example/TodoList.elm"

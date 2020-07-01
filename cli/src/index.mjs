@@ -5,27 +5,34 @@ import fs from "fs";
 import fsx from "fs-extra";
 import path from "path";
 
-const file = process.argv[2];
+const dir = process.argv[2];
+const target = process.argv[3];
 
-if (file) {
-  const buffer = fs.readFileSync(file);
-  const app = elm.Elm.Main.init({ flags: buffer.toString() });
+if (dir && target) {
+  const file = dir + target;
+  const app = elm.Elm.Main.init({ flags: { dir, target } });
 
-  app.ports.outputEncoder.subscribe((result) => {
-    if (result.tag == "ok") {
-      const outputPath = path.join(
-        path.dirname(file),
-        path.basename(file, ".elm"),
-        "Derive.elm"
-      );
-      fsx.ensureDir(path.dirname(outputPath));
-      fs.writeFileSync(outputPath, result.value);
-    } else {
-      console.error(result.tag + ": " + result.value);
-      process.on("exit", function () {
-        process.exit(1);
-      });
-    }
+  app.ports.requestFile.subscribe((path) => {
+    const buffer = fs.readFileSync(path);
+    app.ports.receiveFile.send({ path, source: buffer.toString() });
+  });
+
+  app.ports.exitWithError.subscribe((message) => {
+    process.on("exit", function () {
+      process.exit(0);
+    });
+  });
+
+  app.ports.exitWithError.subscribe((message) => {
+    console.error(message);
+    process.on("exit", function () {
+      process.exit(1);
+    });
+  });
+
+  app.ports.writeFile.subscribe((args) => {
+    fsx.ensureDir(path.dirname(args.path));
+    fs.writeFileSync(args.path, args.source);
   });
 } else {
   console.log("elm-derive v0.0.1");
