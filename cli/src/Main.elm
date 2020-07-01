@@ -5,6 +5,7 @@ import Derive.Util exposing (..)
 import Dict exposing (Dict)
 import Elm.Parser
 import Elm.Processing
+import Elm.RawFile exposing (RawFile)
 import Elm.Writer
 import Graph
 import List.Extra as List
@@ -27,7 +28,8 @@ type alias Flags =
 
 type alias Model =
     { flags : Flags
-    , files : Dict String String
+    , requestingFiles : Dict String ()
+    , files : Dict String RawFile
     }
 
 
@@ -41,6 +43,7 @@ main =
         { init =
             \flags ->
                 ( { flags = flags
+                  , requestingFiles = Dict.singleton (flags.dir ++ flags.target) ()
                   , files = Dict.empty
                   }
                 , Port.requestFile <| flags.dir ++ flags.target
@@ -54,39 +57,60 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ReceiveFile { path, source } ->
-            let
-                _ =
-                    Debug.log "ReceiveFile" path
-            in
-            if path == model.flags.dir ++ model.flags.target then
-                case Elm.Parser.parse source of
-                    Err err ->
-                        ( model
-                        , Port.exitWithError <| "Parse Error: " ++ (unlines <| List.map (Parser.Extra.deadEndToString source) err)
-                        )
+            case Elm.Parser.parse source of
+                Err err ->
+                    ( model
+                    , Port.exitWithError <| "Parse Error: " ++ (unlines <| List.map (Parser.Extra.deadEndToString source) err)
+                    )
 
-                    Ok rawFile ->
+                Ok rawFile ->
+                    let
+                        moduleName =
+                            path
+                                |> String.dropLeft (String.length model.flags.dir)
+                                |> String.dropRight (String.length ".elm")
+                                |> String.replace "/" "."
+
+                        model_ =
+                            { model
+                                | files = Dict.insert moduleName rawFile model.files
+                                , requestingFiles = Dict.remove path model.requestingFiles
+                            }
+                    in
+                    if Dict.isEmpty model_.requestingFiles then
                         let
-                            file =
-                                Elm.Processing.process Elm.Processing.init rawFile
-
-                            result =
-                                Derive.generate file
+                            targetModuleName =
+                                (model.flags.dir ++ model.flags.target)
+                                    |> String.dropLeft (String.length model.flags.dir)
+                                    |> String.dropRight (String.length ".elm")
+                                    |> String.replace "/" "."
                         in
-                        case result of
-                            Err err ->
-                                ( model, Port.exitWithError <| "Generation Error: " ++ String.join " " err )
+                        case Dict.get targetModuleName model_.files of
+                            Nothing ->
+                                ( model_, Port.exitWithError "Internal Error" )
 
-                            Ok generated ->
-                                ( model
-                                , Cmd.batch
-                                    [ Port.writeFile
-                                        { path = model.flags.dir ++ String.dropRight 4 model.flags.target ++ "/Derive.elm"
-                                        , source = Elm.Writer.write (Elm.Writer.writeFile generated)
-                                        }
-                                    , Port.exit ()
-                                    ]
-                                )
+                            Just targetRawFile ->
+                                let
+                                    file =
+                                        Elm.Processing.process Elm.Processing.init targetRawFile
 
-            else
-                ( model, Cmd.none )
+                                    result =
+                                        Derive.generate file
+                                in
+                                case result of
+                                    Err err ->
+                                        ( model_, Port.exitWithError <| "Generation Error: " ++ String.join " " err )
+
+                                    Ok generated ->
+                                        ( model_
+                                        , Cmd.batch
+                                            [ Port.writeFile
+                                                { path = model.flags.dir ++ targetModuleName ++ "/Derive.elm"
+                                                , source = Elm.Writer.write (Elm.Writer.writeFile generated)
+                                                }
+                                            , Port.exit ()
+                                            ]
+                                        )
+
+                    else
+                        ( model_, Cmd.none )

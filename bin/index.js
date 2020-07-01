@@ -2155,6 +2155,22 @@ __commonjs = {
       }, A2($elm$json$Json$Decode$field, "source", $elm$json$Json$Decode$string)));
       var $elm$json$Json$Encode$string = _Json_wrap;
       var $author$project$Port$requestFile = _Platform_outgoingPort("requestFile", $elm$json$Json$Encode$string);
+      var $elm$core$Dict$Black = {
+        $: "Black"
+      };
+      var $elm$core$Dict$RBNode_elm_builtin = F5(function(a, b, c, d, e) {
+        return {
+          $: "RBNode_elm_builtin",
+          a,
+          b,
+          c,
+          d,
+          e
+        };
+      });
+      var $elm$core$Dict$singleton = F2(function(key, value) {
+        return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, key, value, $elm$core$Dict$RBEmpty_elm_builtin, $elm$core$Dict$RBEmpty_elm_builtin);
+      });
       var $elm$core$Platform$Cmd$batch = _Platform_batch;
       var $elm$core$List$drop = F2(function(n, list) {
         drop:
@@ -2253,10 +2269,13 @@ __commonjs = {
         var lineNumberWidth = 4;
         return "(" + ($elm$core$String$fromInt(deadEnd.row) + ("," + ($elm$core$String$fromInt(deadEnd.col) + (") " + ($author$project$Parser$Extra$problemToString(deadEnd.problem) + ("\n\n" + (A3($elm$core$String$padLeft, lineNumberWidth, _Utils_chr(" "), $elm$core$String$fromInt(row + 1)) + ("| " + (A2($elm$core$Maybe$withDefault, "", A2($elm_community$list_extra$List$Extra$getAt, row, $elm$core$String$lines(src))) + ("\n" + (A2($elm$core$String$repeat, lineNumberWidth + 2 + deadEnd.col - 1, " ") + "^")))))))))));
       });
+      var $elm$core$String$slice = _String_slice;
+      var $elm$core$String$dropLeft = F2(function(n, string) {
+        return n < 1 ? string : A3($elm$core$String$slice, n, $elm$core$String$length(string), string);
+      });
       var $elm$core$Basics$negate = function(n) {
         return -n;
       };
-      var $elm$core$String$slice = _String_slice;
       var $elm$core$String$dropRight = F2(function(n, string) {
         return n < 1 ? string : A3($elm$core$String$slice, 0, -n, string);
       });
@@ -5150,19 +5169,6 @@ __commonjs = {
         };
       };
       var $elm$core$Set$empty = $elm$core$Set$Set_elm_builtin($elm$core$Dict$empty);
-      var $elm$core$Dict$Black = {
-        $: "Black"
-      };
-      var $elm$core$Dict$RBNode_elm_builtin = F5(function(a, b, c, d, e) {
-        return {
-          $: "RBNode_elm_builtin",
-          a,
-          b,
-          c,
-          d,
-          e
-        };
-      });
       var $elm$core$Dict$Red = {
         $: "Red"
       };
@@ -6151,9 +6157,6 @@ __commonjs = {
       var $elm$parser$Parser$NotNestable = {
         $: "NotNestable"
       };
-      var $elm$core$String$dropLeft = F2(function(n, string) {
-        return n < 1 ? string : A3($elm$core$String$slice, n, $elm$core$String$length(string), string);
-      });
       var $author$project$Elm$Parser$Declarations$glslExpression = function() {
         var start = "[glsl|";
         var end = "|]";
@@ -7928,6 +7931,262 @@ compareResult f g lhs rhs
       };
       var $elm$core$Debug$log = _Debug_log;
       var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+      var $elm$core$Dict$getMin = function(dict) {
+        getMin:
+          while (true) {
+            if (dict.$ === "RBNode_elm_builtin" && dict.d.$ === "RBNode_elm_builtin") {
+              var left = dict.d;
+              var $temp$dict = left;
+              dict = $temp$dict;
+              continue getMin;
+            } else {
+              return dict;
+            }
+          }
+      };
+      var $elm$core$Dict$moveRedLeft = function(dict) {
+        if (dict.$ === "RBNode_elm_builtin" && dict.d.$ === "RBNode_elm_builtin" && dict.e.$ === "RBNode_elm_builtin") {
+          if (dict.e.d.$ === "RBNode_elm_builtin" && dict.e.d.a.$ === "Red") {
+            var clr = dict.a;
+            var k = dict.b;
+            var v = dict.c;
+            var _v1 = dict.d;
+            var lClr = _v1.a;
+            var lK = _v1.b;
+            var lV = _v1.c;
+            var lLeft = _v1.d;
+            var lRight = _v1.e;
+            var _v2 = dict.e;
+            var rClr = _v2.a;
+            var rK = _v2.b;
+            var rV = _v2.c;
+            var rLeft = _v2.d;
+            var _v3 = rLeft.a;
+            var rlK = rLeft.b;
+            var rlV = rLeft.c;
+            var rlL = rLeft.d;
+            var rlR = rLeft.e;
+            var rRight = _v2.e;
+            return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, rlK, rlV, A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, lK, lV, lLeft, lRight), rlL), A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, rK, rV, rlR, rRight));
+          } else {
+            var clr = dict.a;
+            var k = dict.b;
+            var v = dict.c;
+            var _v4 = dict.d;
+            var lClr = _v4.a;
+            var lK = _v4.b;
+            var lV = _v4.c;
+            var lLeft = _v4.d;
+            var lRight = _v4.e;
+            var _v5 = dict.e;
+            var rClr = _v5.a;
+            var rK = _v5.b;
+            var rV = _v5.c;
+            var rLeft = _v5.d;
+            var rRight = _v5.e;
+            if (clr.$ === "Black") {
+              return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, lK, lV, lLeft, lRight), A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, rK, rV, rLeft, rRight));
+            } else {
+              return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, lK, lV, lLeft, lRight), A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, rK, rV, rLeft, rRight));
+            }
+          }
+        } else {
+          return dict;
+        }
+      };
+      var $elm$core$Dict$moveRedRight = function(dict) {
+        if (dict.$ === "RBNode_elm_builtin" && dict.d.$ === "RBNode_elm_builtin" && dict.e.$ === "RBNode_elm_builtin") {
+          if (dict.d.d.$ === "RBNode_elm_builtin" && dict.d.d.a.$ === "Red") {
+            var clr = dict.a;
+            var k = dict.b;
+            var v = dict.c;
+            var _v1 = dict.d;
+            var lClr = _v1.a;
+            var lK = _v1.b;
+            var lV = _v1.c;
+            var _v2 = _v1.d;
+            var _v3 = _v2.a;
+            var llK = _v2.b;
+            var llV = _v2.c;
+            var llLeft = _v2.d;
+            var llRight = _v2.e;
+            var lRight = _v1.e;
+            var _v4 = dict.e;
+            var rClr = _v4.a;
+            var rK = _v4.b;
+            var rV = _v4.c;
+            var rLeft = _v4.d;
+            var rRight = _v4.e;
+            return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, lK, lV, A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, llK, llV, llLeft, llRight), A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, lRight, A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, rK, rV, rLeft, rRight)));
+          } else {
+            var clr = dict.a;
+            var k = dict.b;
+            var v = dict.c;
+            var _v5 = dict.d;
+            var lClr = _v5.a;
+            var lK = _v5.b;
+            var lV = _v5.c;
+            var lLeft = _v5.d;
+            var lRight = _v5.e;
+            var _v6 = dict.e;
+            var rClr = _v6.a;
+            var rK = _v6.b;
+            var rV = _v6.c;
+            var rLeft = _v6.d;
+            var rRight = _v6.e;
+            if (clr.$ === "Black") {
+              return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, lK, lV, lLeft, lRight), A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, rK, rV, rLeft, rRight));
+            } else {
+              return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, lK, lV, lLeft, lRight), A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, rK, rV, rLeft, rRight));
+            }
+          }
+        } else {
+          return dict;
+        }
+      };
+      var $elm$core$Dict$removeHelpPrepEQGT = F7(function(targetKey, dict, color, key, value, left, right) {
+        if (left.$ === "RBNode_elm_builtin" && left.a.$ === "Red") {
+          var _v1 = left.a;
+          var lK = left.b;
+          var lV = left.c;
+          var lLeft = left.d;
+          var lRight = left.e;
+          return A5($elm$core$Dict$RBNode_elm_builtin, color, lK, lV, lLeft, A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, key, value, lRight, right));
+        } else {
+          _v2$2:
+            while (true) {
+              if (right.$ === "RBNode_elm_builtin" && right.a.$ === "Black") {
+                if (right.d.$ === "RBNode_elm_builtin") {
+                  if (right.d.a.$ === "Black") {
+                    var _v3 = right.a;
+                    var _v4 = right.d;
+                    var _v5 = _v4.a;
+                    return $elm$core$Dict$moveRedRight(dict);
+                  } else {
+                    break _v2$2;
+                  }
+                } else {
+                  var _v6 = right.a;
+                  var _v7 = right.d;
+                  return $elm$core$Dict$moveRedRight(dict);
+                }
+              } else {
+                break _v2$2;
+              }
+            }
+          return dict;
+        }
+      });
+      var $elm$core$Dict$removeMin = function(dict) {
+        if (dict.$ === "RBNode_elm_builtin" && dict.d.$ === "RBNode_elm_builtin") {
+          var color = dict.a;
+          var key = dict.b;
+          var value = dict.c;
+          var left = dict.d;
+          var lColor = left.a;
+          var lLeft = left.d;
+          var right = dict.e;
+          if (lColor.$ === "Black") {
+            if (lLeft.$ === "RBNode_elm_builtin" && lLeft.a.$ === "Red") {
+              var _v3 = lLeft.a;
+              return A5($elm$core$Dict$RBNode_elm_builtin, color, key, value, $elm$core$Dict$removeMin(left), right);
+            } else {
+              var _v4 = $elm$core$Dict$moveRedLeft(dict);
+              if (_v4.$ === "RBNode_elm_builtin") {
+                var nColor = _v4.a;
+                var nKey = _v4.b;
+                var nValue = _v4.c;
+                var nLeft = _v4.d;
+                var nRight = _v4.e;
+                return A5($elm$core$Dict$balance, nColor, nKey, nValue, $elm$core$Dict$removeMin(nLeft), nRight);
+              } else {
+                return $elm$core$Dict$RBEmpty_elm_builtin;
+              }
+            }
+          } else {
+            return A5($elm$core$Dict$RBNode_elm_builtin, color, key, value, $elm$core$Dict$removeMin(left), right);
+          }
+        } else {
+          return $elm$core$Dict$RBEmpty_elm_builtin;
+        }
+      };
+      var $elm$core$Dict$removeHelp = F2(function(targetKey, dict) {
+        if (dict.$ === "RBEmpty_elm_builtin") {
+          return $elm$core$Dict$RBEmpty_elm_builtin;
+        } else {
+          var color = dict.a;
+          var key = dict.b;
+          var value = dict.c;
+          var left = dict.d;
+          var right = dict.e;
+          if (_Utils_cmp(targetKey, key) < 0) {
+            if (left.$ === "RBNode_elm_builtin" && left.a.$ === "Black") {
+              var _v4 = left.a;
+              var lLeft = left.d;
+              if (lLeft.$ === "RBNode_elm_builtin" && lLeft.a.$ === "Red") {
+                var _v6 = lLeft.a;
+                return A5($elm$core$Dict$RBNode_elm_builtin, color, key, value, A2($elm$core$Dict$removeHelp, targetKey, left), right);
+              } else {
+                var _v7 = $elm$core$Dict$moveRedLeft(dict);
+                if (_v7.$ === "RBNode_elm_builtin") {
+                  var nColor = _v7.a;
+                  var nKey = _v7.b;
+                  var nValue = _v7.c;
+                  var nLeft = _v7.d;
+                  var nRight = _v7.e;
+                  return A5($elm$core$Dict$balance, nColor, nKey, nValue, A2($elm$core$Dict$removeHelp, targetKey, nLeft), nRight);
+                } else {
+                  return $elm$core$Dict$RBEmpty_elm_builtin;
+                }
+              }
+            } else {
+              return A5($elm$core$Dict$RBNode_elm_builtin, color, key, value, A2($elm$core$Dict$removeHelp, targetKey, left), right);
+            }
+          } else {
+            return A2($elm$core$Dict$removeHelpEQGT, targetKey, A7($elm$core$Dict$removeHelpPrepEQGT, targetKey, dict, color, key, value, left, right));
+          }
+        }
+      });
+      var $elm$core$Dict$removeHelpEQGT = F2(function(targetKey, dict) {
+        if (dict.$ === "RBNode_elm_builtin") {
+          var color = dict.a;
+          var key = dict.b;
+          var value = dict.c;
+          var left = dict.d;
+          var right = dict.e;
+          if (_Utils_eq(targetKey, key)) {
+            var _v1 = $elm$core$Dict$getMin(right);
+            if (_v1.$ === "RBNode_elm_builtin") {
+              var minKey = _v1.b;
+              var minValue = _v1.c;
+              return A5($elm$core$Dict$balance, color, minKey, minValue, left, $elm$core$Dict$removeMin(right));
+            } else {
+              return $elm$core$Dict$RBEmpty_elm_builtin;
+            }
+          } else {
+            return A5($elm$core$Dict$balance, color, key, value, left, A2($elm$core$Dict$removeHelp, targetKey, right));
+          }
+        } else {
+          return $elm$core$Dict$RBEmpty_elm_builtin;
+        }
+      });
+      var $elm$core$Dict$remove = F2(function(key, dict) {
+        var _v0 = A2($elm$core$Dict$removeHelp, key, dict);
+        if (_v0.$ === "RBNode_elm_builtin" && _v0.a.$ === "Red") {
+          var _v1 = _v0.a;
+          var k = _v0.b;
+          var v = _v0.c;
+          var l = _v0.d;
+          var r = _v0.e;
+          return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, l, r);
+        } else {
+          var x = _v0;
+          return x;
+        }
+      });
+      var $elm$core$String$replace = F3(function(before, after, string) {
+        return A2($elm$core$String$join, after, A2($elm$core$String$split, before, string));
+      });
       var $author$project$Derive$Util$unlines = $elm$core$String$join("\n");
       var $stil4m$structured_writer$StructuredWriter$Breaked = function(a) {
         return {
@@ -8438,28 +8697,40 @@ compareResult f g lhs rhs
         var path = msg.a.path;
         var source = msg.a.source;
         var _v1 = A2($elm$core$Debug$log, "ReceiveFile", path);
-        if (_Utils_eq(path, _Utils_ap(model.flags.dir, model.flags.target))) {
-          var _v2 = $author$project$Elm$Parser$parse(source);
-          if (_v2.$ === "Err") {
-            var err = _v2.a;
-            return _Utils_Tuple2(model, $author$project$Port$exitWithError("Parse Error: " + $author$project$Derive$Util$unlines(A2($elm$core$List$map, $author$project$Parser$Extra$deadEndToString(source), err))));
-          } else {
-            var rawFile = _v2.a;
-            var file = A2($author$project$Elm$Processing$process, $author$project$Elm$Processing$init, rawFile);
-            var result = $author$project$Derive$generate(file);
-            if (result.$ === "Err") {
-              var err = result.a;
-              return _Utils_Tuple2(model, $author$project$Port$exitWithError("Generation Error: " + A2($elm$core$String$join, " ", err)));
-            } else {
-              var generated = result.a;
-              return _Utils_Tuple2(model, $elm$core$Platform$Cmd$batch(_List_fromArray([$author$project$Port$writeFile({
-                path: model.flags.dir + (A2($elm$core$String$dropRight, 4, model.flags.target) + "/Derive.elm"),
-                source: $author$project$Elm$Writer$write($author$project$Elm$Writer$writeFile(generated))
-              }), $author$project$Port$exit(_Utils_Tuple0)])));
-            }
-          }
+        var _v2 = $author$project$Elm$Parser$parse(source);
+        if (_v2.$ === "Err") {
+          var err = _v2.a;
+          return _Utils_Tuple2(model, $author$project$Port$exitWithError("Parse Error: " + $author$project$Derive$Util$unlines(A2($elm$core$List$map, $author$project$Parser$Extra$deadEndToString(source), err))));
         } else {
-          return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+          var rawFile = _v2.a;
+          var moduleName = A2($elm$core$Debug$log, "moduleName", A3($elm$core$String$replace, "/", ".", A2($elm$core$String$dropRight, $elm$core$String$length(".elm"), A2($elm$core$String$dropLeft, $elm$core$String$length(model.flags.dir), path))));
+          var model_ = _Utils_update(model, {
+            files: A3($elm$core$Dict$insert, moduleName, rawFile, model.files),
+            requestingFiles: A2($elm$core$Dict$remove, path, model.requestingFiles)
+          });
+          if (A2($elm$core$Debug$log, "", $elm$core$Dict$isEmpty(model_.requestingFiles))) {
+            var targetModuleName = A2($elm$core$Debug$log, "targetModuleName", A3($elm$core$String$replace, "/", ".", A2($elm$core$String$dropRight, $elm$core$String$length(".elm"), A2($elm$core$String$dropLeft, $elm$core$String$length(model.flags.dir), _Utils_ap(model.flags.dir, model.flags.target)))));
+            var _v3 = A2($elm$core$Dict$get, targetModuleName, model_.files);
+            if (_v3.$ === "Nothing") {
+              return _Utils_Tuple2(model_, $author$project$Port$exitWithError("Internal Error"));
+            } else {
+              var targetRawFile = _v3.a;
+              var file = A2($author$project$Elm$Processing$process, $author$project$Elm$Processing$init, targetRawFile);
+              var result = $author$project$Derive$generate(file);
+              if (result.$ === "Err") {
+                var err = result.a;
+                return _Utils_Tuple2(model_, $author$project$Port$exitWithError("Generation Error: " + A2($elm$core$String$join, " ", err)));
+              } else {
+                var generated = result.a;
+                return _Utils_Tuple2(model_, $elm$core$Platform$Cmd$batch(_List_fromArray([$author$project$Port$writeFile({
+                  path: model.flags.dir + (targetModuleName + "/Derive.elm"),
+                  source: $author$project$Elm$Writer$write($author$project$Elm$Writer$writeFile(generated))
+                }), $author$project$Port$exit(_Utils_Tuple0)])));
+              }
+            }
+          } else {
+            return _Utils_Tuple2(model_, $elm$core$Platform$Cmd$none);
+          }
         }
       });
       var $elm$core$Platform$worker = _Platform_worker;
@@ -8467,7 +8738,8 @@ compareResult f g lhs rhs
         init: function(flags) {
           return _Utils_Tuple2({
             files: $elm$core$Dict$empty,
-            flags
+            flags,
+            requestingFiles: A2($elm$core$Dict$singleton, _Utils_ap(flags.dir, flags.target), _Utils_Tuple0)
           }, $author$project$Port$requestFile(_Utils_ap(flags.dir, flags.target)));
         },
         subscriptions: $elm$core$Basics$always($author$project$Port$receiveFile($author$project$Main$ReceiveFile)),
