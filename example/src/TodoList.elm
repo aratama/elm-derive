@@ -22,7 +22,7 @@ type alias Task =
     }
 
 
-type alias TodoList =
+type alias Model =
     { tasks : List Task
     , field : String
     , visibility : Visibility

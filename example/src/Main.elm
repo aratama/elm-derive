@@ -10,7 +10,7 @@ import Json.Decode
 import Json.Encode
 import Task
 import Time
-import TodoList exposing (Id, TodoList, Visibility(..))
+import TodoList exposing (Id, Model, Visibility(..))
 import TodoList.Derive
 
 
@@ -22,24 +22,12 @@ type Msg
     | RequestTime
 
 
-type alias Model =
-    TodoList
-
-
-port save : Json.Encode.Value -> Cmd msg
-
-
-withSave : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-withSave ( model, cmd ) =
-    ( model, Cmd.batch [ save <| TodoList.Derive.encodeTodoList model, cmd ] )
-
-
 main : Program Json.Encode.Value Model Msg
 main =
     Browser.element
         { init =
             \flag ->
-                case Json.Decode.decodeValue TodoList.Derive.decodeTodoList flag of
+                case Json.Decode.decodeValue TodoList.Derive.decodeModel flag of
                     Err _ ->
                         ( { tasks = [], field = "", visibility = Active }, Cmd.none )
 
@@ -49,6 +37,11 @@ main =
         , update = update
         , subscriptions = always Sub.none
         }
+
+
+withSave : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+withSave ( model, cmd ) =
+    ( model, Cmd.batch [ save <| TodoList.Derive.encodeModel model, cmd ] )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -80,19 +73,7 @@ update msg model =
         ChangeVisibility visibility ->
             withSave
                 ( { model
-                    | visibility =
-                        case visibility of
-                            "All" ->
-                                All
-
-                            "Active" ->
-                                Active
-
-                            "Completed" ->
-                                Completed
-
-                            _ ->
-                                model.visibility
+                    | visibility = Maybe.withDefault model.visibility <| stringToVisibility visibility
                   }
                 , Cmd.none
                 )
@@ -135,7 +116,7 @@ view model =
                                 , Html.checked <| model.visibility == visibility
                                 ]
                                 []
-                            , Html.text <| visibilityToString visibility
+                            , Html.text <| showVisibility visibility
                             ]
                     )
                     [ All, Active, Completed ]
@@ -162,7 +143,18 @@ view model =
         ]
 
 
+visibilityToString : Visibility -> String
 visibilityToString visibility =
+    Json.Encode.encode 2 <| TodoList.Derive.encodeVisibility visibility
+
+
+stringToVisibility : String -> Maybe Visibility
+stringToVisibility str =
+    Result.toMaybe <| Json.Decode.decodeString TodoList.Derive.decodeVisibility str
+
+
+showVisibility : Visibility -> String
+showVisibility visibility =
     case visibility of
         All ->
             "All"
@@ -172,3 +164,6 @@ visibilityToString visibility =
 
         Completed ->
             "Completed"
+
+
+port save : Json.Encode.Value -> Cmd msg

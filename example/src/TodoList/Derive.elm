@@ -30,8 +30,8 @@ encodeTask : Task -> Json.Encode.Value
 encodeTask  =
     (\value0 -> Json.Encode.object [("id", encodeId value0.id), ("description", Json.Encode.string value0.description), ("posix", Json.Encode.int value0.posix), ("completed", Json.Encode.bool value0.completed)])
 
-encodeTodoList : TodoList -> Json.Encode.Value
-encodeTodoList  =
+encodeModel : Model -> Json.Encode.Value
+encodeModel  =
     (\value0 -> Json.Encode.object [("tasks", (Json.Encode.list encodeTask) value0.tasks), ("field", Json.Encode.string value0.field), ("visibility", encodeVisibility value0.visibility)])
 
 decodeId : Json.Decode.Decoder Id
@@ -54,8 +54,8 @@ decodeTask : Json.Decode.Decoder Task
 decodeTask  =
     (Json.Decode.succeed (\id description posix completed -> {id = id, description = description, posix = posix, completed = completed}) |> Json.Decode.Extra.andMap (Json.Decode.field "id" decodeId) |> Json.Decode.Extra.andMap (Json.Decode.field "description" Json.Decode.string) |> Json.Decode.Extra.andMap (Json.Decode.field "posix" Json.Decode.int) |> Json.Decode.Extra.andMap (Json.Decode.field "completed" Json.Decode.bool))
 
-decodeTodoList : Json.Decode.Decoder TodoList
-decodeTodoList  =
+decodeModel : Json.Decode.Decoder Model
+decodeModel  =
     (Json.Decode.succeed (\tasks field visibility -> {tasks = tasks, field = field, visibility = visibility}) |> Json.Decode.Extra.andMap (Json.Decode.field "tasks" (Json.Decode.list decodeTask)) |> Json.Decode.Extra.andMap (Json.Decode.field "field" Json.Decode.string) |> Json.Decode.Extra.andMap (Json.Decode.field "visibility" decodeVisibility))
 
 randomId : Random.Generator Id
@@ -84,8 +84,8 @@ randomTask : Random.Generator Task
 randomTask  =
     (Random.constant (\id description posix completed -> {id = id, description = description, posix = posix, completed = completed}) |> Random.Extra.andMap randomId |> Random.Extra.andMap randomString |> Random.Extra.andMap randomInt |> Random.Extra.andMap Random.Extra.bool)
 
-randomTodoList : Random.Generator TodoList
-randomTodoList  =
+randomModel : Random.Generator Model
+randomModel  =
     (Random.constant (\tasks field visibility -> {tasks = tasks, field = field, visibility = visibility}) |> Random.Extra.andMap (randomList randomTask) |> Random.Extra.andMap randomString |> Random.Extra.andMap randomVisibility)
 
 compareId : Id -> (Id -> Order)
@@ -126,8 +126,8 @@ compareTask  =
       o0 ->
         o0)
 
-compareTodoList : TodoList -> (TodoList -> Order)
-compareTodoList  =
+compareModel : Model -> (Model -> Order)
+compareModel  =
     (\lhs0 rhs0 -> case (compareList compareTask) lhs0.tasks rhs0.tasks of
       EQ  ->
         case compare lhs0.field rhs0.field of
@@ -156,8 +156,8 @@ viewTask : Task -> Html.Html msg
 viewTask  =
     (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "id"], Html.td [] [viewId value0.id]], Html.tr [] [Html.td [] [Html.text "description"], Html.td [] [viewString value0.description]], Html.tr [] [Html.td [] [Html.text "posix"], Html.td [] [viewInt value0.posix]], Html.tr [] [Html.td [] [Html.text "completed"], Html.td [] [viewBool value0.completed]]]])
 
-viewTodoList : TodoList -> Html.Html msg
-viewTodoList  =
+viewModel : Model -> Html.Html msg
+viewModel  =
     (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "tasks"], Html.td [] [(viewList viewTask) value0.tasks]], Html.tr [] [Html.td [] [Html.text "field"], Html.td [] [viewString value0.field]], Html.tr [] [Html.td [] [Html.text "visibility"], Html.td [] [viewVisibility value0.visibility]]]])
 
 decodeChar : Json.Decode.Decoder Char
