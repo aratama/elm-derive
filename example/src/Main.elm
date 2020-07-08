@@ -1,16 +1,16 @@
 port module Main exposing (..)
 
 import Browser
+import Browser.Events exposing (Visibility)
 import Html
 import Html.Attributes as Html
 import Html.Events as Html
 import Iso8601
 import Json.Decode
 import Json.Encode
-import Random
 import Task
 import Time
-import TodoList exposing (..)
+import TodoList exposing (Id, TodoList, Visibility(..))
 import TodoList.Derive
 
 
@@ -41,7 +41,7 @@ main =
             \flag ->
                 case Json.Decode.decodeValue TodoList.Derive.decodeTodoList flag of
                     Err _ ->
-                        ( { tasks = [], field = "", showCompleted = False }, Cmd.none )
+                        ( { tasks = [], field = "", visibility = Active }, Cmd.none )
 
                     Ok model ->
                         ( model, Cmd.none )
@@ -72,13 +72,23 @@ update msg model =
             withSave
                 ( { model
                     | field = ""
-                    , tasks = model.tasks ++ [ task ]
+                    , tasks = task :: model.tasks
                   }
                 , Cmd.none
                 )
 
-        Checked showCompleted ->
-            withSave ( { model | showCompleted = showCompleted }, Cmd.none )
+        Checked checked ->
+            withSave
+                ( { model
+                    | visibility =
+                        if checked then
+                            All
+
+                        else
+                            Active
+                  }
+                , Cmd.none
+                )
 
         Completed id completed ->
             withSave
@@ -101,11 +111,26 @@ update msg model =
 view : Model -> Html.Html Msg
 view model =
     Html.div []
-        [ Html.input [ Html.value model.field, Html.onInput Input ] []
-        , Html.button [ Html.onClick RequestTime ] [ Html.text "Add" ]
-        , Html.label []
-            [ Html.input [ Html.type_ "checkbox", Html.onCheck Checked, Html.checked model.showCompleted ] []
-            , Html.text "Show Completed"
+        [ Html.div [ Html.class "upper" ]
+            [ Html.div []
+                [ Html.input [ Html.class "field", Html.value model.field, Html.onInput Input, Html.placeholder "What needs to be done?" ] []
+                , Html.button [ Html.onClick RequestTime ] [ Html.text "Add" ]
+                ]
+            , Html.label []
+                [ Html.input
+                    [ Html.type_ "checkbox"
+                    , Html.onCheck Checked
+                    , Html.checked <|
+                        case model.visibility of
+                            All ->
+                                True
+
+                            Active ->
+                                False
+                    ]
+                    []
+                , Html.text "Show Completed"
+                ]
             ]
         , Html.table [] <|
             List.map
@@ -116,10 +141,11 @@ view model =
                         , Html.td [] [ Html.text <| Iso8601.fromTime <| Time.millisToPosix task.posix ]
                         ]
                 )
-                (if model.showCompleted then
-                    model.tasks
+                (case model.visibility of
+                    All ->
+                        model.tasks
 
-                 else
-                    List.filter (not << .completed) model.tasks
+                    Active ->
+                        List.filter (not << .completed) model.tasks
                 )
         ]

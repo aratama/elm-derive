@@ -17,6 +17,28 @@ tr:nth-child(even) {
   background-color: rgba(240, 240, 250, 1);
 }
 
+.upper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+
+  .field {
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    margin-right: 0.2rem;
+  }
+
+  button {
+    font-size: 1.2rem;
+    padding: 0.5rem;
+  }
+
+  & > * {
+    display: block;
+  }
+}
+
 table {
   border-collapse: collapse;
   width: 100%;

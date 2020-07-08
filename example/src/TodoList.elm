@@ -22,6 +22,11 @@ type alias Id =
     Int
 
 
+type Visibility
+    = Active
+    | All
+
+
 type alias Task =
     { id : Id
     , description : String
@@ -33,5 +38,5 @@ type alias Task =
 type alias TodoList =
     { tasks : List Task
     , field : String
-    , showCompleted : Bool
+    , visibility : Visibility
     }

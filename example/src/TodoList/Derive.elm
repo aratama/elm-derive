@@ -16,17 +16,35 @@ encodeId : Id -> Json.Encode.Value
 encodeId  =
     Json.Encode.int
 
+encodeVisibility : Visibility -> Json.Encode.Value
+encodeVisibility val =
+    case val of
+      Active  ->
+        Json.Encode.object [("tag", Json.Encode.string "Active")]
+      All  ->
+        Json.Encode.object [("tag", Json.Encode.string "All")]
+
 encodeTask : Task -> Json.Encode.Value
 encodeTask  =
     (\value0 -> Json.Encode.object [("id", encodeId value0.id), ("description", Json.Encode.string value0.description), ("posix", Json.Encode.int value0.posix), ("completed", Json.Encode.bool value0.completed)])
 
 encodeTodoList : TodoList -> Json.Encode.Value
 encodeTodoList  =
-    (\value0 -> Json.Encode.object [("tasks", (Json.Encode.list encodeTask) value0.tasks), ("field", Json.Encode.string value0.field), ("showCompleted", Json.Encode.bool value0.showCompleted)])
+    (\value0 -> Json.Encode.object [("tasks", (Json.Encode.list encodeTask) value0.tasks), ("field", Json.Encode.string value0.field), ("visibility", encodeVisibility value0.visibility)])
 
 decodeId : Json.Decode.Decoder Id
 decodeId  =
     Json.Decode.int
+
+decodeVisibility : Json.Decode.Decoder Visibility
+decodeVisibility  =
+    Json.Decode.andThen (\tag -> case tag of
+      "Active" ->
+        ((Json.Decode.succeed Active))
+      "All" ->
+        ((Json.Decode.succeed All))
+      _ ->
+        Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
 
 decodeTask : Json.Decode.Decoder Task
 decodeTask  =
@@ -34,11 +52,25 @@ decodeTask  =
 
 decodeTodoList : Json.Decode.Decoder TodoList
 decodeTodoList  =
-    (Json.Decode.succeed (\tasks field showCompleted -> {tasks = tasks, field = field, showCompleted = showCompleted}) |> Json.Decode.Extra.andMap (Json.Decode.field "tasks" (Json.Decode.list decodeTask)) |> Json.Decode.Extra.andMap (Json.Decode.field "field" Json.Decode.string) |> Json.Decode.Extra.andMap (Json.Decode.field "showCompleted" Json.Decode.bool))
+    (Json.Decode.succeed (\tasks field visibility -> {tasks = tasks, field = field, visibility = visibility}) |> Json.Decode.Extra.andMap (Json.Decode.field "tasks" (Json.Decode.list decodeTask)) |> Json.Decode.Extra.andMap (Json.Decode.field "field" Json.Decode.string) |> Json.Decode.Extra.andMap (Json.Decode.field "visibility" decodeVisibility))
 
 randomId : Random.Generator Id
 randomId  =
     randomInt
+
+randomVisibility : Random.Generator Visibility
+randomVisibility  =
+    let
+      
+      
+      active () =
+          Random.constant Active
+      
+      
+      all () =
+          Random.constant All
+    in
+      Random.andThen ((|>) ()) (Random.uniform active [all])
 
 randomTask : Random.Generator Task
 randomTask  =
@@ -46,11 +78,23 @@ randomTask  =
 
 randomTodoList : Random.Generator TodoList
 randomTodoList  =
-    (Random.constant (\tasks field showCompleted -> {tasks = tasks, field = field, showCompleted = showCompleted}) |> Random.Extra.andMap (randomList randomTask) |> Random.Extra.andMap randomString |> Random.Extra.andMap Random.Extra.bool)
+    (Random.constant (\tasks field visibility -> {tasks = tasks, field = field, visibility = visibility}) |> Random.Extra.andMap (randomList randomTask) |> Random.Extra.andMap randomString |> Random.Extra.andMap randomVisibility)
 
 compareId : Id -> (Id -> Order)
 compareId  =
     compare
+
+compareVisibility : Visibility -> (Visibility -> Order)
+compareVisibility lhs rhs =
+    case (lhs, rhs) of
+      (Active , Active ) ->
+        EQ
+      (Active , _) ->
+        LT
+      (_, Active ) ->
+        GT
+      (All , All ) ->
+        EQ
 
 compareTask : Task -> (Task -> Order)
 compareTask  =
@@ -74,7 +118,7 @@ compareTodoList  =
       EQ  ->
         case compare lhs0.field rhs0.field of
           EQ  ->
-            compareBool lhs0.showCompleted rhs0.showCompleted
+            compareVisibility lhs0.visibility rhs0.visibility
           o1 ->
             o1
       o0 ->
@@ -84,13 +128,21 @@ viewId : Id -> Html.Html msg
 viewId  =
     viewInt
 
+viewVisibility : Visibility -> Html.Html msg
+viewVisibility  =
+    (\customTypeValue -> case customTypeValue of
+      Active  ->
+        Html.table [] []
+      All  ->
+        Html.table [] [])
+
 viewTask : Task -> Html.Html msg
 viewTask  =
     (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "id"], Html.td [] [viewId value0.id]], Html.tr [] [Html.td [] [Html.text "description"], Html.td [] [viewString value0.description]], Html.tr [] [Html.td [] [Html.text "posix"], Html.td [] [viewInt value0.posix]], Html.tr [] [Html.td [] [Html.text "completed"], Html.td [] [viewBool value0.completed]]]])
 
 viewTodoList : TodoList -> Html.Html msg
 viewTodoList  =
-    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "tasks"], Html.td [] [(viewList viewTask) value0.tasks]], Html.tr [] [Html.td [] [Html.text "field"], Html.td [] [viewString value0.field]], Html.tr [] [Html.td [] [Html.text "showCompleted"], Html.td [] [viewBool value0.showCompleted]]]])
+    (\value0 -> Html.table [] [Html.tbody [] [Html.tr [] [Html.td [] [Html.text "tasks"], Html.td [] [(viewList viewTask) value0.tasks]], Html.tr [] [Html.td [] [Html.text "field"], Html.td [] [viewString value0.field]], Html.tr [] [Html.td [] [Html.text "visibility"], Html.td [] [viewVisibility value0.visibility]]]])
 
 decodeChar : Json.Decode.Decoder Char
 decodeChar  =
