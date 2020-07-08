@@ -18,9 +18,14 @@ import Dict exposing (..)
 import Maybe exposing (..)
 
 
+type alias Id =
+    Int
+
+
 type alias Task =
-    { id : Int
+    { id : Id
     , description : String
+    , posix : Int
     , completed : Bool
     }
 
@@ -28,52 +33,5 @@ type alias Task =
 type alias TodoList =
     { tasks : List Task
     , field : String
+    , showCompleted : Bool
     }
-
-
-type Tree
-    = Leaf String
-    | Branch Tree Tree
-
-
-type Color
-    = Red
-    | Green
-    | Blue
-
-
-type Vector
-    = Vector { x : Float, y : Float }
-
-
-type alias Grid =
-    List (List Int)
-
-
-type alias Dictionary =
-    Dict String Int
-
-
-
--- type alias Many =
---     { a : Int
---     , b : String
---     , c : Float
---     , d : Bool
---     , e : Int
---     , f : String
---     , g : Float
---     , h : Bool
---     , i : Int
---     , j : String
---     , k : Float
---     , l : Bool
---     , m : Int
---     , n : String
---     , o : Float
---     , p : Bool
---     , q : Int
---     , r : String
---     , s : Float
---     , t : Bool
---     }

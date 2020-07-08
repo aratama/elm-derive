@@ -26,6 +26,21 @@ body > * > table {
   width: initial;
 }
 
+ul {
+  padding: 0;
+}
+
+li {
+  display: flex;
+  align-items: center;
+}
+
+li > * {
+  display: block;
+  border: solid 1px grey;
+  padding: 4px;
+}
+
 .elm-derive-type {
   margin: 8px;
   margin-left: 16px;
