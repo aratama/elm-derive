@@ -15,8 +15,7 @@ import TodoList.Derive
 
 
 type Msg
-    = Generated TodoList
-    | Input String
+    = Input String
     | Add Time.Posix
     | Checked Bool
     | Completed Id Bool
@@ -24,7 +23,7 @@ type Msg
 
 
 type alias Model =
-    Maybe TodoList
+    TodoList
 
 
 port save : Json.Encode.Value -> Cmd msg
@@ -32,12 +31,7 @@ port save : Json.Encode.Value -> Cmd msg
 
 withSave : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 withSave ( model, cmd ) =
-    case model of
-        Just todoList ->
-            ( model, Cmd.batch [ save <| TodoList.Derive.encodeTodoList todoList, cmd ] )
-
-        _ ->
-            ( model, cmd )
+    ( model, Cmd.batch [ save <| TodoList.Derive.encodeTodoList model, cmd ] )
 
 
 main : Program Json.Encode.Value Model Msg
@@ -47,10 +41,10 @@ main =
             \flag ->
                 case Json.Decode.decodeValue TodoList.Derive.decodeTodoList flag of
                     Err _ ->
-                        ( Nothing, Random.generate Generated TodoList.Derive.randomTodoList )
+                        ( { tasks = [], field = "", showCompleted = False }, Cmd.none )
 
-                    Ok todoList ->
-                        ( Just todoList, Cmd.none )
+                    Ok model ->
+                        ( model, Cmd.none )
         , view = view
         , update = update
         , subscriptions = always Sub.none
@@ -60,102 +54,72 @@ main =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Generated todoList ->
-            withSave ( Just todoList, Cmd.none )
-
         Input str ->
-            case model of
-                Just todoList ->
-                    withSave ( Just { todoList | field = str }, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none )
+            withSave ( { model | field = str }, Cmd.none )
 
         RequestTime ->
             ( model, Task.perform Add Time.now )
 
         Add posix ->
-            case model of
-                Just todoList ->
-                    let
-                        task =
-                            { id = List.length todoList.tasks
-                            , description = todoList.field
-                            , posix = Time.posixToMillis posix
-                            , completed = False
-                            }
-                    in
-                    withSave
-                        ( Just
-                            { todoList
-                                | field = ""
-                                , tasks = todoList.tasks ++ [ task ]
-                            }
-                        , Cmd.none
-                        )
-
-                _ ->
-                    ( model, Cmd.none )
+            let
+                task =
+                    { id = List.length model.tasks
+                    , description = model.field
+                    , posix = Time.posixToMillis posix
+                    , completed = False
+                    }
+            in
+            withSave
+                ( { model
+                    | field = ""
+                    , tasks = model.tasks ++ [ task ]
+                  }
+                , Cmd.none
+                )
 
         Checked showCompleted ->
-            case model of
-                Just todoList ->
-                    withSave ( Just { todoList | showCompleted = showCompleted }, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none )
+            withSave ( { model | showCompleted = showCompleted }, Cmd.none )
 
         Completed id completed ->
-            case model of
-                Just todoList ->
-                    withSave
-                        ( Just
-                            { todoList
-                                | tasks =
-                                    List.map
-                                        (\task ->
-                                            if task.id == id then
-                                                { task | completed = completed }
+            withSave
+                ( { model
+                    | tasks =
+                        List.map
+                            (\task ->
+                                if task.id == id then
+                                    { task | completed = completed }
 
-                                            else
-                                                task
-                                        )
-                                        todoList.tasks
-                            }
-                        , Cmd.none
-                        )
-
-                _ ->
-                    ( model, Cmd.none )
+                                else
+                                    task
+                            )
+                            model.tasks
+                  }
+                , Cmd.none
+                )
 
 
 view : Model -> Html.Html Msg
-view maybeTodoList =
-    case maybeTodoList of
-        Nothing ->
-            Html.text "Loading..."
+view model =
+    Html.div []
+        [ Html.input [ Html.value model.field, Html.onInput Input ] []
+        , Html.button [ Html.onClick RequestTime ] [ Html.text "Add" ]
+        , Html.label []
+            [ Html.input [ Html.type_ "checkbox", Html.onCheck Checked, Html.checked model.showCompleted ] []
+            , Html.text "Show Completed"
+            ]
+        , Html.table [] <|
+            List.map
+                (\task ->
+                    Html.tr []
+                        [ Html.td [] [ Html.input [ Html.type_ "checkbox", Html.checked task.completed, Html.onCheck (Completed task.id) ] [] ]
+                        , Html.td [] [ Html.text task.description ]
+                        , Html.td [] [ Html.text <| Iso8601.fromTime <| Time.millisToPosix task.posix ]
+                        ]
+                )
+                (if model.showCompleted then
+                    model.tasks
 
-        Just todoList ->
-            Html.div []
-                [ Html.input [ Html.value todoList.field, Html.onInput Input ] []
-                , Html.button [ Html.onClick RequestTime ] [ Html.text "Add" ]
-                , Html.label []
-                    [ Html.input [ Html.type_ "checkbox", Html.onCheck Checked, Html.checked todoList.showCompleted ] []
-                    , Html.text "Show Completed"
-                    ]
-                , Html.table [] <|
-                    List.map
-                        (\task ->
-                            Html.tr []
-                                [ Html.td [] [ Html.input [ Html.type_ "checkbox", Html.checked task.completed, Html.onCheck (Completed task.id) ] [] ]
-                                , Html.td [] [ Html.text task.description ]
-                                , Html.td [] [ Html.text <| Iso8601.fromTime <| Time.millisToPosix task.posix ]
-                                ]
-                        )
-                        (if todoList.showCompleted then
-                            todoList.tasks
-
-                         else
-                            List.filter (not << .completed) todoList.tasks
-                        )
-                ]
+                 else
+                    List.filter (not << .completed) model.tasks
+                )
+        ]
