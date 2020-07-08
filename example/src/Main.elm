@@ -17,8 +17,8 @@ import TodoList.Derive
 type Msg
     = Input String
     | Add Time.Posix
-    | Checked Bool
-    | Completed Id Bool
+    | ChangeVisibility String
+    | CheckCompleted Id Bool
     | RequestTime
 
 
@@ -77,20 +77,27 @@ update msg model =
                 , Cmd.none
                 )
 
-        Checked checked ->
+        ChangeVisibility visibility ->
             withSave
                 ( { model
                     | visibility =
-                        if checked then
-                            All
+                        case visibility of
+                            "All" ->
+                                All
 
-                        else
-                            Active
+                            "Active" ->
+                                Active
+
+                            "Completed" ->
+                                Completed
+
+                            _ ->
+                                model.visibility
                   }
                 , Cmd.none
                 )
 
-        Completed id completed ->
+        CheckCompleted id completed ->
             withSave
                 ( { model
                     | tasks =
@@ -116,27 +123,28 @@ view model =
                 [ Html.input [ Html.class "field", Html.value model.field, Html.onInput Input, Html.placeholder "What needs to be done?" ] []
                 , Html.button [ Html.onClick RequestTime ] [ Html.text "Add" ]
                 ]
-            , Html.label []
-                [ Html.input
-                    [ Html.type_ "checkbox"
-                    , Html.onCheck Checked
-                    , Html.checked <|
-                        case model.visibility of
-                            All ->
-                                True
-
-                            Active ->
-                                False
-                    ]
-                    []
-                , Html.text "Show Completed"
-                ]
+            , Html.div [] <|
+                List.map
+                    (\visibility ->
+                        Html.label []
+                            [ Html.input
+                                [ Html.type_ "radio"
+                                , Html.name "visibility"
+                                , Html.value <| visibilityToString visibility
+                                , Html.onInput ChangeVisibility
+                                , Html.checked <| model.visibility == visibility
+                                ]
+                                []
+                            , Html.text <| visibilityToString visibility
+                            ]
+                    )
+                    [ All, Active, Completed ]
             ]
         , Html.table [] <|
             List.map
                 (\task ->
                     Html.tr []
-                        [ Html.td [] [ Html.input [ Html.type_ "checkbox", Html.checked task.completed, Html.onCheck (Completed task.id) ] [] ]
+                        [ Html.td [] [ Html.input [ Html.type_ "checkbox", Html.checked task.completed, Html.onCheck (CheckCompleted task.id) ] [] ]
                         , Html.td [] [ Html.text task.description ]
                         , Html.td [] [ Html.text <| Iso8601.fromTime <| Time.millisToPosix task.posix ]
                         ]
@@ -147,5 +155,20 @@ view model =
 
                     Active ->
                         List.filter (not << .completed) model.tasks
+
+                    Completed ->
+                        List.filter .completed model.tasks
                 )
         ]
+
+
+visibilityToString visibility =
+    case visibility of
+        All ->
+            "All"
+
+        Active ->
+            "Active"
+
+        Completed ->
+            "Completed"

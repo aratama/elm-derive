@@ -23,6 +23,8 @@ encodeVisibility val =
         Json.Encode.object [("tag", Json.Encode.string "Active")]
       All  ->
         Json.Encode.object [("tag", Json.Encode.string "All")]
+      Completed  ->
+        Json.Encode.object [("tag", Json.Encode.string "Completed")]
 
 encodeTask : Task -> Json.Encode.Value
 encodeTask  =
@@ -43,6 +45,8 @@ decodeVisibility  =
         ((Json.Decode.succeed Active))
       "All" ->
         ((Json.Decode.succeed All))
+      "Completed" ->
+        ((Json.Decode.succeed Completed))
       _ ->
         Json.Decode.fail ("Unexpected tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
 
@@ -69,8 +73,12 @@ randomVisibility  =
       
       all () =
           Random.constant All
+      
+      
+      completed () =
+          Random.constant Completed
     in
-      Random.andThen ((|>) ()) (Random.uniform active [all])
+      Random.andThen ((|>) ()) (Random.uniform active [all, completed])
 
 randomTask : Random.Generator Task
 randomTask  =
@@ -94,6 +102,12 @@ compareVisibility lhs rhs =
       (_, Active ) ->
         GT
       (All , All ) ->
+        EQ
+      (All , _) ->
+        LT
+      (_, All ) ->
+        GT
+      (Completed , Completed ) ->
         EQ
 
 compareTask : Task -> (Task -> Order)
@@ -134,6 +148,8 @@ viewVisibility  =
       Active  ->
         Html.table [] []
       All  ->
+        Html.table [] []
+      Completed  ->
         Html.table [] [])
 
 viewTask : Task -> Html.Html msg
