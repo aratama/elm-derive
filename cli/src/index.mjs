@@ -61,9 +61,10 @@ if (target) {
   });
 
   app.ports.writeFile.subscribe((args) => {
-    //console.error(args);
+    console.log("ensureDir: " + path.dirname(args.path));
     fsx.ensureDir(path.dirname(args.path));
     try {
+      console.log("dest: " + path.resolve(dest, args.path));
       fs.writeFileSync(path.resolve(dest, args.path), args.source);
     } catch (e) {
       console.error({ dir, dest, target });
