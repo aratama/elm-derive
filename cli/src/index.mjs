@@ -66,7 +66,7 @@ if (target) {
     fsx.ensureDir(path.resolve(dest, path.dirname(args.path)));
     try {
       console.log("dest: " + path.resolve(dest, args.path));
-      fs.writeFileSync(path.resolve(dest, args.path), args.source);
+      fsx.writeFileSync(path.resolve(dest, args.path), args.source);
     } catch (e) {
       console.error({ dir, dest, target });
       console.error(args.path);

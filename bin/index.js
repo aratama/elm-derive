@@ -11549,7 +11549,7 @@ compareResult f g lhs rhs
         fs_extra.default.ensureDir(path.default.resolve(dest, path.default.dirname(args.path)));
         try {
           console.log("dest: " + path.default.resolve(dest, args.path));
-          fs.default.writeFileSync(path.default.resolve(dest, args.path), args.source);
+          fs_extra.default.writeFileSync(path.default.resolve(dest, args.path), args.source);
         } catch (e) {
           console.error({
             dir,
