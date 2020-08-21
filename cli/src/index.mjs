@@ -35,11 +35,16 @@ if (target) {
   app.ports.requestFile.subscribe((filePath) => {
     console.log({ dir });
     console.log({ filePath });
-    const buffer = fs.readFileSync(path.resolve(dir, filePath));
-    app.ports.receiveFile.send({
-      path: filePath,
-      source: buffer.toString(),
-    });
+    try {
+      const buffer = fs.readFileSync(path.resolve(dir, filePath));
+      app.ports.receiveFile.send({
+        path: filePath,
+        source: buffer.toString(),
+      });
+    } catch (e) {
+      console.error({ dir, dest, target });
+      console.error(e);
+    }
   });
 
   app.ports.exitWithError.subscribe((message) => {
