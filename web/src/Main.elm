@@ -60,6 +60,7 @@ type alias Model =
     { source : String
     , lastInputTIme : Time.Posix
     , rendered : List (Html.Html Msg)
+    , options : Derive.Options {}
     }
 
 
@@ -85,14 +86,14 @@ update msg model =
 
         Derive now ->
             if throttle <= Time.posixToMillis now - Time.posixToMillis model.lastInputTIme then
-                ( { model | rendered = render model.source }, Cmd.none )
+                ( { model | rendered = render model.options model.source }, Cmd.none )
 
             else
                 ( model, Cmd.none )
 
 
-render : String -> List (Html.Html Msg)
-render source =
+render : Derive.Options a -> String -> List (Html.Html Msg)
+render options source =
     case Elm.Parser.parse source of
         Err err ->
             [ Html.pre [ class "syntactic-error" ]
@@ -111,7 +112,7 @@ render source =
                     Elm.Processing.process Elm.Processing.init rawFile
 
                 result =
-                    Derive.generate file
+                    Derive.generate options file
             in
             [ case result of
                 Err err ->
@@ -133,12 +134,17 @@ render source =
 
 main : Program () Model Msg
 main =
+    let
+        options =
+            { encode = True, decode = True, random = True, html = True, ord = True }
+    in
     Browser.element
         { init =
             always
                 ( { source = sampleSource
                   , lastInputTIme = Time.millisToPosix 0
-                  , rendered = render sampleSource
+                  , rendered = render options sampleSource
+                  , options = options
                   }
                 , Cmd.none
                 )

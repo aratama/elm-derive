@@ -1,4 +1,4 @@
-module Derive exposing (generate)
+module Derive exposing (Options, generate)
 
 import Derive.Decoder
 import Derive.Encoder
