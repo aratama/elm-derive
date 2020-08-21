@@ -11545,8 +11545,10 @@ compareResult f g lhs rhs
         });
       });
       app.ports.writeFile.subscribe((args) => {
+        console.log("ensureDir: " + path.default.dirname(args.path));
         fs_extra.default.ensureDir(path.default.dirname(args.path));
         try {
+          console.log("dest: " + path.default.resolve(dest, args.path));
           fs.default.writeFileSync(path.default.resolve(dest, args.path), args.source);
         } catch (e) {
           console.error({
