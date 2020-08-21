@@ -29,12 +29,13 @@ const ord = all || (argv.ord ? true : false);
 
 if (target) {
   const app = elm.Elm.Main.init({
-    flags: { dir, target, encode, decode, random, html, ord },
+    flags: { target, encode, decode, random, html, ord },
   });
 
   app.ports.requestFile.subscribe((filePath) => {
     console.log({ dir });
     console.log({ filePath });
+    console.log(`reading ${path.resolve(dir, filePath)}`);
     try {
       const buffer = fs.readFileSync(path.resolve(dir, filePath));
       app.ports.receiveFile.send({
@@ -61,8 +62,8 @@ if (target) {
   });
 
   app.ports.writeFile.subscribe((args) => {
-    console.log("ensureDir: " + path.dirname(args.path));
-    fsx.ensureDir(path.dirname(args.path));
+    console.log("ensureDir: " + path.resolve(dest, path.dirname(args.path)));
+    fsx.ensureDir(path.resolve(dest, path.dirname(args.path)));
     try {
       console.log("dest: " + path.resolve(dest, args.path));
       fs.writeFileSync(path.resolve(dest, args.path), args.source);

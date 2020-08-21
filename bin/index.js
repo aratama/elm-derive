@@ -11502,7 +11502,6 @@ compareResult f g lhs rhs
     if (target) {
       const app = elm_derive.default.Elm.Main.init({
         flags: {
-          dir,
           target,
           encode,
           decode,
@@ -11518,6 +11517,7 @@ compareResult f g lhs rhs
         console.log({
           filePath
         });
+        console.log(`reading ${path.default.resolve(dir, filePath)}`);
         try {
           const buffer = fs.default.readFileSync(path.default.resolve(dir, filePath));
           app.ports.receiveFile.send({
@@ -11545,8 +11545,8 @@ compareResult f g lhs rhs
         });
       });
       app.ports.writeFile.subscribe((args) => {
-        console.log("ensureDir: " + path.default.dirname(args.path));
-        fs_extra.default.ensureDir(path.default.dirname(args.path));
+        console.log("ensureDir: " + path.default.resolve(dest, path.default.dirname(args.path)));
+        fs_extra.default.ensureDir(path.default.resolve(dest, path.default.dirname(args.path)));
         try {
           console.log("dest: " + path.default.resolve(dest, args.path));
           fs.default.writeFileSync(path.default.resolve(dest, args.path), args.source);
