@@ -9625,7 +9625,7 @@ compareResult f g lhs rhs
     };
     const processOptions = (options) => {
       const defaults = {
-        mode: 511 & ~process.umask()
+        mode: 511
       };
       if (typeof options === "number")
         options = {
@@ -10381,9 +10381,6 @@ compareResult f g lhs rhs
       assert(p);
       assert(options);
       assert(typeof cb === "function");
-      if (er) {
-        assert(er instanceof Error);
-      }
       options.chmod(p, 438, (er2) => {
         if (er2) {
           cb(er2.code === "ENOENT" ? null : er);
@@ -10404,9 +10401,6 @@ compareResult f g lhs rhs
       let stats;
       assert(p);
       assert(options);
-      if (er) {
-        assert(er instanceof Error);
-      }
       try {
         options.chmodSync(p, 438);
       } catch (er2) {
@@ -10434,9 +10428,6 @@ compareResult f g lhs rhs
     function rmdir(p, options, originalEr, cb) {
       assert(p);
       assert(options);
-      if (originalEr) {
-        assert(originalEr instanceof Error);
-      }
       assert(typeof cb === "function");
       options.rmdir(p, (er) => {
         if (er && (er.code === "ENOTEMPTY" || er.code === "EEXIST" || er.code === "EPERM")) {
@@ -10511,9 +10502,6 @@ compareResult f g lhs rhs
     function rmdirSync(p, options, originalEr) {
       assert(p);
       assert(options);
-      if (originalEr) {
-        assert(originalEr instanceof Error);
-      }
       try {
         options.rmdirSync(p);
       } catch (er) {
@@ -11524,6 +11512,12 @@ compareResult f g lhs rhs
         }
       });
       app.ports.requestFile.subscribe((filePath) => {
+        console.log({
+          dir
+        });
+        console.log({
+          filePath
+        });
         const buffer = fs.default.readFileSync(path.default.resolve(dir, filePath));
         app.ports.receiveFile.send({
           path: filePath,
@@ -11542,6 +11536,7 @@ compareResult f g lhs rhs
         });
       });
       app.ports.writeFile.subscribe((args) => {
+        console.log(args);
         fs_extra.default.ensureDir(path.default.dirname(args.path));
         fs.default.writeFileSync(path.default.resolve(dest, args.path), args.source);
       });

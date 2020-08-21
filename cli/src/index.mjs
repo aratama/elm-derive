@@ -56,9 +56,15 @@ if (target) {
   });
 
   app.ports.writeFile.subscribe((args) => {
-    console.log(args);
+    //console.error(args);
     fsx.ensureDir(path.dirname(args.path));
-    fs.writeFileSync(path.resolve(dest, args.path), args.source);
+    try {
+      fs.writeFileSync(path.resolve(dest, args.path), args.source);
+    } catch (e) {
+      console.error({ dir, dest, target });
+      console.error(args.path);
+      console.error(e);
+    }
   });
 } else {
   console.log("elm-derive v0.0.1");
