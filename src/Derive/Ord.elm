@@ -2,7 +2,6 @@ module Derive.Ord exposing (..)
 
 import Derive.Util exposing (Error, alphabet, alphabets, concatResults, nodeValue)
 import Elm.CodeGen as CodeGen exposing (..)
-import Elm.Parser.TypeAnnotation exposing (typeAnnotation)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Case, Cases, Expression(..), Function, FunctionImplementation)
 import Elm.Syntax.File exposing (File)
