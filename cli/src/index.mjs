@@ -33,6 +33,8 @@ if (target) {
   });
 
   app.ports.requestFile.subscribe((filePath) => {
+    console.log({ dir });
+    console.log({ filePath });
     const buffer = fs.readFileSync(path.resolve(dir, filePath));
     app.ports.receiveFile.send({
       path: filePath,
