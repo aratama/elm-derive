@@ -11518,11 +11518,20 @@ compareResult f g lhs rhs
         console.log({
           filePath
         });
-        const buffer = fs.default.readFileSync(path.default.resolve(dir, filePath));
-        app.ports.receiveFile.send({
-          path: filePath,
-          source: buffer.toString()
-        });
+        try {
+          const buffer = fs.default.readFileSync(path.default.resolve(dir, filePath));
+          app.ports.receiveFile.send({
+            path: filePath,
+            source: buffer.toString()
+          });
+        } catch (e) {
+          console.error({
+            dir,
+            dest,
+            target
+          });
+          console.error(e);
+        }
       });
       app.ports.exitWithError.subscribe((message) => {
         process.on("exit", function() {
@@ -11536,9 +11545,18 @@ compareResult f g lhs rhs
         });
       });
       app.ports.writeFile.subscribe((args) => {
-        console.log(args);
         fs_extra.default.ensureDir(path.default.dirname(args.path));
-        fs.default.writeFileSync(path.default.resolve(dest, args.path), args.source);
+        try {
+          fs.default.writeFileSync(path.default.resolve(dest, args.path), args.source);
+        } catch (e) {
+          console.error({
+            dir,
+            dest,
+            target
+          });
+          console.error(args.path);
+          console.error(e);
+        }
       });
     } else {
       console.log("elm-derive v0.0.1");
