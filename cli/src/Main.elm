@@ -4,6 +4,7 @@ import Derive
 import Derive.Util exposing (..)
 import Dict exposing (Dict)
 import Elm.Parser
+import Elm.Pretty
 import Elm.Processing
 import Elm.RawFile exposing (RawFile)
 import Elm.Writer
@@ -108,7 +109,7 @@ update msg model =
                                         , Cmd.batch
                                             [ Port.writeFile
                                                 { path = String.replace "." "/" targetModuleName ++ "/Derive.elm"
-                                                , source = Elm.Writer.write (Elm.Writer.writeFile generated)
+                                                , source = Elm.Pretty.pretty 120 generated
                                                 }
                                             , Port.exit ()
                                             ]

@@ -1,156 +1,140 @@
 module Derive.Decoder exposing (generateDecoder)
 
-import Derive.Util exposing (Error, alphabet, concatResults, node, nodeValue, objectConstructor)
+import Derive.Util exposing (Error, alphabet, concatResults, nodeValue, objectConstructor)
+import Elm.CodeGen as CodeGen exposing (..)
 import Elm.Syntax.Declaration exposing (Declaration(..))
-import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
 import Elm.Syntax.File exposing (File)
 import Elm.Syntax.Infix exposing (InfixDirection(..))
 import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Pattern exposing (Pattern(..))
-import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
-import Elm.Writer
 
 
 generateDecoderFromTypeAnnotation : File -> TypeAnnotation -> Result Error Expression
 generateDecoderFromTypeAnnotation file typeAnnotation =
     case typeAnnotation of
         Typed (Node _ ( [], "Bool" )) [] ->
-            Ok (FunctionOrValue [ "Json", "Decode" ] "bool")
+            Ok (fqVal [ "Json", "Decode" ] "bool")
 
         Typed (Node _ ( [], "Int" )) [] ->
-            Ok (FunctionOrValue [ "Json", "Decode" ] "int")
+            Ok (fqVal [ "Json", "Decode" ] "int")
 
         Typed (Node _ ( [], "Float" )) [] ->
-            Ok (FunctionOrValue [ "Json", "Decode" ] "float")
+            Ok (fqVal [ "Json", "Decode" ] "float")
 
         Typed (Node _ ( [], "String" )) [] ->
-            Ok (FunctionOrValue [ "Json", "Decode" ] "string")
+            Ok (fqVal [ "Json", "Decode" ] "string")
 
         Typed (Node _ ( [], "Char" )) [] ->
-            Ok (FunctionOrValue [] "decodeChar")
+            Ok (fqVal [] "decodeChar")
 
         Typed (Node _ ( [], "List" )) [ Node _ content ] ->
             generateDecoderFromTypeAnnotation file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            node <|
-                                Application
-                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "list"
-                                    , node decoder
-                                    ]
+                        parens <|
+                            apply
+                                [ fqVal [ "Json", "Decode" ] "list"
+                                , decoder
+                                ]
                     )
 
         Typed (Node _ ( [], "Array" )) [ Node _ content ] ->
             generateDecoderFromTypeAnnotation file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            node <|
-                                Application
-                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "array"
-                                    , node decoder
-                                    ]
+                        parens <|
+                            apply
+                                [ fqVal [ "Json", "Decode" ] "array"
+                                , decoder
+                                ]
                     )
 
         Typed (Node _ ( [], "Set" )) [ Node _ content ] ->
             generateDecoderFromTypeAnnotation file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            node <|
-                                Application
-                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "map"
-                                    , node <| FunctionOrValue [ "Set" ] "fromList"
-                                    , node <|
-                                        ParenthesizedExpression <|
-                                            node <|
-                                                Application
-                                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "list"
-                                                    , node decoder
-                                                    ]
-                                    ]
+                        parens <|
+                            apply
+                                [ fqVal [ "Json", "Decode" ] "map"
+                                , fqVal [ "Set" ] "fromList"
+                                , parens <|
+                                    apply
+                                        [ fqVal [ "Json", "Decode" ] "list"
+                                        , decoder
+                                        ]
+                                ]
                     )
 
         Typed (Node _ ( [], "Dict" )) [ Node _ (Typed (Node _ ( [], "String" )) _), Node _ content ] ->
             generateDecoderFromTypeAnnotation file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            node <|
-                                Application
-                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "dict"
-                                    , node decoder
-                                    ]
+                        parens <|
+                            apply
+                                [ fqVal [ "Json", "Decode" ] "dict"
+                                , decoder
+                                ]
                     )
 
         Typed (Node _ ( [], "Maybe" )) [ Node _ content ] ->
             generateDecoderFromTypeAnnotation file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            node <|
-                                Application
-                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "maybe"
-                                    , node decoder
-                                    ]
+                        parens <|
+                            apply
+                                [ fqVal [ "Json", "Decode" ] "maybe"
+                                , decoder
+                                ]
                     )
 
         Typed (Node _ ( [], "Result" )) [ Node _ err, Node _ ok ] ->
             Result.map2
                 (\errDecoder okDecoder ->
-                    ParenthesizedExpression <|
-                        node <|
-                            Application
-                                [ node <| FunctionOrValue [] "decodeResult"
-                                , node errDecoder
-                                , node okDecoder
-                                ]
+                    parens <|
+                        apply
+                            [ fqVal [] "decodeResult"
+                            , errDecoder
+                            , okDecoder
+                            ]
                 )
                 (generateDecoderFromTypeAnnotation file err)
                 (generateDecoderFromTypeAnnotation file ok)
 
         Unit ->
             Ok <|
-                ParenthesizedExpression <|
-                    node <|
-                        Application
-                            [ node <| FunctionOrValue [ "Json", "Decode" ] "succeed"
-                            , node UnitExpr
-                            ]
+                parens <|
+                    apply
+                        [ fqVal [ "Json", "Decode" ] "succeed"
+                        , unit
+                        ]
 
         Tupled [ Node _ fst, Node _ snd ] ->
             Result.map2
                 (\fstDecoder sndDecoder ->
-                    ParenthesizedExpression <|
-                        node <|
-                            Application
-                                [ node <| FunctionOrValue [ "Json", "Decode" ] "map2"
-                                , node <| FunctionOrValue [ "Tuple" ] "pair"
-                                , node <|
-                                    ParenthesizedExpression <|
-                                        node <|
-                                            Application
-                                                [ node <| FunctionOrValue [ "Json", "Decode" ] "index"
-                                                , node <| Integer 0
-                                                , node fstDecoder
-                                                ]
-                                , node <|
-                                    ParenthesizedExpression <|
-                                        node <|
-                                            Application
-                                                [ node <| FunctionOrValue [ "Json", "Decode" ] "index"
-                                                , node <| Integer 1
-                                                , node sndDecoder
-                                                ]
-                                ]
+                    parens <|
+                        apply
+                            [ fqVal [ "Json", "Decode" ] "map2"
+                            , fqVal [ "Tuple" ] "pair"
+                            , parens <|
+                                apply
+                                    [ fqVal [ "Json", "Decode" ] "index"
+                                    , int 0
+                                    , fstDecoder
+                                    ]
+                            , parens <|
+                                apply
+                                    [ fqVal [ "Json", "Decode" ] "index"
+                                    , int 1
+                                    , sndDecoder
+                                    ]
+                            ]
                 )
                 (generateDecoderFromTypeAnnotation file fst)
                 (generateDecoderFromTypeAnnotation file snd)
 
         Typed (Node _ ( [], name )) [] ->
-            Ok <| FunctionOrValue [] ("decode" ++ name)
+            Ok <| fqVal [] ("decode" ++ name)
 
         Record fields ->
             let
@@ -162,139 +146,107 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                 |> concatResults (\field -> fieldToDecoder field |> Result.map (\decoder -> { field = field, decoder = decoder }))
                 |> Result.map
                     (\fieldDecoders ->
-                        ParenthesizedExpression <|
-                            node <|
-                                case fieldDecoders of
-                                    [] ->
-                                        Application
-                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "succeed"
-                                            , node <| RecordExpr []
-                                            ]
+                        parens <|
+                            case fieldDecoders of
+                                [] ->
+                                    apply
+                                        [ fqVal [ "Json", "Decode" ] "succeed"
+                                        , record []
+                                        ]
 
-                                    [ fieldDecoder ] ->
-                                        let
-                                            recordField : RecordField
-                                            recordField =
-                                                nodeValue fieldDecoder.field
+                                [ fieldDecoder ] ->
+                                    let
+                                        recordField : RecordField
+                                        recordField =
+                                            nodeValue fieldDecoder.field
 
-                                            ( Node _ name, _ ) =
-                                                recordField
-                                        in
-                                        Application
-                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "map"
-                                            , node <| objectConstructor fields
-                                            , node <|
-                                                ParenthesizedExpression <|
-                                                    node <|
-                                                        Application
-                                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "field"
-                                                            , node <| Literal name
-                                                            , node <| fieldDecoder.decoder
-                                                            ]
-                                            ]
+                                        ( Node _ name, _ ) =
+                                            recordField
+                                    in
+                                    apply
+                                        [ fqVal [ "Json", "Decode" ] "map"
+                                        , objectConstructor fields
+                                        , parens <|
+                                            apply
+                                                [ fqVal [ "Json", "Decode" ] "field"
+                                                , string name
+                                                , fieldDecoder.decoder
+                                                ]
+                                        ]
 
-                                    _ ->
-                                        let
-                                            go : List { field : Node RecordField, decoder : Expression } -> Expression
-                                            go entries =
-                                                case entries of
-                                                    [] ->
-                                                        -- dead code
-                                                        UnitExpr
+                                _ ->
+                                    let
+                                        go : List { field : Node RecordField, decoder : Expression } -> Expression
+                                        go entries =
+                                            case entries of
+                                                [] ->
+                                                    -- dead code
+                                                    unit
 
-                                                    [ entry ] ->
-                                                        let
-                                                            (Node _ ( Node _ name, _ )) =
-                                                                entry.field
-                                                        in
-                                                        Application
-                                                            [ node <| FunctionOrValue [ "Json", "Decode", "Extra" ] "andMap"
-                                                            , node <|
-                                                                ParenthesizedExpression <|
-                                                                    node <|
-                                                                        Application
-                                                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "field"
-                                                                            , node <| Literal name
-                                                                            , node <| entry.decoder
-                                                                            ]
-                                                            ]
+                                                [ entry ] ->
+                                                    let
+                                                        (Node _ ( Node _ name, _ )) =
+                                                            entry.field
+                                                    in
+                                                    apply
+                                                        [ fqVal [ "Json", "Decode", "Extra" ] "andMap"
+                                                        , parens <|
+                                                            apply
+                                                                [ fqVal [ "Json", "Decode" ] "field"
+                                                                , string name
+                                                                , entry.decoder
+                                                                ]
+                                                        ]
 
-                                                    d :: ds ->
-                                                        let
-                                                            (Node _ ( Node _ name, _ )) =
-                                                                d.field
-                                                        in
-                                                        OperatorApplication "|>"
-                                                            Right
-                                                            (node <|
-                                                                Application
-                                                                    [ node <| FunctionOrValue [ "Json", "Decode", "Extra" ] "andMap"
-                                                                    , node <|
-                                                                        ParenthesizedExpression <|
-                                                                            node <|
-                                                                                Application
-                                                                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "field"
-                                                                                    , node <| Literal name
-                                                                                    , node d.decoder
-                                                                                    ]
+                                                d :: ds ->
+                                                    let
+                                                        (Node _ ( Node _ name, _ )) =
+                                                            d.field
+                                                    in
+                                                    applyBinOp
+                                                        (apply
+                                                            [ fqVal [ "Json", "Decode", "Extra" ] "andMap"
+                                                            , parens <|
+                                                                apply
+                                                                    [ fqVal [ "Json", "Decode" ] "field"
+                                                                    , string name
+                                                                    , d.decoder
                                                                     ]
-                                                            )
-                                                            (node <| go ds)
-                                        in
-                                        OperatorApplication "|>"
-                                            Right
-                                            (node <|
-                                                Application
-                                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "succeed"
-                                                    , node <| objectConstructor fields
-                                                    ]
-                                            )
-                                            (node <| go fieldDecoders)
+                                                            ]
+                                                        )
+                                                        piper
+                                                        (go ds)
+                                    in
+                                    applyBinOp
+                                        (apply
+                                            [ fqVal [ "Json", "Decode" ] "succeed"
+                                            , objectConstructor fields
+                                            ]
+                                        )
+                                        piper
+                                        (go fieldDecoders)
                     )
 
         _ ->
-            Err [ "Decoder: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation (node typeAnnotation)) ]
+            -- Err [ "Decoder: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation typeAnnotation) ]
+            Err [ "Decoder: Unsupported Data Type: " ]
 
 
-generateDecoderFromDeclaration : File -> Declaration -> Result Error (List Declaration)
+generateDecoderFromDeclaration : File -> Declaration -> Result Error (List CodeGen.Declaration)
 generateDecoderFromDeclaration file delaration =
-    let
-        decoderName : String -> String
-        decoderName typeName =
-            "decode" ++ typeName
-
-        functionImplementation : String -> Expression -> FunctionImplementation
-        functionImplementation typeName decoder =
-            { name = node <| decoderName typeName
-            , arguments = []
-            , expression = node decoder
-            }
-
-        signature : String -> Signature
-        signature typeName =
-            { name = node <| decoderName typeName
-            , typeAnnotation = node <| Typed (node ( [ "Json", "Decode" ], "Decoder" )) [ node <| Typed (node ( [], typeName )) [] ]
-            }
-
-        function : String -> Expression -> Function
-        function typeName decoder =
-            { documentation = Nothing
-            , signature = Just <| node <| signature typeName
-            , declaration = node <| functionImplementation typeName decoder
-            }
-    in
     case delaration of
         AliasDeclaration aliasDecl ->
             let
+                name : String
                 name =
-                    nodeValue aliasDecl.name
+                    "decode" ++ nodeValue aliasDecl.name
             in
             generateDecoderFromTypeAnnotation file (nodeValue aliasDecl.typeAnnotation)
-                |> Result.map (\decoder -> [ FunctionDeclaration <| function name decoder ])
+                |> Result.map (\decoder -> [ funDecl Nothing Nothing name [] decoder ])
 
         CustomTypeDeclaration customTypeDecl ->
             let
-                caseExpressions : Result Error (List Case)
+                caseExpressions : Result Error (List ( CodeGen.Pattern, CodeGen.Expression ))
                 caseExpressions =
                     customTypeDecl.constructors
                         |> concatResults
@@ -314,108 +266,94 @@ generateDecoderFromDeclaration file delaration =
                                     |> List.map
                                         (\{ constructor, decoders } ->
                                             let
-                                                nodeDecoders : List (Node Expression)
+                                                nodeDecoders : List Expression
                                                 nodeDecoders =
                                                     List.indexedMap
                                                         (\i d ->
-                                                            node <|
-                                                                ParenthesizedExpression <|
-                                                                    node <|
-                                                                        Application
-                                                                            [ node <| FunctionOrValue [ "Json", "Decode" ] "field"
-                                                                            , node <| Literal <| String.fromChar <| alphabet i
-                                                                            , node d
-                                                                            ]
+                                                            parens <|
+                                                                apply
+                                                                    [ fqVal [ "Json", "Decode" ] "field"
+                                                                    , string <| String.fromChar <| alphabet i
+                                                                    , d
+                                                                    ]
                                                         )
                                                         decoders
 
                                                 decoder : Expression
                                                 decoder =
-                                                    ParenthesizedExpression <|
-                                                        node <|
-                                                            case List.length decoders of
-                                                                0 ->
-                                                                    Application
-                                                                        [ node <| FunctionOrValue [ "Json", "Decode" ] "succeed"
-                                                                        , node <| FunctionOrValue [] (nodeValue constructor.name)
-                                                                        ]
+                                                    parens <|
+                                                        case List.length decoders of
+                                                            0 ->
+                                                                apply
+                                                                    [ fqVal [ "Json", "Decode" ] "succeed"
+                                                                    , fqVal [] (nodeValue constructor.name)
+                                                                    ]
 
-                                                                n ->
-                                                                    Application
-                                                                        ([ node <|
-                                                                            FunctionOrValue [ "Json", "Decode" ]
-                                                                                (case List.length decoders of
-                                                                                    1 ->
-                                                                                        "map"
+                                                            n ->
+                                                                apply
+                                                                    ([ fqVal [ "Json", "Decode" ]
+                                                                        (case List.length decoders of
+                                                                            1 ->
+                                                                                "map"
 
-                                                                                    _ ->
-                                                                                        "map" ++ String.fromInt n
-                                                                                )
-                                                                         , node <| FunctionOrValue [] (nodeValue constructor.name)
-                                                                         ]
-                                                                            ++ nodeDecoders
+                                                                            _ ->
+                                                                                "map" ++ String.fromInt n
                                                                         )
+                                                                     , fqVal [] (nodeValue constructor.name)
+                                                                     ]
+                                                                        ++ nodeDecoders
+                                                                    )
                                             in
-                                            ( node <| StringPattern <| nodeValue constructor.name
-                                            , node <| ParenthesizedExpression <| node decoder
+                                            ( stringPattern <| nodeValue constructor.name
+                                            , parens <| decoder
                                             )
                                         )
                             )
 
+                body : Result Error CodeGen.Expression
                 body =
                     caseExpressions
                         |> Result.map
                             (\cases ->
                                 let
-                                    caseExpression : Expression
+                                    caseExpression : CodeGen.Expression
                                     caseExpression =
-                                        CaseExpression
-                                            { expression = node <| FunctionOrValue [] "tag"
-                                            , cases =
-                                                cases
-                                                    ++ [ ( node <| AllPattern
-                                                         , node <|
-                                                            Application
-                                                                [ node <| FunctionOrValue [ "Json", "Decode" ] "fail"
-                                                                , node <|
-                                                                    ParenthesizedExpression <|
-                                                                        node <|
-                                                                            OperatorApplication "++"
-                                                                                Left
-                                                                                (node <| Literal "Unexpected tag name: ")
-                                                                                (node <| FunctionOrValue [] "tag")
-                                                                ]
-                                                         )
-                                                       ]
-                                            }
+                                        caseExpr
+                                            (fqVal [] "tag")
+                                            (cases
+                                                ++ [ ( allPattern
+                                                     , apply
+                                                        [ fqVal [ "Json", "Decode" ] "fail"
+                                                        , parens <|
+                                                            applyBinOp
+                                                                (string "Unexpected tag name: ")
+                                                                append
+                                                                (fqVal [] "tag")
+                                                        ]
+                                                     )
+                                                   ]
+                                            )
                                 in
-                                Application
-                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "andThen"
-                                    , node <|
-                                        ParenthesizedExpression <|
-                                            node <|
-                                                LambdaExpression
-                                                    { args = [ node <| VarPattern "tag" ]
-                                                    , expression = node <| caseExpression
-                                                    }
-                                    , node <|
-                                        ParenthesizedExpression <|
-                                            node <|
-                                                Application
-                                                    [ node <| FunctionOrValue [ "Json", "Decode" ] "field"
-                                                    , node <| Literal "tag"
-                                                    , node <| FunctionOrValue [ "Json", "Decode" ] "string"
-                                                    ]
+                                apply
+                                    [ fqVal [ "Json", "Decode" ] "andThen"
+                                    , parens <|
+                                        lambda [ varPattern "tag" ] caseExpression
+                                    , parens <|
+                                        apply
+                                            [ fqVal [ "Json", "Decode" ] "field"
+                                            , string "tag"
+                                            , fqVal [ "Json", "Decode" ] "string"
+                                            ]
                                     ]
                             )
             in
-            body |> Result.map (\b -> [ FunctionDeclaration <| function (nodeValue customTypeDecl.name) b ])
+            body |> Result.map (\b -> [ funDecl Nothing Nothing ("decode" ++ nodeValue customTypeDecl.name) [] b ])
 
         _ ->
             Ok []
 
 
-generateDecoder : File -> Result Error (List Declaration)
+generateDecoder : File -> Result Error (List CodeGen.Declaration)
 generateDecoder file =
     concatResults (\node -> generateDecoderFromDeclaration file (nodeValue node)) file.declarations
         |> Result.map List.concat

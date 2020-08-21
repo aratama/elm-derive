@@ -1,6 +1,7 @@
 module Derive.Encoder exposing (generateEncoder)
 
-import Derive.Util exposing (Error, alphabets, concatResults, functionAnnotation, node, nodeValue)
+import Derive.Util exposing (Error, alphabets, concatResults, nodeValue)
+import Elm.CodeGen as CodeGen exposing (..)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
 import Elm.Syntax.File exposing (File)
@@ -13,13 +14,13 @@ import Elm.Writer
 import Result
 
 
-generateEncoder : File -> Result Error (List Declaration)
+generateEncoder : File -> Result Error (List CodeGen.Declaration)
 generateEncoder file =
     concatResults (\node -> generateEncoderFromDeclaration file (nodeValue node)) file.declarations
         |> Result.map List.concat
 
 
-generateEncoderFromDeclaration : File -> Declaration -> Result Error (List Declaration)
+generateEncoderFromDeclaration : File -> Declaration -> Result Error (List CodeGen.Declaration)
 generateEncoderFromDeclaration file declaration =
     case declaration of
         AliasDeclaration aliasDecl ->
@@ -34,27 +35,11 @@ generateEncoderFromDeclaration file declaration =
                             name =
                                 "encode" ++ typeName
 
-                            functionImplementation : FunctionImplementation
-                            functionImplementation =
-                                { name = node <| name
-                                , arguments = []
-                                , expression = node encoder
-                                }
-
-                            signature : Signature
-                            signature =
-                                { name = node name
-                                , typeAnnotation = node <| functionAnnotation ( [], typeName ) ( [ "Json", "Encode" ], "Value" )
-                                }
-
-                            function : Function
-                            function =
-                                { documentation = Nothing
-                                , signature = Just <| node signature
-                                , declaration = node functionImplementation
-                                }
+                            ann : CodeGen.TypeAnnotation
+                            ann =
+                                funAnn (fqTyped [] typeName []) (fqTyped [ "Json", "Encode" ] "Value" [])
                         in
-                        [ FunctionDeclaration function ]
+                        [ funDecl Nothing (Just ann) name [] encoder ]
                     )
 
         CustomTypeDeclaration customTypeDecl ->
@@ -67,7 +52,7 @@ generateEncoderFromDeclaration file declaration =
                 encoderName =
                     "encode" ++ typeName
 
-                variants : List (Result Error Case)
+                variants : List (Result Error ( CodeGen.Pattern, CodeGen.Expression ))
                 variants =
                     List.map
                         (\constructorNode ->
@@ -81,18 +66,17 @@ generateEncoderFromDeclaration file declaration =
                                     alphabets (List.length constructor.arguments)
                                         |> List.map String.fromChar
 
-                                first : Expression
+                                first : CodeGen.Expression
                                 first =
-                                    TupledExpression
-                                        [ node <| Literal "tag"
-                                        , node <|
-                                            Application
-                                                [ node <| FunctionOrValue [ "Json", "Encode" ] "string"
-                                                , node <| Literal (nodeValue constructor.name)
-                                                ]
+                                    tuple
+                                        [ string "tag"
+                                        , apply
+                                            [ fqFun [ "Json", "Encode" ] "string"
+                                            , string (nodeValue constructor.name)
+                                            ]
                                         ]
 
-                                fields : Result Error (List Expression)
+                                fields : Result Error (List CodeGen.Expression)
                                 fields =
                                     constructor.arguments
                                         |> List.indexedMap (\i fieldNode -> ( i, fieldNode ))
@@ -111,30 +95,30 @@ generateEncoderFromDeclaration file declaration =
                                                                 c =
                                                                     String.fromChar (Char.fromCode (97 + i))
                                                             in
-                                                            TupledExpression
-                                                                [ node <| Literal c
-                                                                , node <| Application [ node encoder, node <| FunctionOrValue [] c ]
+                                                            tuple
+                                                                [ string c
+                                                                , apply [ encoder, fqFun [] c ]
                                                                 ]
                                                         )
                                             )
                                         |> Result.map ((::) first)
 
-                                constructorCase : Result Error Case
+                                constructorCase : Result Error ( CodeGen.Pattern, CodeGen.Expression )
                                 constructorCase =
                                     fields
                                         |> Result.map
                                             (\fs ->
                                                 let
-                                                    xs : List (Node Expression)
+                                                    xs : List CodeGen.Expression
                                                     xs =
-                                                        List.map node fs
+                                                        fs
 
-                                                    h : Node Expression
+                                                    h : CodeGen.Expression
                                                     h =
-                                                        node (FunctionOrValue [ "Json", "Encode" ] "object")
+                                                        fqFun [ "Json", "Encode" ] "object"
                                                 in
-                                                ( node <| NamedPattern { moduleName = [], name = nodeValue constructor.name } (List.map (\c -> node <| VarPattern c) abc)
-                                                , node <| Application [ h, node <| ListExpr xs ]
+                                                ( fqNamedPattern [] (nodeValue constructor.name) (List.map (\c -> varPattern c) abc)
+                                                , apply [ h, list xs ]
                                                 )
                                             )
                             in
@@ -146,27 +130,15 @@ generateEncoderFromDeclaration file declaration =
                 |> Result.map
                     (\cases ->
                         let
-                            signature : Signature
                             signature =
-                                { name = node encoderName
-                                , typeAnnotation = node <| functionAnnotation ( [], typeName ) ( [ "Json", "Encode" ], "Value" )
-                                }
+                                funAnn (fqTyped [] typeName []) (fqTyped [ "Json", "Encode" ] "Value" [])
                         in
-                        [ FunctionDeclaration
-                            { documentation = Nothing
-                            , signature = Just <| node signature
-                            , declaration =
-                                node <|
-                                    { name = node <| encoderName
-                                    , arguments = [ node <| VarPattern "val" ]
-                                    , expression =
-                                        node <|
-                                            CaseExpression
-                                                { expression = node <| FunctionOrValue [] "val"
-                                                , cases = cases
-                                                }
-                                    }
-                            }
+                        [ funDecl
+                            Nothing
+                            (Just signature)
+                            encoderName
+                            [ varPattern "val" ]
+                            (caseExpr (fqFun [] "val") cases)
                         ]
                     )
 
@@ -174,101 +146,90 @@ generateEncoderFromDeclaration file declaration =
             Ok []
 
 
-generateEncoderFromTypeAnnotation : Int -> File -> TypeAnnotation -> Result Error Expression
+generateEncoderFromTypeAnnotation : Int -> File -> TypeAnnotation -> Result Error CodeGen.Expression
 generateEncoderFromTypeAnnotation depth file typeAnnotation =
     case typeAnnotation of
         Typed (Node _ ( [], "Bool" )) [] ->
-            Ok (FunctionOrValue [ "Json", "Encode" ] "bool")
+            Ok (fqFun [ "Json", "Encode" ] "bool")
 
         Typed (Node _ ( [], "Int" )) [] ->
-            Ok (FunctionOrValue [ "Json", "Encode" ] "int")
+            Ok (fqFun [ "Json", "Encode" ] "int")
 
         Typed (Node _ ( [], "Float" )) [] ->
-            Ok (FunctionOrValue [ "Json", "Encode" ] "float")
+            Ok (fqFun [ "Json", "Encode" ] "float")
 
         Typed (Node _ ( [], "String" )) [] ->
-            Ok (FunctionOrValue [ "Json", "Encode" ] "string")
+            Ok (fqFun [ "Json", "Encode" ] "string")
 
         Typed (Node _ ( [], "Char" )) [] ->
-            Ok (FunctionOrValue [] "encodeChar")
+            Ok (fqFun [] "encodeChar")
 
         Typed (Node _ ( [], "List" )) [ Node _ content ] ->
             generateEncoderFromTypeAnnotation (depth + 1) file content
                 |> Result.map
-                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "list", node encoder ])
+                    (\encoder -> parens <| apply [ fqFun [ "Json", "Encode" ] "list", encoder ])
 
         Typed (Node _ ( [], "Array" )) [ Node _ content ] ->
             generateEncoderFromTypeAnnotation (depth + 1) file content
                 |> Result.map
-                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "array", node encoder ])
+                    (\encoder -> parens <| apply [ fqFun [ "Json", "Encode" ] "array", encoder ])
 
         Typed (Node _ ( [], "Set" )) [ Node _ content ] ->
             generateEncoderFromTypeAnnotation (depth + 1) file content
                 |> Result.map
-                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "set", node encoder ])
+                    (\encoder -> parens <| apply [ fqFun [ "Json", "Encode" ] "set", encoder ])
 
         Typed (Node _ ( [], "Dict" )) [ Node _ (Typed (Node _ ( [], "String" )) _), Node _ content ] ->
             generateEncoderFromTypeAnnotation (depth + 1) file content
                 |> Result.map
-                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [ "Json", "Encode" ] "dict", node <| FunctionOrValue [ "Basics" ] "identity", node encoder ])
+                    (\encoder -> parens <| apply [ fqFun [ "Json", "Encode" ] "dict", fqFun [ "Basics" ] "identity", encoder ])
 
         Typed (Node _ ( [], "Maybe" )) [ Node _ content ] ->
             generateEncoderFromTypeAnnotation (depth + 1) file content
                 |> Result.map
-                    (\encoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [] "encodeMaybe", node encoder ])
+                    (\encoder -> parens <| apply [ fqFun [] "encodeMaybe", encoder ])
 
         Typed (Node _ ( [], "Result" )) [ Node _ err, Node _ ok ] ->
             Result.map2
-                (\errEncoder okEncoder -> ParenthesizedExpression <| node <| Application [ node <| FunctionOrValue [] "encodeResult", node errEncoder, node okEncoder ])
+                (\errEncoder okEncoder -> parens <| apply [ fqFun [] "encodeResult", errEncoder, okEncoder ])
                 (generateEncoderFromTypeAnnotation (depth + 1) file err)
                 (generateEncoderFromTypeAnnotation (depth + 1) file ok)
 
         Unit ->
             Ok <|
-                ParenthesizedExpression <|
-                    node <|
-                        LambdaExpression
-                            { args = [ node UnitPattern ]
-                            , expression =
-                                node <|
-                                    Application
-                                        [ node <| FunctionOrValue [ "Json", "Encode" ] "list"
-                                        , node <| FunctionOrValue [ "Basics" ] "identity"
-                                        , node <| ListExpr []
-                                        ]
-                            }
+                parens <|
+                    lambda
+                        [ unitPattern ]
+                        (apply
+                            [ fqFun [ "Json", "Encode" ] "list"
+                            , fqFun [ "Basics" ] "identity"
+                            , list []
+                            ]
+                        )
 
         Tupled [ Node _ fst, Node _ snd ] ->
             Result.map2
                 (\fstEncoder sndEncoder ->
-                    ParenthesizedExpression <|
-                        node <|
-                            LambdaExpression
-                                { args = [ node <| TuplePattern [ node <| VarPattern "fst", node <| VarPattern "snd" ] ]
-                                , expression =
-                                    node <|
-                                        Application
-                                            [ node <| FunctionOrValue [ "Json", "Encode" ] "list"
-                                            , node <| FunctionOrValue [ "Basics" ] "identity"
-                                            , node <|
-                                                ListExpr
-                                                    [ node <|
-                                                        ParenthesizedExpression <|
-                                                            node <|
-                                                                Application
-                                                                    [ node <| fstEncoder
-                                                                    , node <| FunctionOrValue [] "fst"
-                                                                    ]
-                                                    , node <|
-                                                        ParenthesizedExpression <|
-                                                            node <|
-                                                                Application
-                                                                    [ node <| sndEncoder
-                                                                    , node <| FunctionOrValue [] "snd"
-                                                                    ]
-                                                    ]
+                    parens <|
+                        lambda
+                            [ tuplePattern [ varPattern "fst", varPattern "snd" ] ]
+                            (apply
+                                [ fqFun [ "Json", "Encode" ] "list"
+                                , fqFun [ "Basics" ] "identity"
+                                , list
+                                    [ parens <|
+                                        apply
+                                            [ fstEncoder
+                                            , fqFun [] "fst"
                                             ]
-                                }
+                                    , parens <|
+                                        apply
+                                            [ sndEncoder
+                                            , fqFun [] "snd"
+                                            ]
+                                    ]
+                                ]
+                            )
                 )
                 (generateEncoderFromTypeAnnotation (depth + 1) file fst)
                 (generateEncoderFromTypeAnnotation (depth + 1) file snd)
@@ -300,11 +261,11 @@ generateEncoderFromTypeAnnotation depth file typeAnnotation =
                     Err <| [ "Encoder: Unknown Data Type: `" ++ moduleMemberTypeName ++ "`" ]
 
                 _ ->
-                    Ok <| FunctionOrValue [] ("encode" ++ moduleMemberTypeName)
+                    Ok <| fqFun [] ("encode" ++ moduleMemberTypeName)
 
         Record record ->
             let
-                field : Node RecordField -> Result Error Expression
+                field : Node RecordField -> Result Error CodeGen.Expression
                 field recordFieldNode =
                     let
                         ( Node _ name, Node _ fieldTypeAnnotation ) =
@@ -313,31 +274,28 @@ generateEncoderFromTypeAnnotation depth file typeAnnotation =
                     generateEncoderFromTypeAnnotation (depth + 1) file fieldTypeAnnotation
                         |> Result.map
                             (\k ->
-                                TupledExpression
-                                    [ node <| Literal name
-                                    , node <|
-                                        Application
-                                            [ node k
-                                            , node <| RecordAccess (node <| FunctionOrValue [] <| "value" ++ String.fromInt depth) (node name)
-                                            ]
+                                tuple
+                                    [ string name
+                                    , apply
+                                        [ k
+                                        , access (fqFun [] <| "value" ++ String.fromInt depth) name
+                                        ]
                                     ]
                             )
             in
             concatResults field record
                 |> Result.map
                     (\fields ->
-                        ParenthesizedExpression <|
-                            node <|
-                                LambdaExpression
-                                    { args = [ node <| VarPattern <| "value" ++ String.fromInt depth ]
-                                    , expression =
-                                        node <|
-                                            Application
-                                                [ node <| FunctionOrValue [ "Json", "Encode" ] "object"
-                                                , node <| ListExpr <| List.map node fields
-                                                ]
-                                    }
+                        parens <|
+                            lambda
+                                [ varPattern <| "value" ++ String.fromInt depth ]
+                                (apply
+                                    [ fqFun [ "Json", "Encode" ] "object"
+                                    , list fields
+                                    ]
+                                )
                     )
 
         _ ->
-            Err [ "Encoder: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation (node typeAnnotation)) ]
+            --Err [ "Encoder: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation typeAnnotation) ]
+            Err [ "Encoder: Unsupported Data Type: " ]

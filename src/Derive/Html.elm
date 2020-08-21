@@ -1,6 +1,7 @@
 module Derive.Html exposing (generateView)
 
-import Derive.Util exposing (Error, application, concatResults, functionOrValue, node, nodeValue)
+import Derive.Util exposing (Error, concatResults, nodeValue)
+import Elm.CodeGen as CodeGen exposing (..)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Exposing exposing (Exposing(..))
 import Elm.Syntax.Expression exposing (Case, Expression(..), Function, FunctionImplementation)
@@ -14,71 +15,42 @@ import Elm.Syntax.TypeAnnotation exposing (TypeAnnotation(..))
 import Elm.Writer
 
 
-generateView : File -> Result Error (List Declaration)
+generateView : File -> Result Error (List CodeGen.Declaration)
 generateView file =
     concatResults (\node -> generateViewFromDeclaration file (nodeValue node)) file.declarations
         |> Result.map List.concat
 
 
-generateViewFromDeclaration : File -> Declaration -> Result Error (List Declaration)
+generateViewFromDeclaration : File -> Declaration -> Result Error (List CodeGen.Declaration)
 generateViewFromDeclaration file declaration =
     let
         typeName : String
         typeName =
-            nodeValue <|
-                case declaration of
-                    AliasDeclaration aliasDecl ->
-                        aliasDecl.name
+            case declaration of
+                AliasDeclaration aliasDecl ->
+                    nodeValue aliasDecl.name
 
-                    CustomTypeDeclaration customTypeDecl ->
-                        customTypeDecl.name
+                CustomTypeDeclaration customTypeDecl ->
+                    nodeValue customTypeDecl.name
 
-                    _ ->
-                        node "<<<Html: INTERNAL ERROR>>>"
+                _ ->
+                    "<<<Html: INTERNAL ERROR>>>"
 
         decoderName : String
         decoderName =
             "view" ++ typeName
 
-        functionImplementation : Expression -> FunctionImplementation
-        functionImplementation expr =
-            { name = node <| decoderName
-            , arguments = []
-            , expression = node expr
-            }
-
-        signature : Signature
-        signature =
-            { name = node <| decoderName
-            , typeAnnotation =
-                node <|
-                    FunctionTypeAnnotation
-                        (node <| Typed (node ( [], typeName )) [])
-                        (node <| Typed (node ( [ "Html" ], "Html" )) [ node <| GenericType "msg" ])
-            }
+        typeAnnotation =
+            funAnn
+                (fqTyped [] typeName [])
+                (fqTyped [ "Html" ] "Html" [ typeVar "msg" ])
     in
     case declaration of
         AliasDeclaration aliasDecl ->
-            let
-                function : Expression -> Function
-                function expr =
-                    { documentation = Nothing
-                    , signature = Just <| node <| signature
-                    , declaration = node <| functionImplementation expr
-                    }
-            in
             generateViewFromTypeAnnotation 0 file (nodeValue aliasDecl.typeAnnotation)
-                |> Result.map (\expr -> [ FunctionDeclaration <| function expr ])
+                |> Result.map (\expr -> [ funDecl Nothing (Just typeAnnotation) decoderName [] expr ])
 
         CustomTypeDeclaration customTypeDecl ->
-            let
-                function : Expression -> Function
-                function expr =
-                    { documentation = Nothing
-                    , signature = Just <| node <| signature
-                    , declaration = node <| functionImplementation expr
-                    }
-            in
             customTypeDecl.constructors
                 |> concatResults
                     (\(Node _ constructor) ->
@@ -89,69 +61,61 @@ generateViewFromDeclaration file declaration =
                 |> Result.map
                     (\pairs ->
                         let
-                            caseExpression : { constructor : ValueConstructor, view : List Expression } -> Case
+                            caseExpression : { constructor : ValueConstructor, view : List CodeGen.Expression } -> ( CodeGen.Pattern, CodeGen.Expression )
                             caseExpression pair =
-                                ( node <|
-                                    NamedPattern
-                                        { moduleName = []
-                                        , name = nodeValue pair.constructor.name
-                                        }
-                                        (List.map (node << VarPattern << String.fromChar) (Derive.Util.alphabets (List.length pair.view)))
-                                , node <|
-                                    Application
-                                        [ node <|
-                                            element "table" [] <|
-                                                List.indexedMap
-                                                    (\i field ->
-                                                        element "tr"
-                                                            []
-                                                            [ Application
-                                                                [ node field
-                                                                , node <| FunctionOrValue [] <| String.fromChar <| Derive.Util.alphabet i
-                                                                ]
-                                                            ]
-                                                    )
-                                                    pair.view
-                                        ]
+                                ( namedPattern
+                                    (nodeValue pair.constructor.name)
+                                    (List.map (varPattern << String.fromChar) (Derive.Util.alphabets (List.length pair.view)))
+                                , apply
+                                    [ element "table" [] <|
+                                        List.indexedMap
+                                            (\i field ->
+                                                element "tr"
+                                                    []
+                                                    [ apply
+                                                        [ field
+                                                        , fqFun [] <| String.fromChar <| Derive.Util.alphabet i
+                                                        ]
+                                                    ]
+                                            )
+                                            pair.view
+                                    ]
                                 )
 
-                            expr : Expression
+                            expr : CodeGen.Expression
                             expr =
-                                LambdaExpression
-                                    { args = [ node <| VarPattern "customTypeValue" ]
-                                    , expression =
-                                        node <|
-                                            CaseExpression
-                                                { expression = node <| FunctionOrValue [] "customTypeValue"
-                                                , cases = List.map caseExpression pairs
-                                                }
-                                    }
+                                lambda
+                                    [ varPattern "customTypeValue" ]
+                                    (caseExpr
+                                        (fqFun [] "customTypeValue")
+                                        (List.map caseExpression pairs)
+                                    )
                         in
-                        [ FunctionDeclaration <| function (ParenthesizedExpression <| node <| expr) ]
+                        [ funDecl Nothing (Just typeAnnotation) decoderName [] (parens <| expr) ]
                     )
 
         _ ->
             Ok []
 
 
-element : String -> List ( String, String ) -> List Expression -> Expression
+element : String -> List ( String, String ) -> List CodeGen.Expression -> CodeGen.Expression
 element name _ children =
-    Application
-        [ node <| FunctionOrValue [ "Html" ] name
-        , node <| ListExpr []
-        , node <| ListExpr <| List.map node children
+    apply
+        [ fqFun [ "Html" ] name
+        , list []
+        , list children
         ]
 
 
-text : String -> Expression
+text : String -> CodeGen.Expression
 text str =
-    Application
-        [ node <| FunctionOrValue [ "Html" ] "text"
-        , node <| Literal str
+    apply
+        [ fqFun [ "Html" ] "text"
+        , string str
         ]
 
 
-generateViewFromTypeAnnotation : Int -> File -> TypeAnnotation -> Result Error Expression
+generateViewFromTypeAnnotation : Int -> File -> TypeAnnotation -> Result Error CodeGen.Expression
 generateViewFromTypeAnnotation depth file typeAnnotation =
     case typeAnnotation of
         Record fields ->
@@ -163,56 +127,53 @@ generateViewFromTypeAnnotation depth file typeAnnotation =
                     )
                 |> Result.map
                     (\pairs ->
-                        ParenthesizedExpression <|
-                            node <|
-                                LambdaExpression
-                                    { args = [ node <| VarPattern <| "value" ++ String.fromInt depth ]
-                                    , expression =
-                                        node <|
-                                            element "table"
-                                                []
-                                                [ element "tbody"
+                        parens <|
+                            lambda
+                                [ varPattern <| "value" ++ String.fromInt depth ]
+                                (element "table"
+                                    []
+                                    [ element "tbody"
+                                        []
+                                        (List.map
+                                            (\pair ->
+                                                element "tr"
                                                     []
-                                                    (List.map
-                                                        (\pair ->
-                                                            element "tr"
-                                                                []
-                                                                [ element "td" [] [ text <| pair.name ]
-                                                                , element "td"
-                                                                    []
-                                                                    [ Application
-                                                                        [ node pair.annotation
-                                                                        , node <| RecordAccess (node <| FunctionOrValue [] <| "value" ++ String.fromInt depth) (node pair.name)
-                                                                        ]
-                                                                    ]
-                                                                ]
-                                                        )
-                                                        pairs
-                                                    )
-                                                ]
-                                    }
+                                                    [ element "td" [] [ text <| pair.name ]
+                                                    , element "td"
+                                                        []
+                                                        [ apply
+                                                            [ pair.annotation
+                                                            , access (fqFun [] <| "value" ++ String.fromInt depth) pair.name
+                                                            ]
+                                                        ]
+                                                    ]
+                                            )
+                                            pairs
+                                        )
+                                    ]
+                                )
                     )
 
         Typed (Node _ ( [], "Bool" )) [] ->
-            Ok (FunctionOrValue [] "viewBool")
+            Ok (fqFun [] "viewBool")
 
         Typed (Node _ ( [], "Int" )) [] ->
-            Ok (FunctionOrValue [] "viewInt")
+            Ok (fqFun [] "viewInt")
 
         Typed (Node _ ( [], "Float" )) [] ->
-            Ok (FunctionOrValue [] "viewFloat")
+            Ok (fqFun [] "viewFloat")
 
         Typed (Node _ ( [], "String" )) [] ->
-            Ok (FunctionOrValue [] "viewString")
+            Ok (fqFun [] "viewString")
 
         Typed (Node _ ( [], "List" )) [ Node _ content ] ->
             generateViewFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            application
-                                [ functionOrValue [] "viewList"
-                                , node decoder
+                        parens <|
+                            apply
+                                [ fqFun [] "viewList"
+                                , decoder
                                 ]
                     )
 
@@ -220,10 +181,10 @@ generateViewFromTypeAnnotation depth file typeAnnotation =
             generateViewFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            application
-                                [ functionOrValue [] "viewArray"
-                                , node decoder
+                        parens <|
+                            apply
+                                [ fqFun [] "viewArray"
+                                , decoder
                                 ]
                     )
 
@@ -231,10 +192,10 @@ generateViewFromTypeAnnotation depth file typeAnnotation =
             generateViewFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            application
-                                [ functionOrValue [] "viewSet"
-                                , node decoder
+                        parens <|
+                            apply
+                                [ fqFun [] "viewSet"
+                                , decoder
                                 ]
                     )
 
@@ -242,21 +203,21 @@ generateViewFromTypeAnnotation depth file typeAnnotation =
             generateViewFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            application
-                                [ functionOrValue [] "viewMaybe"
-                                , node decoder
+                        parens <|
+                            apply
+                                [ fqFun [] "viewMaybe"
+                                , decoder
                                 ]
                     )
 
         Typed (Node _ ( [], "Result" )) [ Node _ err, Node _ ok ] ->
             Result.map2
                 (\errView okView ->
-                    ParenthesizedExpression <|
-                        application
-                            [ functionOrValue [] "viewResult"
-                            , node errView
-                            , node okView
+                    parens <|
+                        apply
+                            [ fqFun [] "viewResult"
+                            , errView
+                            , okView
                             ]
                 )
                 (generateViewFromTypeAnnotation (depth + 1) file err)
@@ -266,38 +227,36 @@ generateViewFromTypeAnnotation depth file typeAnnotation =
             generateViewFromTypeAnnotation (depth + 1) file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            application
-                                [ functionOrValue [] "viewDict"
-                                , node decoder
+                        parens <|
+                            apply
+                                [ fqFun [] "viewDict"
+                                , decoder
                                 ]
                     )
 
         Tupled [ Node _ fst, Node _ snd ] ->
             Result.map2
                 (\fstView sndView ->
-                    ParenthesizedExpression <|
-                        node <|
-                            Application
-                                [ node <| FunctionOrValue [] "viewTuple"
-                                , node <| fstView
-                                , node <| sndView
-                                ]
+                    parens <|
+                        apply
+                            [ fqFun [] "viewTuple"
+                            , fstView
+                            , sndView
+                            ]
                 )
                 (generateViewFromTypeAnnotation (depth + 1) file fst)
                 (generateViewFromTypeAnnotation (depth + 1) file snd)
 
         Unit ->
             Ok <|
-                ParenthesizedExpression <|
-                    node <|
-                        LambdaExpression
-                            { args = [ node <| UnitPattern ]
-                            , expression = node <| element "div" [] [ text "" ]
-                            }
+                parens <|
+                    lambda
+                        [ unitPattern ]
+                        (element "div" [] [ text "" ])
 
         Typed (Node _ ( [], name )) [] ->
-            Ok <| FunctionOrValue [] ("view" ++ name)
+            Ok <| fqFun [] ("view" ++ name)
 
         _ ->
-            Err [ "Html: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation (node typeAnnotation)) ]
+            -- Err [ "Html: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation typeAnnotation) ]
+            Err [ "Html: Unsupported Data Type: " ]

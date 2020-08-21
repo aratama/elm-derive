@@ -4,6 +4,7 @@ import Browser
 import Derive
 import Derive.Util exposing (..)
 import Elm.Parser
+import Elm.Pretty
 import Elm.Processing
 import Elm.Writer
 import Html
@@ -121,7 +122,7 @@ render options source =
                 Ok generated ->
                     let
                         str =
-                            Elm.Writer.write (Elm.Writer.writeFile generated)
+                            Elm.Pretty.pretty 120 generated
                     in
                     Html.div [ class "generated" ]
                         [ SyntaxHighlight.elm str

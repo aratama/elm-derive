@@ -1,6 +1,7 @@
 module Derive.Random exposing (generateRandom)
 
-import Derive.Util exposing (Error, application, concatResults, functionOrValue, node, nodeValue, objectConstructor)
+import Derive.Util exposing (Error, concatResults, nodeValue, objectConstructor)
+import Elm.CodeGen as CodeGen exposing (..)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Expression exposing (Expression(..), Function, FunctionImplementation, LetBlock, LetDeclaration(..))
 import Elm.Syntax.File exposing (File)
@@ -13,13 +14,13 @@ import Elm.Syntax.TypeAnnotation exposing (TypeAnnotation(..))
 import Elm.Writer
 
 
-generateRandom : File -> Result Error (List Declaration)
+generateRandom : File -> Result Error (List CodeGen.Declaration)
 generateRandom file =
     concatResults (\node -> generateRandomFromDeclaration file (nodeValue node)) file.declarations
         |> Result.map List.concat
 
 
-generateRandomFromDeclaration : File -> Declaration -> Result Error (List Declaration)
+generateRandomFromDeclaration : File -> Declaration -> Result Error (List CodeGen.Declaration)
 generateRandomFromDeclaration file declaration =
     case declaration of
         AliasDeclaration aliasDecl ->
@@ -35,27 +36,10 @@ generateRandomFromDeclaration file declaration =
                             decoderName =
                                 "random" ++ typeName
 
-                            functionImplementation : FunctionImplementation
-                            functionImplementation =
-                                { name = node <| decoderName
-                                , arguments = []
-                                , expression = node decoder
-                                }
-
-                            signature : Signature
-                            signature =
-                                { name = node decoderName
-                                , typeAnnotation = node <| Typed (node <| ( [ "Random" ], "Generator" )) [ node <| Typed (node <| ( [], typeName )) [] ]
-                                }
-
-                            function : Function
-                            function =
-                                { documentation = Nothing
-                                , signature = Just <| node signature
-                                , declaration = node functionImplementation
-                                }
+                            typeAnnotation =
+                                fqTyped [ "Random" ] "Generator" [ fqTyped [] typeName [] ]
                         in
-                        [ FunctionDeclaration function ]
+                        [ funDecl Nothing (Just typeAnnotation) decoderName [] decoder ]
                     )
 
         CustomTypeDeclaration customTypeDecl ->
@@ -68,35 +52,10 @@ generateRandomFromDeclaration file declaration =
                 decoderName =
                     "random" ++ typeName
 
-                functionImplementation : Result Error FunctionImplementation
-                functionImplementation =
-                    letExpression
-                        |> Result.map
-                            (\expr ->
-                                { name = node <| decoderName
-                                , arguments = []
-                                , expression = node expr
-                                }
-                            )
+                typeAnnotation =
+                    fqTyped [ "Random" ] "Generator" [ fqTyped [] typeName [] ]
 
-                signature : Signature
-                signature =
-                    { name = node decoderName
-                    , typeAnnotation = node <| Typed (node <| ( [ "Random" ], "Generator" )) [ node <| Typed (node <| ( [], typeName )) [] ]
-                    }
-
-                function : Result Error Function
-                function =
-                    functionImplementation
-                        |> Result.map
-                            (\impl ->
-                                { documentation = Nothing
-                                , signature = Just <| node signature
-                                , declaration = node impl
-                                }
-                            )
-
-                pairs : Result Error (List { constructor : ValueConstructor, decoders : List Expression })
+                pairs : Result Error (List { constructor : ValueConstructor, decoders : List CodeGen.Expression })
                 pairs =
                     concatResults
                         (\(Node _ constructor) ->
@@ -105,7 +64,7 @@ generateRandomFromDeclaration file declaration =
                         )
                         customTypeDecl.constructors
 
-                letExpression : Result Error Expression
+                letExpression : Result Error CodeGen.Expression
                 letExpression =
                     pairs
                         |> Result.map
@@ -113,43 +72,36 @@ generateRandomFromDeclaration file declaration =
                                 let
                                     -- tree () = random.map2 Tree randomTree randomTree
                                     -- leaf () = random.map Leaf randomString
-                                    ds : List LetDeclaration
+                                    ds : List CodeGen.LetDeclaration
                                     ds =
                                         List.map
                                             (\{ constructor, decoders } ->
-                                                LetFunction
-                                                    { documentation = Nothing
-                                                    , signature = Nothing
-                                                    , declaration =
-                                                        node <|
-                                                            { name = node <| String.toLower <| nodeValue constructor.name
-                                                            , arguments = [ node UnitPattern ]
-                                                            , expression =
-                                                                node <|
-                                                                    if List.isEmpty decoders then
-                                                                        Application
-                                                                            [ node <| FunctionOrValue [ "Random" ] "constant"
-                                                                            , node <| FunctionOrValue [] <| nodeValue constructor.name
-                                                                            ]
+                                                letFunction
+                                                    (String.toLower <| nodeValue constructor.name)
+                                                    [ unitPattern ]
+                                                    (if List.isEmpty decoders then
+                                                        apply
+                                                            [ fqFun [ "Random" ] "constant"
+                                                            , fqFun [] <| nodeValue constructor.name
+                                                            ]
 
-                                                                    else
-                                                                        let
-                                                                            mapFunction =
-                                                                                case List.length decoders of
-                                                                                    1 ->
-                                                                                        "map"
+                                                     else
+                                                        let
+                                                            mapFunction =
+                                                                case List.length decoders of
+                                                                    1 ->
+                                                                        "map"
 
-                                                                                    _ ->
-                                                                                        "map" ++ String.fromInt (List.length decoders)
-                                                                        in
-                                                                        Application
-                                                                            ([ node <| FunctionOrValue [ "Random" ] mapFunction
-                                                                             , node <| FunctionOrValue [] <| nodeValue constructor.name
-                                                                             ]
-                                                                                ++ List.map node decoders
-                                                                            )
-                                                            }
-                                                    }
+                                                                    _ ->
+                                                                        "map" ++ String.fromInt (List.length decoders)
+                                                        in
+                                                        apply
+                                                            ([ fqFun [ "Random" ] mapFunction
+                                                             , fqFun [] <| nodeValue constructor.name
+                                                             ]
+                                                                ++ decoders
+                                                            )
+                                                    )
                                             )
                                             ps
 
@@ -159,141 +111,134 @@ generateRandomFromDeclaration file declaration =
                                     -- in
                                     --      Random.map ((<|) ()) (Random.uniform leaf [tree])
                                     --
-                                    letBlock : LetBlock
+                                    letBlock : CodeGen.Expression
                                     letBlock =
-                                        { declarations = List.map node ds
-                                        , expression =
-                                            case ps of
+                                        letExpr
+                                            ds
+                                            (case ps of
                                                 [] ->
-                                                    node <| Literal "<<<INTERNAL ERROR>>>"
+                                                    string "<<<INTERNAL ERROR>>>"
 
                                                 head :: tail ->
-                                                    node <|
-                                                        Application
-                                                            [ node <| FunctionOrValue [ "Random" ] "andThen"
-                                                            , node <| ParenthesizedExpression <| node <| Application [ node <| ParenthesizedExpression <| node <| Operator "|>", node UnitExpr ]
-                                                            , node <|
-                                                                ParenthesizedExpression <|
-                                                                    node <|
-                                                                        Application
-                                                                            [ node <| FunctionOrValue [ "Random" ] "uniform"
-                                                                            , node <| FunctionOrValue [] <| String.toLower <| nodeValue head.constructor.name
-                                                                            , node <| ListExpr (List.map (\t -> node <| FunctionOrValue [] <| String.toLower <| nodeValue t.constructor.name) tail)
-                                                                            ]
-                                                            ]
-                                        }
+                                                    apply
+                                                        [ fqFun [ "Random" ] "andThen"
+                                                        , parens <| apply [ parens (binOp piper), unit ]
+                                                        , parens <|
+                                                            apply
+                                                                [ fqFun [ "Random" ] "uniform"
+                                                                , fqFun [] <| String.toLower <| nodeValue head.constructor.name
+                                                                , list (List.map (\t -> fqFun [] <| String.toLower <| nodeValue t.constructor.name) tail)
+                                                                ]
+                                                        ]
+                                            )
                                 in
-                                LetExpression letBlock
+                                letBlock
                             )
             in
-            function
+            letExpression
                 |> Result.map
-                    (\f -> [ FunctionDeclaration f ])
+                    (\f -> [ funDecl Nothing (Just typeAnnotation) decoderName [] f ])
 
         _ ->
             Ok []
 
 
-generateRandomFromType : File -> TypeAnnotation -> Result Error Expression
+generateRandomFromType : File -> TypeAnnotation -> Result Error CodeGen.Expression
 generateRandomFromType file typeAnnotation =
     case typeAnnotation of
         Record fields ->
             concatResults (\(Node _ ( Node _ _, Node _ anno )) -> generateRandomFromType file anno) fields
                 |> Result.map
                     (\randoms ->
-                        ParenthesizedExpression <|
-                            node <|
-                                case List.length fields of
-                                    0 ->
-                                        Application
-                                            [ node <| FunctionOrValue [ "Random" ] "constant"
-                                            , node <| RecordExpr []
-                                            ]
+                        parens <|
+                            case List.length fields of
+                                0 ->
+                                    apply
+                                        [ fqFun [ "Random" ] "constant"
+                                        , record []
+                                        ]
 
-                                    1 ->
-                                        Application
-                                            ([ node <| FunctionOrValue [ "Random" ] "map"
-                                             , node <| objectConstructor fields
-                                             ]
-                                                ++ List.map node randoms
-                                            )
+                                1 ->
+                                    apply
+                                        ([ fqFun [ "Random" ] "map"
+                                         , objectConstructor fields
+                                         ]
+                                            ++ randoms
+                                        )
 
-                                    _ ->
-                                        let
-                                            go : List Expression -> Expression
-                                            go rs =
-                                                case rs of
-                                                    [] ->
-                                                        -- dead code
-                                                        UnitExpr
+                                _ ->
+                                    let
+                                        go : List CodeGen.Expression -> CodeGen.Expression
+                                        go rs =
+                                            case rs of
+                                                [] ->
+                                                    -- dead code
+                                                    unit
 
-                                                    [ r ] ->
-                                                        Application
-                                                            [ node <| FunctionOrValue [ "Random", "Extra" ] "andMap"
-                                                            , node <| r
+                                                [ r ] ->
+                                                    apply
+                                                        [ fqFun [ "Random", "Extra" ] "andMap"
+                                                        , r
+                                                        ]
+
+                                                x :: xs ->
+                                                    applyBinOp
+                                                        (apply
+                                                            [ fqFun [ "Random", "Extra" ] "andMap"
+                                                            , x
                                                             ]
-
-                                                    x :: xs ->
-                                                        OperatorApplication "|>"
-                                                            Right
-                                                            (node <|
-                                                                Application
-                                                                    [ node <| FunctionOrValue [ "Random", "Extra" ] "andMap"
-                                                                    , node <| x
-                                                                    ]
-                                                            )
-                                                            (node <| go xs)
-                                        in
-                                        OperatorApplication "|>"
-                                            Right
-                                            (node <|
-                                                Application
-                                                    [ node <| FunctionOrValue [ "Random" ] "constant"
-                                                    , node <| objectConstructor fields
-                                                    ]
-                                            )
-                                            (node <| go randoms)
+                                                        )
+                                                        piper
+                                                        (go xs)
+                                    in
+                                    applyBinOp
+                                        (apply
+                                            [ fqFun [ "Random" ] "constant"
+                                            , objectConstructor fields
+                                            ]
+                                        )
+                                        piper
+                                        (go randoms)
                     )
 
         Tupled [ Node _ fst, Node _ snd ] ->
             Result.map2
                 (\fstRandom sndRandom ->
-                    ParenthesizedExpression <|
-                        node <|
-                            Application
-                                [ node <| FunctionOrValue [ "Random" ] "pair"
-                                , node <| fstRandom
-                                , node <| sndRandom
-                                ]
+                    parens <|
+                        apply
+                            [ fqFun [ "Random" ] "pair"
+                            , fstRandom
+                            , sndRandom
+                            ]
                 )
                 (generateRandomFromType file fst)
                 (generateRandomFromType file snd)
 
         -- Tupled [ Node _ (Typed (Node _ fst) []), Node _ (Typed (Node _ snd) [], Node _ (Typed (Node _ trd) []) ] ->
-        --     Ok (FunctionOrValue [] "randomTuple")
+        --     Ok (fqFun [] "randomTuple")
         Typed (Node _ ( [], "Bool" )) [] ->
-            Ok (FunctionOrValue [ "Random", "Extra" ] "bool")
+            Ok (fqFun [ "Random", "Extra" ] "bool")
 
         Typed (Node _ ( [], "Int" )) [] ->
-            Ok (FunctionOrValue [] "randomInt")
+            Ok (fqFun [] "randomInt")
 
         Typed (Node _ ( [], "Float" )) [] ->
-            Ok (FunctionOrValue [] "randomFloat")
+            Ok (fqFun [] "randomFloat")
 
         Typed (Node _ ( [], "String" )) [] ->
-            Ok (FunctionOrValue [] "randomString")
+            Ok (fqFun [] "randomString")
 
         Typed (Node _ ( [], "Char" )) [] ->
-            Ok (FunctionOrValue [] "randomChar")
+            Ok (fqFun [] "randomChar")
 
         Typed (Node _ ( [], "List" )) [ Node _ content ] ->
             generateRandomFromType file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            application
-                                [ functionOrValue [] "randomList"
-                                , node decoder
+                        parens <|
+                            apply
+                                [ fqFun [] "randomList"
+                                , decoder
                                 ]
                     )
 
@@ -301,10 +246,10 @@ generateRandomFromType file typeAnnotation =
             generateRandomFromType file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            application
-                                [ functionOrValue [] "randomArray"
-                                , node decoder
+                        parens <|
+                            apply
+                                [ fqFun [] "randomArray"
+                                , decoder
                                 ]
                     )
 
@@ -312,10 +257,10 @@ generateRandomFromType file typeAnnotation =
             generateRandomFromType file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            application
-                                [ functionOrValue [] "randomSet"
-                                , node decoder
+                        parens <|
+                            apply
+                                [ fqFun [] "randomSet"
+                                , decoder
                                 ]
                     )
 
@@ -323,10 +268,10 @@ generateRandomFromType file typeAnnotation =
             generateRandomFromType file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            application
-                                [ functionOrValue [] "randomDict"
-                                , node decoder
+                        parens <|
+                            apply
+                                [ fqFun [] "randomDict"
+                                , decoder
                                 ]
                     )
 
@@ -334,23 +279,23 @@ generateRandomFromType file typeAnnotation =
             generateRandomFromType file content
                 |> Result.map
                     (\decoder ->
-                        ParenthesizedExpression <|
-                            application
-                                [ functionOrValue [ "Random", "Extra" ] "maybe"
-                                , functionOrValue [ "Random", "Extra" ] "bool"
-                                , node decoder
+                        parens <|
+                            apply
+                                [ fqFun [ "Random", "Extra" ] "maybe"
+                                , fqFun [ "Random", "Extra" ] "bool"
+                                , decoder
                                 ]
                     )
 
         Typed (Node _ ( [], "Result" )) [ Node _ err, Node _ ok ] ->
             Result.map2
                 (\errRandom okRandom ->
-                    ParenthesizedExpression <|
-                        application
-                            [ functionOrValue [ "Random", "Extra" ] "result"
-                            , functionOrValue [ "Random", "Extra" ] "bool"
-                            , node errRandom
-                            , node okRandom
+                    parens <|
+                        apply
+                            [ fqFun [ "Random", "Extra" ] "result"
+                            , fqFun [ "Random", "Extra" ] "bool"
+                            , errRandom
+                            , okRandom
                             ]
                 )
                 (generateRandomFromType file err)
@@ -358,14 +303,15 @@ generateRandomFromType file typeAnnotation =
 
         Unit ->
             Ok <|
-                ParenthesizedExpression <|
-                    application
-                        [ functionOrValue [ "Random" ] "constant"
-                        , node UnitExpr
+                parens <|
+                    apply
+                        [ fqFun [ "Random" ] "constant"
+                        , unit
                         ]
 
         Typed (Node _ ( [], name )) [] ->
-            Ok <| FunctionOrValue [] ("random" ++ name)
+            Ok <| fqFun [] ("random" ++ name)
 
         _ ->
-            Err [ "Html: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation (node typeAnnotation)) ]
+            -- Err [ "Html: Unsupported Data Type: " ++ Elm.Writer.write (Elm.Writer.writeTypeAnnotation typeAnnotation) ]
+            Err [ "Html: Unsupported Data Type: " ]

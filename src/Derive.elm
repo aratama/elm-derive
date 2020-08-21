@@ -6,6 +6,8 @@ import Derive.Html
 import Derive.Ord
 import Derive.Random
 import Derive.Util exposing (Error, concatResults, derivedModuleName, node, nodeValue)
+import Elm.CodeGen as CodeGen exposing (..)
+import Elm.DSLParser
 import Elm.Parser
 import Elm.Processing
 import Elm.Syntax.Declaration exposing (Declaration(..))
@@ -197,105 +199,60 @@ type alias Options a =
     }
 
 
-generate : Options a -> Elm.Syntax.File.File -> Result Error Elm.Syntax.File.File
+generate : Options a -> Elm.Syntax.File.File -> Result Error CodeGen.File
 generate { encode, decode, random, html, ord } file =
-    case Elm.Parser.parse template of
+    case Elm.DSLParser.parse template of
         Err _ ->
             Err [ "template parse error" ]
 
-        Ok templateRawFile ->
+        Ok templateFile ->
             let
-                templateFile =
-                    Elm.Processing.process Elm.Processing.init templateRawFile
-
                 on flag gen =
                     if flag then
                         Just gen
 
                     else
                         Nothing
+
+                generated : List (Elm.Syntax.File.File -> Result Error (List CodeGen.Declaration))
+                generated =
+                    [ on encode Derive.Encoder.generateEncoder
+                    , on decode Derive.Decoder.generateDecoder
+                    , on random Derive.Random.generateRandom
+                    , on ord Derive.Ord.generate
+                    , on html Derive.Html.generateView
+                    ]
+                        |> List.filterMap identity
             in
-            [ on encode Derive.Encoder.generateEncoder
-            , on decode Derive.Decoder.generateDecoder
-            , on random Derive.Random.generateRandom
-            , on ord Derive.Ord.generate
-            , on html Derive.Html.generateView
-            ]
-                |> List.filterMap identity
+            generated
                 |> concatResults (\gen -> gen file)
                 |> Result.map
                     (\results ->
-                        { moduleDefinition =
-                            node
-                                (NormalModule
-                                    { moduleName = node (derivedModuleName file)
-                                    , exposingList = node (All emptyRange)
-                                    }
-                                )
-                        , imports =
-                            [ node
-                                { moduleName = node [ "Dict" ]
-                                , moduleAlias = Nothing
-                                , exposingList = Nothing
-                                }
-                            , node
-                                { moduleName = node [ "Html" ]
-                                , moduleAlias = Nothing
-                                , exposingList = Nothing
-                                }
-                            , node
-                                { moduleName = node [ "Html", "Attributes" ]
-                                , moduleAlias = Nothing
-                                , exposingList = Nothing
-                                }
-                            , node
-                                { moduleName = node [ "Json", "Encode" ]
-                                , moduleAlias = Nothing
-                                , exposingList = Nothing
-                                }
-                            , node
-                                { moduleName = node [ "Json", "Decode" ]
-                                , moduleAlias = Nothing
-                                , exposingList = Nothing
-                                }
-                            , node
-                                { moduleName = node [ "Json", "Decode", "Extra" ]
-                                , moduleAlias = Nothing
-                                , exposingList = Nothing
-                                }
-                            , node
-                                { moduleName = node [ "Random" ]
-                                , moduleAlias = Nothing
-                                , exposingList = Nothing
-                                }
-                            , node
-                                { moduleName = node [ "Random", "Extra" ]
-                                , moduleAlias = Nothing
-                                , exposingList = Nothing
-                                }
-                            , node
-                                { moduleName = node [ "Array" ]
-                                , moduleAlias = Nothing
-                                , exposingList = Nothing
-                                }
-                            , node
-                                { moduleName = node [ "Set" ]
-                                , moduleAlias = Nothing
-                                , exposingList = Nothing
-                                }
-                            , node
-                                { moduleName = node <| moduleName <| nodeValue file.moduleDefinition
-                                , moduleAlias = Nothing
-                                , exposingList = Just <| node <| All emptyRange
-                                }
+                        CodeGen.file
+                            (normalModule (derivedModuleName file)
+                                [--todo
+                                ]
+                            )
+                            [ importStmt [ "Dict" ] Nothing Nothing
+                            , importStmt [ "Html" ] Nothing Nothing
+                            , importStmt [ "Html", "Attributes" ] Nothing Nothing
+                            , importStmt [ "Json", "Encode" ] Nothing Nothing
+                            , importStmt [ "Json", "Decode" ] Nothing Nothing
+                            , importStmt [ "Json", "Decode", "Extra" ] Nothing Nothing
+                            , importStmt [ "Random" ] Nothing Nothing
+                            , importStmt [ "Random", "Extra" ] Nothing Nothing
+                            , importStmt [ "Array" ] Nothing Nothing
+                            , importStmt [ "Set" ] Nothing Nothing
+                            , importStmt (moduleName <| nodeValue file.moduleDefinition) Nothing (Just exposeAll)
                             ]
-                        , declarations =
-                            List.concat
-                                [ List.map node (List.concat results)
+                            (List.concat
+                                [ List.concatMap identity results
                                 , templateFile.declarations
                                 ]
-                        , comments =
-                            [ node "-- This module is generated by elm-derive, do not edit this manually"
-                            ]
-                        }
+                            )
+                            -- (Just
+                            --     [ node "-- This module is generated by elm-derive, do not edit this manually"
+                            --     ]
+                            -- }
+                            Nothing
                     )
