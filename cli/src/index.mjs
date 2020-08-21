@@ -8,8 +8,8 @@ import minimist from "minimist";
 
 const argv = minimist(process.argv.slice(2), { boolean: true });
 
-const dir = argv.dir || ".";
-const dest = argv.dest || dir;
+const dir = argv.dir || "src";
+const dest = argv.dest || "generated";
 const target = argv._[0];
 
 const all = !(

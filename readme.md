@@ -16,10 +16,18 @@ See https://elm-derive.netlify.app/
 ## Command Line Interface
 
 ```shell
-$ npx aratama/elm-derive src/Your/Type/Decralation/Module.elm
+$ npx aratama/elm-derive --dir=src Your/Type/Decralation/Module.elm
 ```
 
 Hopefully this command will generates `src/Your/Type/Decralation/Module/Derive.elm`.
+
+- `--dir=<DIR>` Source directory. The default value is `src`.
+- `--dest=<DIR>` Destination directory. The default value is `generated`.
+- `--encode` Generate JSON encoders.
+- `--deocde` Generate JSON decoders.
+- `--random` Generate random value generators.
+- `--html` Generate simple HTML view functions.
+- `--ord` Generate comparing functions.
 
 ## TODO
 
