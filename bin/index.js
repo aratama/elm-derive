@@ -11510,28 +11510,12 @@ compareResult f g lhs rhs
           ord
         }
       });
-      app.ports.requestFile.subscribe((filePath) => {
-        console.log({
-          dir
+      app.ports.requestFile.subscribe(async (filePath) => {
+        const buffer = await fs_extra.default.readFile(path.default.resolve(dir, filePath));
+        app.ports.receiveFile.send({
+          path: filePath,
+          source: buffer.toString()
         });
-        console.log({
-          filePath
-        });
-        console.log(`reading ${path.default.resolve(dir, filePath)}`);
-        try {
-          const buffer = fs.default.readFileSync(path.default.resolve(dir, filePath));
-          app.ports.receiveFile.send({
-            path: filePath,
-            source: buffer.toString()
-          });
-        } catch (e) {
-          console.error({
-            dir,
-            dest,
-            target
-          });
-          console.error(e);
-        }
       });
       app.ports.exitWithError.subscribe((message) => {
         process.on("exit", function() {
@@ -11544,21 +11528,9 @@ compareResult f g lhs rhs
           process.exit(1);
         });
       });
-      app.ports.writeFile.subscribe((args) => {
-        console.log("ensureDir: " + path.default.resolve(dest, path.default.dirname(args.path)));
-        fs_extra.default.ensureDir(path.default.resolve(dest, path.default.dirname(args.path)));
-        try {
-          console.log("dest: " + path.default.resolve(dest, args.path));
-          fs_extra.default.writeFileSync(path.default.resolve(dest, args.path), args.source);
-        } catch (e) {
-          console.error({
-            dir,
-            dest,
-            target
-          });
-          console.error(args.path);
-          console.error(e);
-        }
+      app.ports.writeFile.subscribe(async (args) => {
+        await fs_extra.default.ensureDir(path.default.resolve(dest, path.default.dirname(args.path)));
+        await fs_extra.default.writeFile(path.default.resolve(dest, args.path), args.source);
       });
     } else {
       console.log("elm-derive v0.0.1");
