@@ -22,6 +22,11 @@ headerComment =
 
 type alias Flags =
     { target : String
+    , encode : Bool
+    , decode : Bool
+    , random : Bool
+    , html : Bool
+    , ord : Bool
     }
 
 
@@ -92,7 +97,7 @@ update msg model =
                                         Elm.Processing.process Elm.Processing.init targetRawFile
 
                                     result =
-                                        Derive.generate file
+                                        Derive.generate model.flags file
                                 in
                                 case result of
                                     Err err ->

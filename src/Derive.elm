@@ -187,8 +187,18 @@ compareResult f g lhs rhs
 """
 
 
-generate : Elm.Syntax.File.File -> Result Error Elm.Syntax.File.File
-generate file =
+type alias Options a =
+    { a
+        | encode : Bool
+        , decode : Bool
+        , random : Bool
+        , html : Bool
+        , ord : Bool
+    }
+
+
+generate : Options a -> Elm.Syntax.File.File -> Result Error Elm.Syntax.File.File
+generate { encode, decode, random, html, ord } file =
     case Elm.Parser.parse template of
         Err _ ->
             Err [ "template parse error" ]
@@ -197,13 +207,21 @@ generate file =
             let
                 templateFile =
                     Elm.Processing.process Elm.Processing.init templateRawFile
+
+                on flag gen =
+                    if flag then
+                        Just gen
+
+                    else
+                        Nothing
             in
-            [ Derive.Encoder.generateEncoder
-            , Derive.Decoder.generateDecoder
-            , Derive.Random.generateRandom
-            , Derive.Ord.generate
-            , Derive.Html.generateView
+            [ on encode Derive.Encoder.generateEncoder
+            , on decode Derive.Decoder.generateDecoder
+            , on random Derive.Random.generateRandom
+            , on ord Derive.Ord.generate
+            , on html Derive.Html.generateView
             ]
+                |> List.filterMap identity
                 |> concatResults (\gen -> gen file)
                 |> Result.map
                     (\results ->
