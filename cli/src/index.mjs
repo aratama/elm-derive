@@ -54,6 +54,7 @@ if (target) {
   });
 
   app.ports.writeFile.subscribe((args) => {
+    console.log(args);
     fsx.ensureDir(path.dirname(args.path));
     fs.writeFileSync(path.resolve(dest, args.path), args.source);
   });
