@@ -4,7 +4,7 @@
   "description": "WIP: JSON Encoder/Decoder code generator for Elm",
   "main": "",
   "bin": {
-    "elm-derive": "./bin/index.js"
+    "elm-derive": "bin/index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
