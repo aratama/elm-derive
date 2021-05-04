@@ -6,8 +6,8 @@ import Derive.Util exposing (..)
 import Elm.Parser
 import Elm.Pretty
 import Elm.Processing
-import Html exposing (Html, div, input, label, span, text)
-import Html.Attributes exposing (checked, class, type_, value)
+import Html exposing (Html, a, div, h1, input, label, span, text)
+import Html.Attributes exposing (checked, class, href, target, type_, value)
 import Html.Events exposing (onCheck)
 import List.Extra as List
 import Parser exposing (Problem(..))
@@ -213,11 +213,17 @@ view model =
             ]
         , Html.div [ class "right" ]
             [ div [ class "control" ]
-                [ deriveOption "Encode" model.deriveEncode SetDeriveEncode
-                , deriveOption "Decode" model.deriveDecode SetDeriveDecode
-                , deriveOption "Random" model.deriveRandom SetDeriveRandom
-                , deriveOption "View" model.deriveView SetDeriveView
-                , deriveOption "Compare" model.deriveCompare SetDeriveCompare
+                [ div [ class "title" ]
+                    [ h1 [] [ text "elm-derive" ]
+                    , a [ href "https://github.com/aratama/elm-derive", target "_blank" ] [ text "Repository" ]
+                    ]
+                , div []
+                    [ deriveOption "Encode" model.deriveEncode SetDeriveEncode
+                    , deriveOption "Decode" model.deriveDecode SetDeriveDecode
+                    , deriveOption "Random" model.deriveRandom SetDeriveRandom
+                    , deriveOption "View" model.deriveView SetDeriveView
+                    , deriveOption "Compare" model.deriveCompare SetDeriveCompare
+                    ]
                 ]
             , div [ class "rendered" ] model.rendered
             ]

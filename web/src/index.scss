@@ -96,6 +96,25 @@ textarea {
     background-color: rgb(51, 51, 51);
     padding: 1em;
 
+    .title {
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      justify-content: space-between;
+
+      h1 {
+        font-size: 20px;
+        display: inline-block;
+      }
+
+      a {
+        font-size: 14px;
+        color: white;
+        display: inline-block;
+      }
+    }
+
     .derive-option {
       padding: 1em;
     }
