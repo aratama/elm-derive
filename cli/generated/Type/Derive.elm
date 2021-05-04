@@ -1055,6 +1055,31 @@ viewResultType =
     viewResult viewString viewInt
 
 
+encodeMaybe : (a -> Json.Encode.Value) -> Maybe a -> Json.Encode.Value
+encodeMaybe f encodeMaybeValue =
+    case encodeMaybeValue of
+        Nothing ->
+            Json.Encode.null
+
+        Just justValue ->
+            f justValue
+
+
+encodeChar : Char -> Json.Encode.Value
+encodeChar value =
+    Json.Encode.string (String.fromChar value)
+
+
+encodeResult : (err -> Json.Encode.Value) -> (ok -> Json.Encode.Value) -> Result err ok -> Json.Encode.Value
+encodeResult errEncoder okEncoder value =
+    case value of
+        Err err ->
+            Json.Encode.object [ ( "tag", Json.Encode.string "Err" ), ( "a", errEncoder err ) ]
+
+        Ok ok ->
+            Json.Encode.object [ ( "tag", Json.Encode.string "Ok" ), ( "a", okEncoder ok ) ]
+
+
 decodeChar : Json.Decode.Decoder Char
 decodeChar =
     Json.Decode.andThen
@@ -1084,31 +1109,6 @@ decodeResult errDecoder okDecoder =
                     Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag)
         )
         (Json.Decode.field "tag" Json.Decode.string)
-
-
-encodeMaybe : (a -> Json.Encode.Value) -> Maybe a -> Json.Encode.Value
-encodeMaybe f encodeMaybeValue =
-    case encodeMaybeValue of
-        Nothing ->
-            Json.Encode.null
-
-        Just justValue ->
-            f justValue
-
-
-encodeChar : Char -> Json.Encode.Value
-encodeChar value =
-    Json.Encode.string (String.fromChar value)
-
-
-encodeResult : (err -> Json.Encode.Value) -> (ok -> Json.Encode.Value) -> Result err ok -> Json.Encode.Value
-encodeResult errEncoder okEncoder value =
-    case value of
-        Err err ->
-            Json.Encode.object [ ( "tag", Json.Encode.string "Err" ), ( "a", errEncoder err ) ]
-
-        Ok ok ->
-            Json.Encode.object [ ( "tag", Json.Encode.string "Ok" ), ( "a", okEncoder ok ) ]
 
 
 randomInt : Random.Generator Int

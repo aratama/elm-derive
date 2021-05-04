@@ -5,11 +5,9 @@ import Derive.Encoder
 import Derive.Html
 import Derive.Ord
 import Derive.Random
-import Derive.Util exposing (Error, concatResults, derivedModuleName, node, nodeValue)
+import Derive.Util exposing (Error, concatResults, derivedModuleName, nodeValue)
 import Elm.CodeGen as CodeGen exposing (..)
 import Elm.DSLParser
-import Elm.Parser
-import Elm.Processing
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Exposing exposing (Exposing(..))
 import Elm.Syntax.Expression exposing (Expression(..))
@@ -17,7 +15,6 @@ import Elm.Syntax.File
 import Elm.Syntax.Module exposing (Module(..), moduleName)
 import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Pattern exposing (Pattern(..))
-import Elm.Syntax.Range exposing (emptyRange)
 
 
 type alias Lib =
@@ -69,7 +66,7 @@ encodeResult errEncoder okEncoder value = case value of
 
 libRandom : Lib
 libRandom =
-    { imports = [ "Random", "Dict", "Set", "Random.Extra" ]
+    { imports = [ "Random", "Dict", "Set", "Random.Extra", "Array" ]
     , source =
         """
 randomInt : Random.Generator Int
