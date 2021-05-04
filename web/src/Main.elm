@@ -14,7 +14,6 @@ import List.Extra as List
 import Parser exposing (Problem(..))
 import Parser.Extra
 import Process
-import SyntaxHighlight
 import Task
 import Time
 
@@ -194,8 +193,7 @@ main =
 view : Model -> Html.Html Msg
 view model =
     Html.div [ class "root" ]
-        [ SyntaxHighlight.useTheme SyntaxHighlight.oneDark
-        , Html.div [ class "left" ]
+        [ Html.div [ class "left" ]
             [ Html.node "code-mirror"
                 [ Html.Events.on "code-mirror-input" (Decode.map Input <| Decode.field "detail" Decode.string)
                 , Html.Attributes.attribute "value" model.source
