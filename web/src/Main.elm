@@ -21,11 +21,11 @@ import Time
 sampleSource : String
 sampleSource =
     """{- 
-**elm-derive** is an experimental code generator for Elm. 
+elm-derive is an experimental code generator for Elm. 
 Put your great type definitions below and elm-derive will cook it.
 You can use the following types as a field type:
 
-* Primitive Types (Int/Float/String/Bool/Char)
+* Primitive Types (Int / Float / String / Bool / Char)
 * Custom Types / Records / Tuple / Unit
 * List a / Array a / Set comparable / Dict String a
 * Maybe a / Result err ok
@@ -35,7 +35,7 @@ elm-derive has a CLI. Try the following command in your terminal:
     $ npx aratama/elm-derive src/Your/Some/Module.Elm
 
 See https://github.com/aratama/elm-derive for more information.
-Have fun at Meta-programming in Elm! 
+Have fun :)
 -}
 
 module Example exposing (..)
@@ -233,6 +233,6 @@ view model =
 deriveOption : String -> Bool -> (Bool -> Msg) -> Html Msg
 deriveOption str val f =
     span [ class "derive-option" ]
-        [ label [] [ text str ]
-        , input [ type_ "checkbox", checked val, onCheck f ] []
+        [ input [ type_ "checkbox", checked val, onCheck f ] []
+        , label [] [ text str ]
         ]
