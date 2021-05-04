@@ -62,19 +62,24 @@ class CodeMirrorClass extends HTMLElement {
       wrapper.style["height"] = "100%";
       wrapper.style["padding"] = "1em";
 
-      setTimeout(() => {
-        this.editor?.setValue(this.getAttribute("value") || "");
-      });
+      this.editor?.setValue(this.getAttribute("value") || "");
+      if (this.hasAttribute("readonly")) {
+        this.editor?.setOption("readOnly", true);
+      }
     })();
   }
 
   static get observedAttributes() {
-    return ["value"];
+    return ["value", "readonly"];
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (this.editor && this.editor.getValue() !== newValue) {
-      this.editor.setValue(newValue);
+      if (name === "value") {
+        this.editor.setValue(newValue);
+      } else if (name == "readonly") {
+        this.editor.setOption("readOnly", true);
+      }
     }
   }
 

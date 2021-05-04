@@ -9,6 +9,7 @@ import Elm.Processing
 import Html exposing (Html, a, div, h1, input, label, span, text)
 import Html.Attributes exposing (checked, class, href, target, type_, value)
 import Html.Events exposing (onCheck)
+import Json.Decode as Decode
 import List.Extra as List
 import Parser exposing (Problem(..))
 import Parser.Extra
@@ -16,7 +17,7 @@ import Process
 import SyntaxHighlight
 import Task
 import Time
-import Json.Decode as Decode
+
 
 sampleSource : String
 sampleSource =
@@ -136,13 +137,12 @@ render : Derive.Options a -> String -> String
 render options source =
     case Elm.Parser.parse source of
         Err err ->
-            
-                    unlines
-                        [ "Syntactic Error: "
-                        , ""
-                        , unlines <| List.map (Parser.Extra.deadEndToString source) err
-                        ]
-            
+            unlines
+                [ "Syntactic Error: "
+                , ""
+                , unlines <| List.map (Parser.Extra.deadEndToString source) err
+                ]
+
         Ok rawFile ->
             let
                 file =
@@ -151,14 +151,12 @@ render options source =
                 result =
                     Derive.generate options file
             in
-             case result of
+            case result of
                 Err err ->
-                    errorToString err 
+                    errorToString err
 
                 Ok generated ->
-                           Elm.Pretty.pretty 120 generated
-                        
-            
+                    Elm.Pretty.pretty 120 generated
 
 
 main : Program () Model Msg
@@ -198,9 +196,11 @@ view model =
     Html.div [ class "root" ]
         [ SyntaxHighlight.useTheme SyntaxHighlight.oneDark
         , Html.div [ class "left" ]
-            [ Html.node "code-mirror" [
-                Html.Events.on "code-mirror-input" (Decode.map Input <| Decode.field "detail" Decode.string),
-                Html.Attributes.attribute "value" model.source ] [  ]
+            [ Html.node "code-mirror"
+                [ Html.Events.on "code-mirror-input" (Decode.map Input <| Decode.field "detail" Decode.string)
+                , Html.Attributes.attribute "value" model.source
+                ]
+                []
             ]
         , Html.div [ class "right" ]
             [ div [ class "control" ]
@@ -216,7 +216,13 @@ view model =
                     , deriveOption "Compare" model.deriveCompare SetDeriveCompare
                     ]
                 ]
-            , div [ class "rendered" ] [Html.node "code-mirror" [Html.Attributes.attribute "value" model.rendered] []]
+            , div [ class "rendered" ]
+                [ Html.node "code-mirror"
+                    [ Html.Attributes.attribute "value" model.rendered
+                    , Html.Attributes.attribute "readonly" model.rendered
+                    ]
+                    []
+                ]
             ]
         ]
 
