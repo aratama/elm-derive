@@ -19,6 +19,5 @@
     "fs-extra": "^9.0.1",
     "minimist": "^1.2.5",
     "node-elm-compiler": "^5.0.4"
-  },
-  "dependencies": {}
+  }
 }
