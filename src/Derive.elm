@@ -15,6 +15,7 @@ import Elm.Syntax.File
 import Elm.Syntax.Module exposing (Module(..), moduleName)
 import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Pattern exposing (Pattern(..))
+import List.Extra as List
 
 
 type alias Lib =
@@ -25,7 +26,7 @@ type alias Lib =
 
 libDecode : Lib
 libDecode =
-    { imports = [ "Json.Decode", "Json.Decode.Extra" ]
+    { imports = [ "Array", "Dict", "Set", "Json.Decode" ]
     , source =
         """
 decodeChar : Json.Decode.Decoder Char 
@@ -39,13 +40,17 @@ decodeResult errDecoder okDecoder =
         "Err" -> Json.Decode.map Err (Json.Decode.field "a" errDecoder)
         "Ok" -> Json.Decode.map Ok (Json.Decode.field "a" okDecoder)
         _ -> Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
+
+decodeAndMap : Json.Decode.Decoder a -> Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b
+decodeAndMap =
+    Json.Decode.map2 (|>)
 """
     }
 
 
 libEncode : Lib
 libEncode =
-    { imports = [ "Json.Encode" ]
+    { imports = [ "Array", "Dict", "Set", "Json.Encode" ]
     , source =
         """
 encodeMaybe : (a -> Json.Encode.Value) -> Maybe a -> Json.Encode.Value
@@ -66,7 +71,7 @@ encodeResult errEncoder okEncoder value = case value of
 
 libRandom : Lib
 libRandom =
-    { imports = [ "Random", "Dict", "Set", "Random.Extra", "Array" ]
+    { imports = [ "Array", "Dict", "Set", "Random", "Random.Extra" ]
     , source =
         """
 randomInt : Random.Generator Int
@@ -98,7 +103,7 @@ randomDict gen = Random.map Dict.fromList (randomList (Random.map2 (\\k v -> (k,
 
 libHtml : Lib
 libHtml =
-    { imports = [ "Html", "Html.Attributes", "Dict" ]
+    { imports = [ "Array", "Dict", "Set", "Html", "Html.Attributes" ]
     , source =
         """
 viewList : (a -> Html.Html msg) -> List a -> Html.Html msg
@@ -164,7 +169,7 @@ viewTuple fa fb (a, b) = Html.table []
 
 libCompare : Lib
 libCompare =
-    { imports = [ "Set", "Dict" ]
+    { imports = [ "Array", "Dict", "Set" ]
     , source =
         """
 compareList : (a -> a -> Order) -> List a -> List a -> Order
@@ -297,6 +302,7 @@ generate { encode, decode, random, html, ord } file =
 
                 imports =
                     List.concatMap .imports libs
+                        |> List.unique
                         |> List.sort
                         |> List.map (\mod -> importStmt [ mod ] Nothing Nothing)
             in

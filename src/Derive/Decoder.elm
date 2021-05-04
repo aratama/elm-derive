@@ -189,7 +189,7 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                                                             entry.field
                                                     in
                                                     apply
-                                                        [ fqVal [ "Json", "Decode", "Extra" ] "andMap"
+                                                        [ fqVal [] "decodeAndMap"
                                                         , parens <|
                                                             apply
                                                                 [ fqVal [ "Json", "Decode" ] "field"
@@ -205,7 +205,7 @@ generateDecoderFromTypeAnnotation file typeAnnotation =
                                                     in
                                                     applyBinOp
                                                         (apply
-                                                            [ fqVal [ "Json", "Decode", "Extra" ] "andMap"
+                                                            [ fqVal [] "decodeAndMap"
                                                             , parens <|
                                                                 apply
                                                                     [ fqVal [ "Json", "Decode" ] "field"

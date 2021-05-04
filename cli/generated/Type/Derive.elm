@@ -5,7 +5,6 @@ import Dict
 import Html
 import Html.Attributes
 import Json.Decode
-import Json.Decode.Extra
 import Json.Encode
 import Random
 import Random.Extra
@@ -190,20 +189,20 @@ encodeResultType =
 decodeTodoList =
     Json.Decode.succeed
         (\tasks field uid visibility -> { tasks = tasks, field = field, uid = uid, visibility = visibility })
-        |> Json.Decode.Extra.andMap (Json.Decode.field "tasks" (Json.Decode.list decodeTask))
-        |> Json.Decode.Extra.andMap (Json.Decode.field "field" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "uid" Json.Decode.int)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "visibility" Json.Decode.string)
+        |> decodeAndMap (Json.Decode.field "tasks" (Json.Decode.list decodeTask))
+        |> decodeAndMap (Json.Decode.field "field" Json.Decode.string)
+        |> decodeAndMap (Json.Decode.field "uid" Json.Decode.int)
+        |> decodeAndMap (Json.Decode.field "visibility" Json.Decode.string)
 
 
 decodeTask =
     Json.Decode.succeed
         (\description completed edits id -> { description = description, completed = completed, edits = edits, id = id }
         )
-        |> Json.Decode.Extra.andMap (Json.Decode.field "description" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "completed" Json.Decode.bool)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "edits" (Json.Decode.maybe Json.Decode.string))
-        |> Json.Decode.Extra.andMap (Json.Decode.field "id" Json.Decode.int)
+        |> decodeAndMap (Json.Decode.field "description" Json.Decode.string)
+        |> decodeAndMap (Json.Decode.field "completed" Json.Decode.bool)
+        |> decodeAndMap (Json.Decode.field "edits" (Json.Decode.maybe Json.Decode.string))
+        |> decodeAndMap (Json.Decode.field "id" Json.Decode.int)
 
 
 decodeTree =
@@ -251,8 +250,8 @@ decodeVector =
                         (Json.Decode.field
                             "a"
                             (Json.Decode.succeed (\x y -> { x = x, y = y })
-                                |> Json.Decode.Extra.andMap (Json.Decode.field "x" Json.Decode.float)
-                                |> Json.Decode.Extra.andMap (Json.Decode.field "y" Json.Decode.float)
+                                |> decodeAndMap (Json.Decode.field "x" Json.Decode.float)
+                                |> decodeAndMap (Json.Decode.field "y" Json.Decode.float)
                             )
                         )
 
@@ -288,8 +287,8 @@ decodeUnitType =
 
 decodeSomeRecord =
     Json.Decode.succeed (\a b -> { a = a, b = b })
-        |> Json.Decode.Extra.andMap (Json.Decode.field "a" Json.Decode.int)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "b" Json.Decode.string)
+        |> decodeAndMap (Json.Decode.field "a" Json.Decode.int)
+        |> decodeAndMap (Json.Decode.field "b" Json.Decode.string)
 
 
 decodeSmallNestedRecord =
@@ -310,12 +309,12 @@ decodeNestedRecord =
                         (Json.Decode.field
                             "c"
                             (Json.Decode.succeed (\d f -> { d = d, f = f })
-                                |> Json.Decode.Extra.andMap
+                                |> decodeAndMap
                                     (Json.Decode.field
                                         "d"
                                         (Json.Decode.map (\e -> { e = e }) (Json.Decode.field "e" Json.Decode.string))
                                     )
-                                |> Json.Decode.Extra.andMap (Json.Decode.field "f" Json.Decode.int)
+                                |> decodeAndMap (Json.Decode.field "f" Json.Decode.int)
                             )
                         )
                     )
@@ -329,16 +328,16 @@ decodeHugeRecord =
         (\a b c d e f g h i j k l m n ->
             { a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i, j = j, k = k, l = l, m = m, n = n }
         )
-        |> Json.Decode.Extra.andMap (Json.Decode.field "a" Json.Decode.int)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "b" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "c" decodeChar)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "d" Json.Decode.float)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "e" (Json.Decode.list Json.Decode.string))
-        |> Json.Decode.Extra.andMap (Json.Decode.field "f" Json.Decode.bool)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "g" (Json.Decode.dict Json.Decode.int))
-        |> Json.Decode.Extra.andMap (Json.Decode.field "h" (Json.Decode.array Json.Decode.int))
-        |> Json.Decode.Extra.andMap (Json.Decode.field "i" (Json.Decode.succeed ()))
-        |> Json.Decode.Extra.andMap
+        |> decodeAndMap (Json.Decode.field "a" Json.Decode.int)
+        |> decodeAndMap (Json.Decode.field "b" Json.Decode.string)
+        |> decodeAndMap (Json.Decode.field "c" decodeChar)
+        |> decodeAndMap (Json.Decode.field "d" Json.Decode.float)
+        |> decodeAndMap (Json.Decode.field "e" (Json.Decode.list Json.Decode.string))
+        |> decodeAndMap (Json.Decode.field "f" Json.Decode.bool)
+        |> decodeAndMap (Json.Decode.field "g" (Json.Decode.dict Json.Decode.int))
+        |> decodeAndMap (Json.Decode.field "h" (Json.Decode.array Json.Decode.int))
+        |> decodeAndMap (Json.Decode.field "i" (Json.Decode.succeed ()))
+        |> decodeAndMap
             (Json.Decode.field
                 "j"
                 (Json.Decode.map2
@@ -347,10 +346,10 @@ decodeHugeRecord =
                     (Json.Decode.index 1 Json.Decode.string)
                 )
             )
-        |> Json.Decode.Extra.andMap (Json.Decode.field "k" decodeColor)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "l" decodeTree)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "m" decodeTask)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "n" decodeEmptyRecord)
+        |> decodeAndMap (Json.Decode.field "k" decodeColor)
+        |> decodeAndMap (Json.Decode.field "l" decodeTree)
+        |> decodeAndMap (Json.Decode.field "m" decodeTask)
+        |> decodeAndMap (Json.Decode.field "n" decodeEmptyRecord)
 
 
 decodeArrayType =
@@ -1109,6 +1108,11 @@ decodeResult errDecoder okDecoder =
                     Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag)
         )
         (Json.Decode.field "tag" Json.Decode.string)
+
+
+decodeAndMap : Json.Decode.Decoder a -> Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b
+decodeAndMap =
+    Json.Decode.map2 (|>)
 
 
 randomInt : Random.Generator Int

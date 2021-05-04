@@ -3231,7 +3231,7 @@ __commonjs = {
                               var _v53 = _v52.b;
                               var _v54 = _v53.a;
                               var name3 = _v54.b;
-                              return $the_sett$elm_syntax_dsl$Elm$CodeGen$apply(_List_fromArray([A2($the_sett$elm_syntax_dsl$Elm$CodeGen$fqVal, _List_fromArray(["Json", "Decode", "Extra"]), "andMap"), $the_sett$elm_syntax_dsl$Elm$CodeGen$parens($the_sett$elm_syntax_dsl$Elm$CodeGen$apply(_List_fromArray([A2($the_sett$elm_syntax_dsl$Elm$CodeGen$fqVal, _List_fromArray(["Json", "Decode"]), "field"), $the_sett$elm_syntax_dsl$Elm$CodeGen$string(name3), entry.decoder])))]));
+                              return $the_sett$elm_syntax_dsl$Elm$CodeGen$apply(_List_fromArray([A2($the_sett$elm_syntax_dsl$Elm$CodeGen$fqVal, _List_Nil, "decodeAndMap"), $the_sett$elm_syntax_dsl$Elm$CodeGen$parens($the_sett$elm_syntax_dsl$Elm$CodeGen$apply(_List_fromArray([A2($the_sett$elm_syntax_dsl$Elm$CodeGen$fqVal, _List_fromArray(["Json", "Decode"]), "field"), $the_sett$elm_syntax_dsl$Elm$CodeGen$string(name3), entry.decoder])))]));
                             } else {
                               var d = entries.a;
                               var ds = entries.b;
@@ -3239,7 +3239,7 @@ __commonjs = {
                               var _v56 = _v55.b;
                               var _v57 = _v56.a;
                               var name3 = _v57.b;
-                              return A3($the_sett$elm_syntax_dsl$Elm$CodeGen$applyBinOp, $the_sett$elm_syntax_dsl$Elm$CodeGen$apply(_List_fromArray([A2($the_sett$elm_syntax_dsl$Elm$CodeGen$fqVal, _List_fromArray(["Json", "Decode", "Extra"]), "andMap"), $the_sett$elm_syntax_dsl$Elm$CodeGen$parens($the_sett$elm_syntax_dsl$Elm$CodeGen$apply(_List_fromArray([A2($the_sett$elm_syntax_dsl$Elm$CodeGen$fqVal, _List_fromArray(["Json", "Decode"]), "field"), $the_sett$elm_syntax_dsl$Elm$CodeGen$string(name3), d.decoder])))])), $the_sett$elm_syntax_dsl$Elm$CodeGen$piper, go(ds));
+                              return A3($the_sett$elm_syntax_dsl$Elm$CodeGen$applyBinOp, $the_sett$elm_syntax_dsl$Elm$CodeGen$apply(_List_fromArray([A2($the_sett$elm_syntax_dsl$Elm$CodeGen$fqVal, _List_Nil, "decodeAndMap"), $the_sett$elm_syntax_dsl$Elm$CodeGen$parens($the_sett$elm_syntax_dsl$Elm$CodeGen$apply(_List_fromArray([A2($the_sett$elm_syntax_dsl$Elm$CodeGen$fqVal, _List_fromArray(["Json", "Decode"]), "field"), $the_sett$elm_syntax_dsl$Elm$CodeGen$string(name3), d.decoder])))])), $the_sett$elm_syntax_dsl$Elm$CodeGen$piper, go(ds));
                             }
                           }
                         };
@@ -4094,23 +4094,23 @@ __commonjs = {
         };
       });
       var $author$project$Derive$libCompare = {
-        imports: _List_fromArray(["Set", "Dict"]),
+        imports: _List_fromArray(["Array", "Dict", "Set"]),
         source: "\ncompareList : (a -> a -> Order) -> List a -> List a -> Order\ncompareList f lhs rhs \n    = case (lhs, rhs) of \n        ([], []) -> EQ\n        (x :: xs, []) -> GT    \n        ([], y :: ys) -> LT\n        (x :: xs, y :: ys) -> \n            case f x y of \n                EQ -> compareList f xs ys\n                ret -> ret\n\ncompareMaybe : (a -> a -> Order) -> Maybe a -> Maybe a -> Order\ncompareMaybe f lhs rhs \n    = case (lhs, rhs) of \n        (Nothing, Nothing) -> EQ\n        (Nothing, Just _) -> GT    \n        (Just _, Nothing) -> LT\n        (Just x, Just y) -> f x y\n\n\ncompareBool : Bool -> Bool -> Order\ncompareBool lhs rhs \n    = case (lhs, rhs) of \n        (False, False) -> EQ\n        (False, True) -> LT\n        (True, False) -> GT\n        (True, True) -> EQ\n\ncompareSet : (comparable -> comparable -> Order) -> Set.Set comparable -> Set.Set comparable -> Order\ncompareSet f lhs rhs \n    = compareList f (Set.toList lhs) (Set.toList rhs)\n\ncompareArray : (a -> a -> Order) -> Array.Array a -> Array.Array a -> Order\ncompareArray f lhs rhs \n    = compareList f (Array.toList lhs) (Array.toList rhs)\n\ncompareDict : (a -> a -> Order) -> Dict.Dict comparable a -> Dict.Dict comparable a -> Order\ncompareDict f lhs rhs \n    = compareList (\\ls rs -> compareTuple compare f ls rs) (Dict.toList lhs) (Dict.toList rhs)\n\ncompareTuple : (a -> a -> Order) -> (b -> b -> Order) -> (a, b) -> (a, b) -> Order\ncompareTuple f g  (la, lb) (ra, rb) \n    = case f la ra of \n        EQ -> g lb rb \n        ord -> ord\n\ncompareResult : (err -> err -> Order) -> (ok -> ok -> Order) -> Result err ok -> Result err ok -> Order \ncompareResult f g lhs rhs \n    = case (lhs, rhs) of \n        (Err l, Err r) -> f l r\n        (Err _, _) -> LT\n        (_, Err _) -> GT\n        (Ok l, Ok r) -> g l r\n"
       };
       var $author$project$Derive$libDecode = {
-        imports: _List_fromArray(["Json.Decode", "Json.Decode.Extra"]),
-        source: '\ndecodeChar : Json.Decode.Decoder Char \ndecodeChar = Json.Decode.andThen (\\str -> case String.toList str of\n    [c] -> Json.Decode.succeed c\n    _ -> Json.Decode.fail "decodeChar: too many charactors for Char type") Json.Decode.string \n\ndecodeResult : Json.Decode.Decoder err -> Json.Decode.Decoder ok -> Json.Decode.Decoder (Result err ok)\ndecodeResult errDecoder okDecoder =\n    Json.Decode.andThen (\\tag -> case tag of \n        "Err" -> Json.Decode.map Err (Json.Decode.field "a" errDecoder)\n        "Ok" -> Json.Decode.map Ok (Json.Decode.field "a" okDecoder)\n        _ -> Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)\n'
+        imports: _List_fromArray(["Array", "Dict", "Set", "Json.Decode"]),
+        source: '\ndecodeChar : Json.Decode.Decoder Char \ndecodeChar = Json.Decode.andThen (\\str -> case String.toList str of\n    [c] -> Json.Decode.succeed c\n    _ -> Json.Decode.fail "decodeChar: too many charactors for Char type") Json.Decode.string \n\ndecodeResult : Json.Decode.Decoder err -> Json.Decode.Decoder ok -> Json.Decode.Decoder (Result err ok)\ndecodeResult errDecoder okDecoder =\n    Json.Decode.andThen (\\tag -> case tag of \n        "Err" -> Json.Decode.map Err (Json.Decode.field "a" errDecoder)\n        "Ok" -> Json.Decode.map Ok (Json.Decode.field "a" okDecoder)\n        _ -> Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)\n\ndecodeAndMap : Json.Decode.Decoder a -> Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b\ndecodeAndMap =\n    Json.Decode.map2 (|>)\n'
       };
       var $author$project$Derive$libEncode = {
-        imports: _List_fromArray(["Json.Encode"]),
+        imports: _List_fromArray(["Array", "Dict", "Set", "Json.Encode"]),
         source: '\nencodeMaybe : (a -> Json.Encode.Value) -> Maybe a -> Json.Encode.Value\nencodeMaybe f encodeMaybeValue = case encodeMaybeValue of \n    Nothing -> Json.Encode.null\n    Just justValue -> f justValue\n\nencodeChar : Char -> Json.Encode.Value\nencodeChar value = Json.Encode.string (String.fromChar value)\n\nencodeResult : (err -> Json.Encode.Value) -> (ok -> Json.Encode.Value) -> Result err ok -> Json.Encode.Value\nencodeResult errEncoder okEncoder value = case value of \n    Err err -> Json.Encode.object [("tag", Json.Encode.string "Err"), ("a", errEncoder err)]\n    Ok ok -> Json.Encode.object [("tag", Json.Encode.string "Ok"), ("a", okEncoder ok)]\n'
       };
       var $author$project$Derive$libHtml = {
-        imports: _List_fromArray(["Html", "Html.Attributes", "Dict"]),
+        imports: _List_fromArray(["Array", "Dict", "Set", "Html", "Html.Attributes"]),
         source: '\nviewList : (a -> Html.Html msg) -> List a -> Html.Html msg\nviewList f xs = Html.table []\n    [ Html.caption [] [Html.text "List"]\n    , Html.tbody [] (List.indexedMap (\\i x -> Html.tr [] [ Html.td [] [Html.text <| String.fromInt i], Html.td [] [f x]   ]) xs)\n    ]\n\nviewArray : (a -> Html.Html msg) -> Array.Array a -> Html.Html msg\nviewArray f xs = viewList f (Array.toList xs)\n\nviewSet : (a -> Html.Html msg) -> Set.Set a -> Html.Html msg\nviewSet f xs = viewList f (Set.toList xs)\n\nviewMaybe : (a -> Html.Html msg) -> Maybe a -> Html.Html msg\nviewMaybe f m = case m of\n    Nothing -> Html.div [Html.Attributes.class "elm-derive-maybe"] [Html.text "null"]\n    Just a -> Html.div [Html.Attributes.class "elm-derive-maybe"] [f a]\n\nviewResult : (err -> Html.Html msg) -> (ok -> Html.Html msg) -> Result err ok -> Html.Html msg \nviewResult errView okView value = case value of \n    Err err -> Html.div [Html.Attributes.class "elm-derive-result"] [errView err] \n    Ok ok -> Html.div [Html.Attributes.class "elm-derive-result"] [okView ok]\n\nviewBool : Bool -> Html.Html msg\nviewBool value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| if value then "True" else "False"]\n\nviewInt : Int -> Html.Html msg\nviewInt value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromInt value]\n\nviewString : String -> Html.Html msg\nviewString value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text value]\n\nviewChar : Char -> Html.Html msg\nviewChar value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromChar value]\n\nviewFloat : Float -> Html.Html msg\nviewFloat value = Html.div [Html.Attributes.class "elm-derive-primitive"] [Html.text <| String.fromFloat value]\n\nviewDict : (a -> Html.Html msg) -> Dict.Dict String a -> Html.Html msg\nviewDict f dict = Html.table []\n    [ Html.caption [] [Html.text "Dict"]\n    , Html.tbody [] (List.map (\\(k, v) -> Html.tr [] [Html.td [] [Html.text k], Html.td [] [f v]]) (Dict.toList dict))\n    ]\n\nviewTuple : (a -> Html.Html msg) -> (b -> Html.Html msg) -> (a, b) -> Html.Html msg\nviewTuple fa fb (a, b) = Html.table []\n    [ Html.caption [] [Html.text "Dict"]\n    , Html.tbody [] \n        [ Html.tr [] \n            [ Html.td [] [Html.text "fst"] \n            , Html.td [] [fa a]    \n            ]\n        , Html.tr [] \n            [ Html.td [] [Html.text "snd"] \n            , Html.td [] [fb b]    \n            ]\n        ]\n    ]\n'
       };
       var $author$project$Derive$libRandom = {
-        imports: _List_fromArray(["Random", "Dict", "Set", "Random.Extra", "Array"]),
+        imports: _List_fromArray(["Array", "Dict", "Set", "Random", "Random.Extra"]),
         source: `
 randomInt : Random.Generator Int
 randomInt = Random.int 0 100
@@ -7732,6 +7732,36 @@ randomDict gen = Random.map Dict.fromList (randomList (Random.map2 (\\k v -> (k,
       var $elm$core$List$sort = function(xs) {
         return A2($elm$core$List$sortBy, $elm$core$Basics$identity, xs);
       };
+      var $elm_community$list_extra$List$Extra$uniqueHelp = F4(function(f, existing, remaining, accumulator) {
+        uniqueHelp:
+          while (true) {
+            if (!remaining.b) {
+              return $elm$core$List$reverse(accumulator);
+            } else {
+              var first = remaining.a;
+              var rest = remaining.b;
+              var computedFirst = f(first);
+              if (A2($elm$core$Set$member, computedFirst, existing)) {
+                var $temp$f = f, $temp$existing = existing, $temp$remaining = rest, $temp$accumulator = accumulator;
+                f = $temp$f;
+                existing = $temp$existing;
+                remaining = $temp$remaining;
+                accumulator = $temp$accumulator;
+                continue uniqueHelp;
+              } else {
+                var $temp$f = f, $temp$existing = A2($elm$core$Set$insert, computedFirst, existing), $temp$remaining = rest, $temp$accumulator = A2($elm$core$List$cons, first, accumulator);
+                f = $temp$f;
+                existing = $temp$existing;
+                remaining = $temp$remaining;
+                accumulator = $temp$accumulator;
+                continue uniqueHelp;
+              }
+            }
+          }
+      });
+      var $elm_community$list_extra$List$Extra$unique = function(list) {
+        return A4($elm_community$list_extra$List$Extra$uniqueHelp, $elm$core$Basics$identity, $elm$core$Set$empty, list, _List_Nil);
+      };
       var $author$project$Derive$generate = F2(function(_v0, file) {
         var encode = _v0.encode;
         var decode = _v0.decode;
@@ -7752,9 +7782,9 @@ randomDict gen = Random.map Dict.fromList (randomList (Random.map2 (\\k v -> (k,
           });
           var imports = A2($elm$core$List$map, function(mod) {
             return A3($the_sett$elm_syntax_dsl$Elm$CodeGen$importStmt, _List_fromArray([mod]), $elm$core$Maybe$Nothing, $elm$core$Maybe$Nothing);
-          }, $elm$core$List$sort(A2($elm$core$List$concatMap, function($) {
+          }, $elm$core$List$sort($elm_community$list_extra$List$Extra$unique(A2($elm$core$List$concatMap, function($) {
             return $.imports;
-          }, libs)));
+          }, libs))));
           var generated = A2($elm$core$List$filterMap, $elm$core$Basics$identity, _List_fromArray([A2(on, encode, $author$project$Derive$Encoder$generateEncoder), A2(on, decode, $author$project$Derive$Decoder$generateDecoder), A2(on, random, $author$project$Derive$Random$generateRandom), A2(on, ord, $author$project$Derive$Ord$generate), A2(on, html, $author$project$Derive$Html$generateView)]));
           return A2($elm$core$Result$map, function(results) {
             return A4($the_sett$elm_syntax_dsl$Elm$CodeGen$file, A2($the_sett$elm_syntax_dsl$Elm$CodeGen$normalModule, $author$project$Derive$Util$derivedModuleName(file), _List_Nil), _Utils_ap(imports, _List_fromArray([A3($the_sett$elm_syntax_dsl$Elm$CodeGen$importStmt, $stil4m$elm_syntax$Elm$Syntax$Module$moduleName($author$project$Derive$Util$nodeValue(file.moduleDefinition)), $elm$core$Maybe$Nothing, $elm$core$Maybe$Just($the_sett$elm_syntax_dsl$Elm$CodeGen$exposeAll))])), $elm$core$List$concat(_List_fromArray([A2($elm$core$List$concatMap, $elm$core$Basics$identity, results), templateFile.declarations])), $elm$core$Maybe$Nothing);
