@@ -16,7 +16,7 @@ import Process
 import SyntaxHighlight
 import Task
 import Time
-
+import Json.Decode as Decode
 
 sampleSource : String
 sampleSource =
@@ -209,7 +209,9 @@ view model =
     Html.div [ class "root" ]
         [ SyntaxHighlight.useTheme SyntaxHighlight.oneDark
         , Html.div [ class "left" ]
-            [ Html.textarea [ Html.Events.onInput Input ] [ Html.text <| model.source ]
+            [ Html.node "code-mirror" [
+                Html.Events.on "code-mirror-input" (Decode.map Input <| Decode.field "detail" Decode.string),
+                Html.Attributes.attribute "value" model.source ] [  ]
             ]
         , Html.div [ class "right" ]
             [ div [ class "control" ]
