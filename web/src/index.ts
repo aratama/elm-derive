@@ -26,6 +26,14 @@ class CodeMirrorClass extends HTMLElement {
         "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.0/mode/javascript/javascript.min.js"
       );
 
+      const style = this.shadow.ownerDocument.createElement("style");
+      style.textContent = `
+      .CodeMirror {
+        line-height:21px;
+        font-family: Fira Code;
+      }`;
+      this.shadow.appendChild(style);
+
       const root = this.shadow.ownerDocument.createElement("div");
       root.style["width"] = "100%";
       root.style["height"] = "100%";
@@ -33,7 +41,7 @@ class CodeMirrorClass extends HTMLElement {
       this.shadow.appendChild(root);
 
       this.editor = CodeMirror(root, {
-        value: this.getAttribute("value") || "",
+        value: "",
         mode: "elm",
         theme: "material-ocean",
       });
@@ -53,11 +61,18 @@ class CodeMirrorClass extends HTMLElement {
       wrapper.style["width"] = "100%";
       wrapper.style["height"] = "100%";
       wrapper.style["padding"] = "1em";
+
+      setTimeout(() => {
+        this.editor?.setValue(this.getAttribute("value") || "");
+      });
     })();
   }
 
+  static get observedAttributes() {
+    return ["value"];
+  }
+
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    debugger;
     if (this.editor && this.editor.getValue() !== newValue) {
       this.editor.setValue(newValue);
     }

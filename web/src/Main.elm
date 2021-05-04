@@ -59,7 +59,7 @@ type alias Task =
 type alias Model =
     { source : String
     , lastInputTIme : Time.Posix
-    , rendered : List (Html.Html Msg)
+    , rendered : String
     , options : Derive.Options {}
     , deriveEncode : Bool
     , deriveDecode : Bool
@@ -82,7 +82,7 @@ type Msg
 
 throttle : Int
 throttle =
-    300
+    150
 
 
 derive : Model -> Model
@@ -132,20 +132,17 @@ update msg model =
             ( derive { model | deriveCompare = val }, Cmd.none )
 
 
-render : Derive.Options a -> String -> List (Html.Html Msg)
+render : Derive.Options a -> String -> String
 render options source =
     case Elm.Parser.parse source of
         Err err ->
-            [ Html.pre [ class "syntactic-error" ]
-                [ Html.text <|
+            
                     unlines
                         [ "Syntactic Error: "
                         , ""
                         , unlines <| List.map (Parser.Extra.deadEndToString source) err
                         ]
-                ]
-            ]
-
+            
         Ok rawFile ->
             let
                 file =
@@ -154,22 +151,14 @@ render options source =
                 result =
                     Derive.generate options file
             in
-            [ case result of
+             case result of
                 Err err ->
-                    Html.pre [ class "generation-error" ] [ Html.text <| errorToString err ]
+                    errorToString err 
 
                 Ok generated ->
-                    let
-                        str =
-                            Elm.Pretty.pretty 120 generated
-                    in
-                    Html.div [ class "generated" ]
-                        [ SyntaxHighlight.elm str
-                            |> Result.map (SyntaxHighlight.toBlockHtml (Just 1))
-                            |> Result.withDefault
-                                (Html.pre [] [ Html.code [] [ Html.text str ] ])
-                        ]
-            ]
+                           Elm.Pretty.pretty 120 generated
+                        
+            
 
 
 main : Program () Model Msg
@@ -227,7 +216,7 @@ view model =
                     , deriveOption "Compare" model.deriveCompare SetDeriveCompare
                     ]
                 ]
-            , div [ class "rendered" ] model.rendered
+            , div [ class "rendered" ] [Html.node "code-mirror" [Html.Attributes.attribute "value" model.rendered] []]
             ]
         ]
 
