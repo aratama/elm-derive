@@ -350,8 +350,12 @@ generateDecoderFromDeclaration file delaration =
                                             ]
                                     ]
                             )
+
+                ann : CodeGen.TypeAnnotation
+                ann =
+                    CodeGen.fqTyped [ "Json", "Decode" ] "Decoder" [ CodeGen.fqTyped [] (nodeValue customTypeDecl.name) [] ]
             in
-            body |> Result.map (\b -> [ funDecl Nothing Nothing ("decode" ++ nodeValue customTypeDecl.name) [] b ])
+            body |> Result.map (\b -> [ funDecl Nothing (Just ann) ("decode" ++ nodeValue customTypeDecl.name) [] b ])
 
         _ ->
             Ok []

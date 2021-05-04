@@ -207,6 +207,7 @@ decodeTask =
         |> decodeAndMap (Json.Decode.field "id" Json.Decode.int)
 
 
+decodeTree : Json.Decode.Decoder Tree
 decodeTree =
     Json.Decode.andThen
         (\tag ->
@@ -223,6 +224,7 @@ decodeTree =
         (Json.Decode.field "tag" Json.Decode.string)
 
 
+decodeColor : Json.Decode.Decoder Color
 decodeColor =
     Json.Decode.andThen
         (\tag ->
@@ -242,6 +244,7 @@ decodeColor =
         (Json.Decode.field "tag" Json.Decode.string)
 
 
+decodeVector : Json.Decode.Decoder Vector
 decodeVector =
     Json.Decode.andThen
         (\tag ->
