@@ -186,6 +186,7 @@ encodeResultType =
     encodeResult Json.Encode.string Json.Encode.int
 
 
+decodeTodoList : Json.Decode.Decoder TodoList
 decodeTodoList =
     Json.Decode.succeed
         (\tasks field uid visibility -> { tasks = tasks, field = field, uid = uid, visibility = visibility })
@@ -195,6 +196,7 @@ decodeTodoList =
         |> decodeAndMap (Json.Decode.field "visibility" Json.Decode.string)
 
 
+decodeTask : Json.Decode.Decoder Task
 decodeTask =
     Json.Decode.succeed
         (\description completed edits id -> { description = description, completed = completed, edits = edits, id = id }
@@ -261,40 +263,49 @@ decodeVector =
         (Json.Decode.field "tag" Json.Decode.string)
 
 
+decodeGrid : Json.Decode.Decoder Grid
 decodeGrid =
     Json.Decode.list (Json.Decode.list Json.Decode.int)
 
 
+decodeDictionary : Json.Decode.Decoder Dictionary
 decodeDictionary =
     Json.Decode.dict Json.Decode.int
 
 
+decodeEmptyRecord : Json.Decode.Decoder EmptyRecord
 decodeEmptyRecord =
     Json.Decode.succeed {}
 
 
+decodePair : Json.Decode.Decoder Pair
 decodePair =
     Json.Decode.map2 Tuple.pair (Json.Decode.index 0 Json.Decode.int) (Json.Decode.index 1 Json.Decode.string)
 
 
+decodeCharType : Json.Decode.Decoder CharType
 decodeCharType =
     decodeChar
 
 
+decodeUnitType : Json.Decode.Decoder UnitType
 decodeUnitType =
     Json.Decode.succeed ()
 
 
+decodeSomeRecord : Json.Decode.Decoder SomeRecord
 decodeSomeRecord =
     Json.Decode.succeed (\a b -> { a = a, b = b })
         |> decodeAndMap (Json.Decode.field "a" Json.Decode.int)
         |> decodeAndMap (Json.Decode.field "b" Json.Decode.string)
 
 
+decodeSmallNestedRecord : Json.Decode.Decoder SmallNestedRecord
 decodeSmallNestedRecord =
     Json.Decode.map (\b -> { b = b }) (Json.Decode.field "b" Json.Decode.int)
 
 
+decodeNestedRecord : Json.Decode.Decoder NestedRecord
 decodeNestedRecord =
     Json.Decode.map
         (\a -> { a = a })
@@ -323,6 +334,7 @@ decodeNestedRecord =
         )
 
 
+decodeHugeRecord : Json.Decode.Decoder HugeRecord
 decodeHugeRecord =
     Json.Decode.succeed
         (\a b c d e f g h i j k l m n ->
@@ -352,14 +364,17 @@ decodeHugeRecord =
         |> decodeAndMap (Json.Decode.field "n" decodeEmptyRecord)
 
 
+decodeArrayType : Json.Decode.Decoder ArrayType
 decodeArrayType =
     Json.Decode.array Json.Decode.string
 
 
+decodeSetType : Json.Decode.Decoder SetType
 decodeSetType =
     Json.Decode.map Set.fromList (Json.Decode.list Json.Decode.string)
 
 
+decodeResultType : Json.Decode.Decoder ResultType
 decodeResultType =
     decodeResult Json.Decode.string Json.Decode.int
 

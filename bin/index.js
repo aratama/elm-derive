@@ -3275,8 +3275,9 @@ __commonjs = {
           case "AliasDeclaration":
             var aliasDecl = delaration.a;
             var name = "decode" + $author$project$Derive$Util$nodeValue(aliasDecl.name);
+            var ann = A3($the_sett$elm_syntax_dsl$Elm$CodeGen$fqTyped, _List_fromArray(["Json", "Decode"]), "Decoder", _List_fromArray([A3($the_sett$elm_syntax_dsl$Elm$CodeGen$fqTyped, _List_Nil, $author$project$Derive$Util$nodeValue(aliasDecl.name), _List_Nil)]));
             return A2($elm$core$Result$map, function(decoder) {
-              return _List_fromArray([A5($the_sett$elm_syntax_dsl$Elm$CodeGen$funDecl, $elm$core$Maybe$Nothing, $elm$core$Maybe$Nothing, name, _List_Nil, decoder)]);
+              return _List_fromArray([A5($the_sett$elm_syntax_dsl$Elm$CodeGen$funDecl, $elm$core$Maybe$Nothing, $elm$core$Maybe$Just(ann), name, _List_Nil, decoder)]);
             }, A2($author$project$Derive$Decoder$generateDecoderFromTypeAnnotation, file, $author$project$Derive$Util$nodeValue(aliasDecl.typeAnnotation)));
           case "CustomTypeDeclaration":
             var customTypeDecl = delaration.a;
