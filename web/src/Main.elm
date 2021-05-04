@@ -6,8 +6,8 @@ import Derive.Util exposing (..)
 import Elm.Parser
 import Elm.Pretty
 import Elm.Processing
-import Html exposing (Html, a, div, h1, input, label, span, text)
-import Html.Attributes exposing (checked, class, href, target, type_, value)
+import Html exposing (Html, a, div, h1, img, input, label, span, text)
+import Html.Attributes exposing (checked, class, href, src, target, type_, value)
 import Html.Events exposing (onCheck)
 import Json.Decode as Decode
 import List.Extra as List
@@ -206,7 +206,9 @@ view model =
             [ div [ class "control" ]
                 [ div [ class "title" ]
                     [ h1 [] [ text "elm-derive" ]
-                    , a [ href "https://github.com/aratama/elm-derive", target "_blank" ] [ text "Repository" ]
+                    , a [ href "https://twitter.com/intent/tweet?text=elm-derive%3A%20Encoder%2FDecoder%20Generator%20from%20Type%20Definitions&url=https://elm-derive.netlify.app/", target "_blank" ]
+                        [ img [ class "share", src "twitter.svg" ] []
+                        ]
                     ]
                 , div []
                     [ deriveOption "Encode" model.deriveEncode SetDeriveEncode

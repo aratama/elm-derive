@@ -162,6 +162,17 @@ code-mirror {
   min-height: 100vh;
 }
 
+.share {
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+  border-radius: 3px;
+
+  &:hover {
+    background-color: rgb(204, 204, 204);
+  }
+}
+
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;
