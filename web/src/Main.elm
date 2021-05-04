@@ -6,10 +6,9 @@ import Derive.Util exposing (..)
 import Elm.Parser
 import Elm.Pretty
 import Elm.Processing
-import Elm.Writer
-import Html
-import Html.Attributes exposing (class)
-import Html.Events
+import Html exposing (Html, div, input, label, span, text)
+import Html.Attributes exposing (checked, class, type_, value)
+import Html.Events exposing (onCheck)
 import List.Extra as List
 import Parser exposing (Problem(..))
 import Parser.Extra
@@ -62,6 +61,11 @@ type alias Model =
     , lastInputTIme : Time.Posix
     , rendered : List (Html.Html Msg)
     , options : Derive.Options {}
+    , deriveEncode : Bool
+    , deriveDecode : Bool
+    , deriveRandom : Bool
+    , deriveView : Bool
+    , deriveCompare : Bool
     }
 
 
@@ -69,11 +73,31 @@ type Msg
     = Input String
     | Now Time.Posix
     | Derive Time.Posix
+    | SetDeriveEncode Bool
+    | SetDeriveDecode Bool
+    | SetDeriveRandom Bool
+    | SetDeriveView Bool
+    | SetDeriveCompare Bool
 
 
 throttle : Int
 throttle =
     300
+
+
+derive : Model -> Model
+derive model =
+    { model
+        | rendered =
+            render
+                { encode = model.deriveEncode
+                , decode = model.deriveDecode
+                , random = model.deriveRandom
+                , html = model.deriveView
+                , ord = model.deriveCompare
+                }
+                model.source
+    }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -87,10 +111,25 @@ update msg model =
 
         Derive now ->
             if throttle <= Time.posixToMillis now - Time.posixToMillis model.lastInputTIme then
-                ( { model | rendered = render model.options model.source }, Cmd.none )
+                ( derive model, Cmd.none )
 
             else
                 ( model, Cmd.none )
+
+        SetDeriveEncode val ->
+            ( derive { model | deriveEncode = val }, Cmd.none )
+
+        SetDeriveDecode val ->
+            ( derive { model | deriveDecode = val }, Cmd.none )
+
+        SetDeriveRandom val ->
+            ( derive { model | deriveRandom = val }, Cmd.none )
+
+        SetDeriveView val ->
+            ( derive { model | deriveView = val }, Cmd.none )
+
+        SetDeriveCompare val ->
+            ( derive { model | deriveCompare = val }, Cmd.none )
 
 
 render : Derive.Options a -> String -> List (Html.Html Msg)
@@ -137,7 +176,12 @@ main : Program () Model Msg
 main =
     let
         options =
-            { encode = True, decode = True, random = True, html = True, ord = True }
+            { encode = True
+            , decode = True
+            , random = True
+            , html = True
+            , ord = True
+            }
     in
     Browser.element
         { init =
@@ -146,6 +190,11 @@ main =
                   , lastInputTIme = Time.millisToPosix 0
                   , rendered = render options sampleSource
                   , options = options
+                  , deriveEncode = True
+                  , deriveDecode = True
+                  , deriveRandom = True
+                  , deriveView = True
+                  , deriveCompare = True
                   }
                 , Cmd.none
                 )
@@ -162,5 +211,22 @@ view model =
         , Html.div [ class "left" ]
             [ Html.textarea [ Html.Events.onInput Input ] [ Html.text <| model.source ]
             ]
-        , Html.div [ class "right" ] model.rendered
+        , Html.div [ class "right" ]
+            [ div [ class "control" ]
+                [ deriveOption "Encode" model.deriveEncode SetDeriveEncode
+                , deriveOption "Decode" model.deriveDecode SetDeriveDecode
+                , deriveOption "Random" model.deriveRandom SetDeriveRandom
+                , deriveOption "View" model.deriveView SetDeriveView
+                , deriveOption "Compare" model.deriveCompare SetDeriveCompare
+                ]
+            , div [ class "rendered" ] model.rendered
+            ]
+        ]
+
+
+deriveOption : String -> Bool -> (Bool -> Msg) -> Html Msg
+deriveOption str val f =
+    span [ class "derive-option" ]
+        [ label [] [ text str ]
+        , input [ type_ "checkbox", checked val, onCheck f ] []
         ]

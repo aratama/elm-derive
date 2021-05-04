@@ -20,11 +20,17 @@ import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Range exposing (emptyRange)
 
 
-template : String
-template =
-    """
-module Template exposing (..)
+type alias Lib =
+    { imports : List String
+    , source : String
+    }
 
+
+libDecode : Lib
+libDecode =
+    { imports = [ "Json.Decode", "Json.Decode.Extra" ]
+    , source =
+        """
 decodeChar : Json.Decode.Decoder Char 
 decodeChar = Json.Decode.andThen (\\str -> case String.toList str of
     [c] -> Json.Decode.succeed c
@@ -36,7 +42,15 @@ decodeResult errDecoder okDecoder =
         "Err" -> Json.Decode.map Err (Json.Decode.field "a" errDecoder)
         "Ok" -> Json.Decode.map Ok (Json.Decode.field "a" okDecoder)
         _ -> Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
+"""
+    }
 
+
+libEncode : Lib
+libEncode =
+    { imports = [ "Json.Encode" ]
+    , source =
+        """
 encodeMaybe : (a -> Json.Encode.Value) -> Maybe a -> Json.Encode.Value
 encodeMaybe f encodeMaybeValue = case encodeMaybeValue of 
     Nothing -> Json.Encode.null
@@ -49,7 +63,15 @@ encodeResult : (err -> Json.Encode.Value) -> (ok -> Json.Encode.Value) -> Result
 encodeResult errEncoder okEncoder value = case value of 
     Err err -> Json.Encode.object [("tag", Json.Encode.string "Err"), ("a", errEncoder err)]
     Ok ok -> Json.Encode.object [("tag", Json.Encode.string "Ok"), ("a", okEncoder ok)]
+"""
+    }
 
+
+libRandom : Lib
+libRandom =
+    { imports = [ "Random", "Dict", "Set", "Random.Extra" ]
+    , source =
+        """
 randomInt : Random.Generator Int
 randomInt = Random.int 0 100
 
@@ -73,7 +95,15 @@ randomSet gen = Random.map Set.fromList (randomList gen)
 
 randomDict : Random.Generator a -> Random.Generator (Dict.Dict String a)
 randomDict gen = Random.map Dict.fromList (randomList (Random.map2 (\\k v -> (k, v)) randomString gen))
+"""
+    }
 
+
+libHtml : Lib
+libHtml =
+    { imports = [ "Html", "Html.Attributes", "Dict" ]
+    , source =
+        """
 viewList : (a -> Html.Html msg) -> List a -> Html.Html msg
 viewList f xs = Html.table []
     [ Html.caption [] [Html.text "List"]
@@ -131,7 +161,15 @@ viewTuple fa fb (a, b) = Html.table []
             ]
         ]
     ]
+"""
+    }
 
+
+libCompare : Lib
+libCompare =
+    { imports = [ "Set", "Dict" ]
+    , source =
+        """
 compareList : (a -> a -> Order) -> List a -> List a -> Order
 compareList f lhs rhs 
     = case (lhs, rhs) of 
@@ -185,8 +223,8 @@ compareResult f g lhs rhs
         (Err _, _) -> LT
         (_, Err _) -> GT
         (Ok l, Ok r) -> g l r
-
 """
+    }
 
 
 type alias Options a =
@@ -201,6 +239,42 @@ type alias Options a =
 
 generate : Options a -> Elm.Syntax.File.File -> Result Error CodeGen.File
 generate { encode, decode, random, html, ord } file =
+    let
+        libs =
+            List.filterMap identity
+                [ if encode then
+                    Just libEncode
+
+                  else
+                    Nothing
+                , if decode then
+                    Just libDecode
+
+                  else
+                    Nothing
+                , if random then
+                    Just libRandom
+
+                  else
+                    Nothing
+                , if html then
+                    Just libHtml
+
+                  else
+                    Nothing
+                , if ord then
+                    Just libCompare
+
+                  else
+                    Nothing
+                ]
+
+        template =
+            String.join "\n\n" <|
+                [ "module Template exposing (..)"
+                , String.join "\n\n" <| List.map .source libs
+                ]
+    in
     case Elm.DSLParser.parse template of
         Err _ ->
             Err [ "template parse error" ]
@@ -223,6 +297,11 @@ generate { encode, decode, random, html, ord } file =
                     , on html Derive.Html.generateView
                     ]
                         |> List.filterMap identity
+
+                imports =
+                    List.concatMap .imports libs
+                        |> List.sort
+                        |> List.map (\mod -> importStmt [ mod ] Nothing Nothing)
             in
             generated
                 |> concatResults (\gen -> gen file)
@@ -233,18 +312,10 @@ generate { encode, decode, random, html, ord } file =
                                 [--todo
                                 ]
                             )
-                            [ importStmt [ "Dict" ] Nothing Nothing
-                            , importStmt [ "Html" ] Nothing Nothing
-                            , importStmt [ "Html", "Attributes" ] Nothing Nothing
-                            , importStmt [ "Json", "Encode" ] Nothing Nothing
-                            , importStmt [ "Json", "Decode" ] Nothing Nothing
-                            , importStmt [ "Json", "Decode", "Extra" ] Nothing Nothing
-                            , importStmt [ "Random" ] Nothing Nothing
-                            , importStmt [ "Random", "Extra" ] Nothing Nothing
-                            , importStmt [ "Array" ] Nothing Nothing
-                            , importStmt [ "Set" ] Nothing Nothing
-                            , importStmt (moduleName <| nodeValue file.moduleDefinition) Nothing (Just exposeAll)
-                            ]
+                            (imports
+                                ++ [ importStmt (moduleName <| nodeValue file.moduleDefinition) Nothing (Just exposeAll)
+                                   ]
+                            )
                             (List.concat
                                 [ List.concatMap identity results
                                 , templateFile.declarations

@@ -88,9 +88,35 @@ textarea {
 }
 
 .right {
-  .generated {
-    height: 100vh;
-    overflow: scroll;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .control {
+    background-color: rgb(51, 51, 51);
+    padding: 1em;
+
+    .derive-option {
+      padding: 1em;
+    }
+
+    label {
+      text-align: right;
+      display: inline-block;
+      color: white;
+      padding: 0.5em;
+    }
+  }
+
+  .rendered {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 100px;
+
+    .generated {
+      height: 100%;
+      overflow: scroll;
+    }
   }
 }
 
