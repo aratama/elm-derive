@@ -28,6 +28,9 @@ class CodeMirrorClass extends HTMLElement {
 
       const style = this.shadow.ownerDocument.createElement("style");
       style.textContent = `
+      * {
+        box-sizing: border-box;
+      }
       .CodeMirror {
         line-height:21px;
         font-family: Fira Code;
@@ -38,12 +41,14 @@ class CodeMirrorClass extends HTMLElement {
       root.style["width"] = "100%";
       root.style["height"] = "100%";
       root.style["overflow"] = "hidden";
+      // root.style["padding"] = "8px";
       this.shadow.appendChild(root);
 
       this.editor = CodeMirror(root, {
         value: "",
         mode: "elm",
         theme: "material-ocean",
+        lineNumbers: true,
       });
 
       this.editor.on("change", () => {
@@ -60,7 +65,6 @@ class CodeMirrorClass extends HTMLElement {
       const wrapper = this.editor.getWrapperElement();
       wrapper.style["width"] = "100%";
       wrapper.style["height"] = "100%";
-      wrapper.style["padding"] = "1em";
 
       this.editor?.setValue(this.getAttribute("value") || "");
       if (this.hasAttribute("readonly")) {
