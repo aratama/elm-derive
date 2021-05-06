@@ -72,7 +72,11 @@ class CodeMirrorClass extends HTMLElement {
         this.editor?.setOption("readOnly", true);
       }
 
-      this.editor.refresh();
+      setTimeout(() => {
+        if (this.editor) {
+          this.editor.refresh();
+        }
+      }, 3000);
     })();
   }
 
