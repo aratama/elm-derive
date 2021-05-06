@@ -34,6 +34,7 @@ class CodeMirrorClass extends HTMLElement {
       .CodeMirror {
         line-height:21px;
         font-family: Fira Code;
+        font-size: 14px;
       }`;
       this.shadow.appendChild(style);
 
@@ -70,6 +71,8 @@ class CodeMirrorClass extends HTMLElement {
       if (this.hasAttribute("readonly")) {
         this.editor?.setOption("readOnly", true);
       }
+
+      this.editor.refresh();
     })();
   }
 
