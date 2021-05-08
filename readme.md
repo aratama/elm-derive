@@ -31,15 +31,16 @@ Hopefully this command will generates `src/Your/Type/Decralation/Module/Derive.e
 
 ## TODO
 
-- Apply beta-reduction to generated codes
-- Use `elm-syntax-dsl` and prettify generated codes
 - Support Type Variables
+- Support partial ovverrides of generated codes
 - Support generation from multiple modules
+- Apply beta-reduction to generated codes
 
 ## Related Projects and Articles:
 
 - [Awesome Elm / Code Generators](https://github.com/sporto/awesome-elm#code-generators) A curated list of useful Elm tutorials, libraries and software
 - [Elm JSON Interop](https://github.com/pravdomil/elm-json-interop) Generate JSON encoders/decoders and TypeScript definitions from Elm types.
+- [Json2elm](https://discourse.elm-lang.org/t/json2elm-generate-elm-json-decoders-encoders-from-a-json-sample/7277) generate elm/json decoders & encoders from a JSON sample
 
 #### from JSON/JSON Schema
 
