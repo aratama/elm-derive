@@ -62,7 +62,7 @@ decodeResult errDecoder okDecoder =
         Json.Decode.map Ok (Json.Decode.field "a" okDecoder)
       _ ->
         Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag))
-     (Json.Decode.field "tag" Json.Decode.string)
+     (Json.Decode.field "$" Json.Decode.string)
 
 encodeMaybe : (a -> Json.Encode.Value) -> (Maybe a -> Json.Encode.Value)
 encodeMaybe f encodeMaybeValue =
@@ -80,9 +80,9 @@ encodeResult : (err -> Json.Encode.Value) -> ((ok -> Json.Encode.Value) -> (Resu
 encodeResult errEncoder okEncoder value =
     case value of
       Err err ->
-        Json.Encode.object [("tag", Json.Encode.string "Err"), ("a", errEncoder err)]
+        Json.Encode.object [("$", Json.Encode.string "Err"), ("a", errEncoder err)]
       Ok ok ->
-        Json.Encode.object [("tag", Json.Encode.string "Ok"), ("a", okEncoder ok)]
+        Json.Encode.object [("$", Json.Encode.string "Ok"), ("a", okEncoder ok)]
 
 randomInt : Random.Generator Int
 randomInt  =

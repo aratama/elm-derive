@@ -69,7 +69,7 @@ generateEncoderFromDeclaration file declaration =
                                 first : CodeGen.Expression
                                 first =
                                     tuple
-                                        [ string "tag"
+                                        [ string "$"
                                         , apply
                                             [ fqFun [ "Json", "Encode" ] "string"
                                             , string (nodeValue constructor.name)

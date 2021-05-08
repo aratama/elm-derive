@@ -38,23 +38,23 @@ encodeTree : Tree -> Json.Encode.Value
 encodeTree val =
     case val of
         Leaf a ->
-            Json.Encode.object [ ( "tag", Json.Encode.string "Leaf" ), ( "a", Json.Encode.string a ) ]
+            Json.Encode.object [ ( "$", Json.Encode.string "Leaf" ), ( "a", Json.Encode.string a ) ]
 
         Branch a b ->
-            Json.Encode.object [ ( "tag", Json.Encode.string "Branch" ), ( "a", encodeTree a ), ( "b", encodeTree b ) ]
+            Json.Encode.object [ ( "$", Json.Encode.string "Branch" ), ( "a", encodeTree a ), ( "b", encodeTree b ) ]
 
 
 encodeColor : Color -> Json.Encode.Value
 encodeColor val =
     case val of
         Red ->
-            Json.Encode.object [ ( "tag", Json.Encode.string "Red" ) ]
+            Json.Encode.object [ ( "$", Json.Encode.string "Red" ) ]
 
         Green ->
-            Json.Encode.object [ ( "tag", Json.Encode.string "Green" ) ]
+            Json.Encode.object [ ( "$", Json.Encode.string "Green" ) ]
 
         Blue ->
-            Json.Encode.object [ ( "tag", Json.Encode.string "Blue" ) ]
+            Json.Encode.object [ ( "$", Json.Encode.string "Blue" ) ]
 
 
 encodeVector : Vector -> Json.Encode.Value
@@ -62,7 +62,7 @@ encodeVector val =
     case val of
         Vector a ->
             Json.Encode.object
-                [ ( "tag", Json.Encode.string "Vector" )
+                [ ( "$", Json.Encode.string "Vector" )
                 , ( "a"
                   , (\value0 ->
                         Json.Encode.object [ ( "x", Json.Encode.float value0.x ), ( "y", Json.Encode.float value0.y ) ]
@@ -221,7 +221,7 @@ decodeTree =
                 _ ->
                     Json.Decode.fail ("Unexpected tag name: " ++ tag)
         )
-        (Json.Decode.field "tag" Json.Decode.string)
+        (Json.Decode.field "$" Json.Decode.string)
 
 
 decodeColor : Json.Decode.Decoder Color
@@ -241,7 +241,7 @@ decodeColor =
                 _ ->
                     Json.Decode.fail ("Unexpected tag name: " ++ tag)
         )
-        (Json.Decode.field "tag" Json.Decode.string)
+        (Json.Decode.field "$" Json.Decode.string)
 
 
 decodeVector : Json.Decode.Decoder Vector
@@ -263,7 +263,7 @@ decodeVector =
                 _ ->
                     Json.Decode.fail ("Unexpected tag name: " ++ tag)
         )
-        (Json.Decode.field "tag" Json.Decode.string)
+        (Json.Decode.field "$" Json.Decode.string)
 
 
 decodeGrid : Json.Decode.Decoder Grid
@@ -1091,10 +1091,10 @@ encodeResult : (err -> Json.Encode.Value) -> (ok -> Json.Encode.Value) -> Result
 encodeResult errEncoder okEncoder value =
     case value of
         Err err ->
-            Json.Encode.object [ ( "tag", Json.Encode.string "Err" ), ( "a", errEncoder err ) ]
+            Json.Encode.object [ ( "$", Json.Encode.string "Err" ), ( "a", errEncoder err ) ]
 
         Ok ok ->
-            Json.Encode.object [ ( "tag", Json.Encode.string "Ok" ), ( "a", okEncoder ok ) ]
+            Json.Encode.object [ ( "$", Json.Encode.string "Ok" ), ( "a", okEncoder ok ) ]
 
 
 decodeChar : Json.Decode.Decoder Char
@@ -1125,7 +1125,7 @@ decodeResult errDecoder okDecoder =
                 _ ->
                     Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag)
         )
-        (Json.Decode.field "tag" Json.Decode.string)
+        (Json.Decode.field "$" Json.Decode.string)
 
 
 decodeAndMap : Json.Decode.Decoder a -> Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b

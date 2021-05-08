@@ -39,7 +39,7 @@ decodeResult errDecoder okDecoder =
     Json.Decode.andThen (\\tag -> case tag of 
         "Err" -> Json.Decode.map Err (Json.Decode.field "a" errDecoder)
         "Ok" -> Json.Decode.map Ok (Json.Decode.field "a" okDecoder)
-        _ -> Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag)) (Json.Decode.field "tag" Json.Decode.string)
+        _ -> Json.Decode.fail ("decodeResult: Invalid tag name: " ++ tag)) (Json.Decode.field "$" Json.Decode.string)
 
 decodeAndMap : Json.Decode.Decoder a -> Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b
 decodeAndMap =
@@ -63,8 +63,8 @@ encodeChar value = Json.Encode.string (String.fromChar value)
 
 encodeResult : (err -> Json.Encode.Value) -> (ok -> Json.Encode.Value) -> Result err ok -> Json.Encode.Value
 encodeResult errEncoder okEncoder value = case value of 
-    Err err -> Json.Encode.object [("tag", Json.Encode.string "Err"), ("a", errEncoder err)]
-    Ok ok -> Json.Encode.object [("tag", Json.Encode.string "Ok"), ("a", okEncoder ok)]
+    Err err -> Json.Encode.object [("$", Json.Encode.string "Err"), ("a", errEncoder err)]
+    Ok ok -> Json.Encode.object [("$", Json.Encode.string "Ok"), ("a", okEncoder ok)]
 """
     }
 

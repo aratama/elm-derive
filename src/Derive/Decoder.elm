@@ -345,7 +345,7 @@ generateDecoderFromDeclaration file delaration =
                                     , parens <|
                                         apply
                                             [ fqVal [ "Json", "Decode" ] "field"
-                                            , string "tag"
+                                            , string "$"
                                             , fqVal [ "Json", "Decode" ] "string"
                                             ]
                                     ]
